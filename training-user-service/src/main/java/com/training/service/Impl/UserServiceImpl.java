@@ -1,10 +1,12 @@
 package com.training.service.Impl;
 
 import com.training.entity.request.CreateAccountReq;
+import com.training.entity.request.EditAccountByUserReq;
 import com.training.entity.request.EditAccountReq;
 import com.training.entity.request.LoginReq;
 import com.training.entity.respond.AuthInfoRespond;
 import com.training.entity.respond.AuthRespond;
+import com.training.entity.result.UserInfo;
 import com.training.entity.table.AuthTable;
 import com.training.entity.table.UserTable;
 import com.training.mapper.UserMapper;
@@ -165,7 +167,7 @@ public class UserServiceImpl implements UserService {
         Integer oldAuthId = oldAccountInfo.getAuthId();
         String newPassword = req.getPassword();
         // 哈希加密密码，并进行修改操作
-        req.setPassword(encoder.encode(req.getPassword()));
+        req.setPassword(encoder.encode(newPassword));
         userMapper.updateUserAccountInfoByUid(uid, req);
         // 检查密码或权限是否更改，判断是否需要销毁令牌
         if (!encoder.matches(newPassword, oldPassword) || !Objects.equals(req.getAuth_id(), oldAuthId)){
@@ -189,5 +191,74 @@ public class UserServiceImpl implements UserService {
         userMapper.deleteUserAccountByUid(uid);
         userCache.deleteAccessToken(oldInfo.getUsername());
         return MsgRespond.success("已成功删除此用户");
+    }
+
+    /**
+     * 用户自行修改账号信息具体实现
+     * @param uid 用户ID
+     * @param username 用户名
+     * @return 处理结果消息
+     * by organwalk 2023-10-19
+     */
+    @Override
+    public MsgRespond editUserAccountInfoByUser(Integer uid, String username, EditAccountByUserReq req) {
+        // 判断用户是否存在
+        UserTable oldInfo = userMapper.selectUserAccountByUid(uid);
+        if (Objects.isNull(oldInfo)) {
+            return MsgRespond.fail("修改失败，该用户不存在");
+        }
+        // 判断是否是用户自行修改
+        if (!Objects.equals(oldInfo.getId(), uid)){
+            return MsgRespond.fail("修改失败，该操作非用户本人修改");
+        }
+        String newPassword = req.getPassword();
+        String oldPassword = oldInfo.getPassword();
+        req.setPassword(encoder.encode(newPassword));
+        userMapper.updateUserAccountInfoByUser(uid, req);
+        // 检查密码是否更改，判断是否需要销毁令牌
+        if (!encoder.matches(newPassword, oldPassword)){
+            userCache.deleteAccessToken(oldInfo.getUsername());
+        }
+        return MsgRespond.success("已成功更新此账号信息");
+    }
+
+    /**
+     * 获取所有教师/员工的信息列表具体实现
+     * @param type 类别，1.teacher:获取教师信息列表；2.worker:获取员工信息列表
+     * @param pageSize 读取记录数
+     * @param offset 从第几条记录继续读取
+     * @return 返回信息列表，若为空则返回提示信息
+     */
+    @Override
+    public DataRespond getUserInfoListByType(String type, Integer pageSize, Integer offset) {
+        // 转换type为权限ID
+        Integer authId = switch (type){
+            case "teacher" -> 2;
+            case "worker" -> 1;
+            default -> 0;
+        };
+        // 检查对应权限下人员列表是否为空
+        Integer sumMark = userMapper.selectUserAccountSumByAuthId(authId);
+        if (sumMark == 0){
+            return new DataFailRespond("当前类型下人员列表为空");
+        }
+        return new DataSuccessRespond(
+                "已成功获取用户信息列表",
+                userMapper.selectUserInfoByType(authId, pageSize, offset)
+        );
+    }
+
+    /**
+     * 获取指定用户信息具体实现
+     * @param uid 用户ID
+     * @return 返回指定用户信息，若为空则返回提示信息
+     * by organwalk 2023-10-19
+     */
+    @Override
+    public DataRespond getUserInfoByUid(Integer uid) {
+        UserInfo userInfo = userMapper.selectUserInfoByUid(uid);
+        return Objects.nonNull(userInfo)
+                ? new DataSuccessRespond("已成功获取指定用户信息", userInfo)
+                : new DataFailRespond("该用户不存在");
     }
 }

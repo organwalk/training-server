@@ -1,6 +1,7 @@
 package com.training.controller;
 
 import com.training.entity.request.CreateAccountReq;
+import com.training.entity.request.EditAccountByUserReq;
 import com.training.entity.request.EditAccountReq;
 import com.training.entity.request.LoginReq;
 import com.training.entity.respond.AuthInfoRespond;
@@ -10,6 +11,7 @@ import entity.MsgRespond;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -86,4 +88,37 @@ public class UserController {
         return userService.deleteAccountByUid(uid);
     }
 
+    // 用户自行修改账号信息
+    @PutMapping("/v1/user/account/{uid}")
+    public MsgRespond editUserAccountInfoByUser(@PathVariable
+                                                    @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "uid必须为纯数字字段")
+                                                Integer uid,
+                                                @Validated @RequestBody EditAccountByUserReq req,
+                                                @RequestHeader(name = "username") String username){
+        return userService.editUserAccountInfoByUser(uid, username, req);
+    }
+
+    // 获取所有教师/员工的信息列表
+    @GetMapping("/v3/user/info/{type}/{page_size}/{offset}")
+    public DataRespond getUserInfoListByType(@PathVariable
+                                                 @Pattern(regexp = "^(teacher|worker)$", message = "type字段只能是teacher或worker")
+                                             String type,
+                                             @PathVariable
+                                             @Min(value = 1, message = "page_size必须为大于1的整数")
+                                             @Digits(integer = Integer.MAX_VALUE, fraction = 0)
+                                             Integer page_size,
+                                             @PathVariable
+                                                 @Min(value = 0, message = "offset必须为大于或等于0的整数")
+                                                 @Digits(integer = Integer.MAX_VALUE, fraction = 0)
+                                             Integer offset){
+        return userService.getUserInfoListByType(type, page_size, offset);
+    }
+
+    // 获取指定用户信息
+    @GetMapping("/v1/user/info/{uid}")
+    public DataRespond getUserInfoByUid(@PathVariable
+                                            @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "uid必须为纯数字字段")
+                                        Integer uid){
+        return userService.getUserInfoByUid(uid);
+    }
 }

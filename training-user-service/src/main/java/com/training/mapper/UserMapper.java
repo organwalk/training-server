@@ -1,6 +1,8 @@
 package com.training.mapper;
 
+import com.training.entity.request.EditAccountByUserReq;
 import com.training.entity.request.EditAccountReq;
+import com.training.entity.result.UserInfo;
 import com.training.entity.table.AuthTable;
 import com.training.entity.table.UserTable;
 import org.apache.ibatis.annotations.*;
@@ -81,10 +83,40 @@ public interface UserMapper {
     // 根据用户ID编辑账号信息
     @Transactional
     @Update("update t_user set real_name = #{req.real_name}, password = #{req.password}, mobile = #{req.mobile}, auth_id = #{req.auth_id} where id = #{uid}")
-    Integer updateUserAccountInfoByUid(@Param("uid") Integer uid, @Param("req") EditAccountReq req);
+    void updateUserAccountInfoByUid(@Param("uid") Integer uid, @Param("req") EditAccountReq req);
 
     // 根据用户ID删除用户
     @Delete("delete from t_user where id = #{uid}")
-    Integer deleteUserAccountByUid(Integer uid);
+    void deleteUserAccountByUid(Integer uid);
+
+    // 根据用户ID用户自行编辑账号信息
+    @Transactional
+    @Update("update t_user set password = #{req.password}, mobile = #{req.mobile} where id = #{uid}")
+    void updateUserAccountInfoByUser(@Param("uid") Integer uid, @Param("req") EditAccountByUserReq req);
+
+    // 根据类别获取教师/员工信息列表
+    @Select({
+            "select id, real_name, mobile, auth_id, extra from t_user " +
+            "where auth_id = #{authId} " +
+            "limit #{pageSize} offset #{offset}",
+    })
+    @Results(id = "userInfo", value = {
+            @Result(id = true, column = "id", property = "id"),
+            @Result(column = "real_name", property = "realName"),
+            @Result(column = "mobile", property = "mobile"),
+            @Result(column = "extra", property = "extra"),
+            @Result(column = "auth_id", property = "auth", javaType = AuthTable.class,
+                    one = @One(select = "com.training.mapper.UserMapper.selectAuthNameById"))
+
+    })
+    List<UserInfo> selectUserInfoByType(@Param("authId") Integer authId,
+                                        @Param("pageSize") Integer pageSize,
+                                        @Param("offset") Integer offset
+    );
+
+    // 根据ID获取用户信息
+    @Select("select id, real_name, mobile, auth_id, extra from t_user where id = #{uid}")
+    @ResultMap("userInfo")
+    UserInfo selectUserInfoByUid(Integer uid);
 
 }
