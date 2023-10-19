@@ -1,14 +1,11 @@
 package com.training.entity.respond;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
+@AllArgsConstructor
 public class AuthInfoRespond {
     private String auth_name;
     private String access_token;
-
-    public AuthInfoRespond(String auth_name, String access_token) {
-        this.auth_name = auth_name;
-        this.access_token = access_token;
-    }
 }

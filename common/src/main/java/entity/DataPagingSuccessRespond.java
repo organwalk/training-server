@@ -2,19 +2,17 @@ package entity;
 
 import lombok.Data;
 
-/**
- * 通用数据型成功响应
- * by organwalk 2023-10-18
- */
 @Data
-public class DataSuccessRespond implements DataRespond {
+public class DataPagingSuccessRespond implements DataRespond{
     private Integer code;
     private String msg;
+    private Integer total;
     private Object data;
 
-    public DataSuccessRespond(String msg, Object data) {
+    public DataPagingSuccessRespond(String msg, Integer total, Object data) {
         this.code = 2002;
         this.msg = msg;
+        this.total = total;
         this.data = data;
     }
 }

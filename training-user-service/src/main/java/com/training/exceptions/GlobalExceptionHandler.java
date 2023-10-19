@@ -48,8 +48,9 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(value = {Exception.class, RuntimeException.class})
-    public MsgRespond handleInternalServerError(Exception e) {
+    public MsgRespond handleInternalServerError(Exception e, RuntimeException re) {
         logger.error(e);
+        logger.error(re);
         return MsgRespond.fail("内部服务错误，请稍后重试");
     }
 

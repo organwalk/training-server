@@ -1,6 +1,7 @@
 package com.training.service;
 
 import com.training.entity.request.CreateAccountReq;
+import com.training.entity.request.EditAccountReq;
 import com.training.entity.request.LoginReq;
 import com.training.entity.respond.AuthInfoRespond;
 import entity.DataRespond;
@@ -18,4 +19,16 @@ public interface UserService {
 
     // 获取指定用户授权信息
     AuthInfoRespond getUserAuthInfo(String username);
+
+    // 获取所有用户账号列表
+    DataRespond getUserAccountByType(Integer type, Integer page_size, Integer offset);
+
+    // 获取指定用户的账号信息
+    DataRespond getUserAccountByUid(Integer uid);
+
+    // 编辑指定用户的账号信息
+    MsgRespond editUserAccountInfoByUid(Integer uid, EditAccountReq req);
+
+    // 删除指定用户
+    MsgRespond deleteAccountByUid(Integer uid);
 }

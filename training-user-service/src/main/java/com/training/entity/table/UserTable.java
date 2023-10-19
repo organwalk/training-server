@@ -1,5 +1,6 @@
 package com.training.entity.table;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
@@ -17,6 +18,9 @@ public class UserTable {
     private String mobile;
     private Integer authId;
     private String extra;
+
+    @TableField(exist = false)
+    private AuthTable auth;
 
     public UserTable(Integer id, String username, String password, String realName, String mobile, Integer authId, String extra) {
         this.username = username;

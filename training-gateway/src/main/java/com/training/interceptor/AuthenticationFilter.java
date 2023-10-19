@@ -39,7 +39,7 @@ public class AuthenticationFilter implements GatewayFilter {
         // 获取本次请求的URL路径
         String reqURL = exchange.getRequest().getURI().getPath();
 
-        // 如果使登录请求，则直接放行
+        // 如果是登录请求，则直接放行
         if (Objects.equals(reqURL, "/api/v1/user/auth")){
             return chain.filter(exchange);
         }
@@ -56,7 +56,9 @@ public class AuthenticationFilter implements GatewayFilter {
 
         // 检查请求权限和接口权限标识是否一致
         Map<String, String> authMap = filterUtil.authMap();
-        if (authMap.containsKey(reqAuthMark) && !Objects.equals(authMap.get(reqAuthMark), headers.getAuthName())) {
+        if (authMap.containsKey(reqAuthMark)
+                && !Objects.equals(authMap.get(reqAuthMark), headers.getAuthName())
+                && !Objects.equals("/v1", reqAuthMark)) {
             return filterUtil.resAuthFail(exchange, 4003, "当前权限无法访问此接口");
         }
 

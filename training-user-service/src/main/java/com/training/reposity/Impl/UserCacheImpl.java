@@ -38,4 +38,15 @@ public class UserCacheImpl implements UserCache {
         String accessToken = (String) redisTemplate.opsForHash().get(ACCESS_TOKEN_KEY, username);
         return accessToken != null ? accessToken : "";
     }
+
+    /**
+     * 根据username删除通行令牌
+     * @param username 用户名
+     * by organwalk 2023-10-19
+     */
+    @Override
+    public void deleteAccessToken(String username) {
+        redisTemplate.opsForHash().delete(ACCESS_TOKEN_KEY, username);
+
+    }
 }

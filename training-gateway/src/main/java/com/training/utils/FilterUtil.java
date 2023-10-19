@@ -61,7 +61,6 @@ public class FilterUtil {
      */
     public Map<String, String> authMap(){
         Map<String, String> authMap = new HashMap<>();
-        authMap.put("/v1", "none");
         authMap.put("/v2", "teacher");
         authMap.put("/v3", "admin");
         return authMap;
