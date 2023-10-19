@@ -2,6 +2,7 @@ package com.training.service.Impl;
 
 import com.training.entity.request.CreateAccountReq;
 import com.training.entity.request.LoginReq;
+import com.training.entity.respond.AuthInfoRespond;
 import com.training.entity.respond.AuthRespond;
 import com.training.entity.table.AuthTable;
 import com.training.entity.table.UserTable;
@@ -19,6 +20,10 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * 用户服务具体实现
+ * by organwalk 2023-10-18
+ */
 @Service
 @AllArgsConstructor
 public class UserServiceImpl implements UserService {
@@ -28,25 +33,22 @@ public class UserServiceImpl implements UserService {
 
     /**
      * 获取权限列表具体实现
-     *
      * @return 返回权限列表，若为空则返回错误提示
-     * <p>
      * by organwalk 2023-10-18
      */
     @Override
     public DataRespond getAuthList() {
         List<AuthTable> authList = userMapper.selectAuthList();
+        System.out.println(authList);
         return authList.isEmpty()
-                ? DataSuccessRespond.success("已成功获取权限列表", authList)
-                : DataFailRespond.fail("权限列表为空，请稍后再试");
+                ? DataFailRespond.fail("权限列表为空，请稍后再试")
+                : DataSuccessRespond.success("已成功获取权限列表", authList);
     }
 
     /**
      * 创建用户账号具体实现
-     *
      * @param req 请求实体
      * @return 根据处理状态返回成功或失败信息
-     * <p>
      * by organwalk 2023-10-18
      */
     @Override
@@ -73,7 +75,6 @@ public class UserServiceImpl implements UserService {
      *
      * @param req 请求实体
      * @return 若用户名或密码正确，则进行授权，否则返回错误提示
-     * <p>
      * by organwalk 2023-10-18
      */
     @Override
@@ -96,5 +97,20 @@ public class UserServiceImpl implements UserService {
         String authName = userMapper.selectAuthNameById(authInfo.getAuthId());  // 利用auth_id获取auth_name
         AuthRespond authRespond = new AuthRespond(authInfo.getId(), username, accessToken, authName);
         return DataSuccessRespond.success("用户认证通过", authRespond);
+    }
+
+    /**
+     * 获取指定用户授权信息具体实现
+     * @param username 用户名
+     * @return 授权信息响应对象
+     */
+    @Override
+    public AuthInfoRespond getUserAuthInfo(String username) {
+        // 获取通行令牌
+        String accessToken = userCache.getAccessToken(username);
+        // 获取权限
+        UserTable userTable = userMapper.selectAuthInfoByUsername(username);
+        String authName = userMapper.selectAuthNameById(userTable.getAuthId());
+        return new AuthInfoRespond(authName,accessToken);
     }
 }

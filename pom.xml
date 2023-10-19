@@ -17,6 +17,7 @@
     <modules>
         <module>training-user-service</module>
         <module>common</module>
+        <module>training-gateway</module>
     </modules>
 
     <properties>
@@ -74,6 +75,11 @@
                 <groupId>org.apache.logging.log4j</groupId>
                 <artifactId>log4j-core</artifactId>
                 <version>2.20.0</version>
+            </dependency>
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>fastjson</artifactId>
+                <version>1.2.67_noneautotype2</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
