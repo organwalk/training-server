@@ -18,6 +18,7 @@
         <module>training-user-service</module>
         <module>common</module>
         <module>training-gateway</module>
+        <module>training-department-service</module>
     </modules>
 
     <properties>
