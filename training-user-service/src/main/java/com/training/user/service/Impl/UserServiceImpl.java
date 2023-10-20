@@ -171,6 +171,14 @@ public class UserServiceImpl implements UserService {
         String newPassword = req.getPassword();
         // 哈希加密密码，并进行修改操作
         req.setPassword(encoder.encode(newPassword));
+        // 检查用户是否加入了部门
+        Integer deptMark = deptClient.getDeptIdByUid(uid);
+        if (Objects.nonNull(deptMark)){
+            // 检查是否更改了权限
+            if (!Objects.equals(req.getAuth_id(), oldAuthId)){
+                return MsgRespond.fail("该用户以员工身份加入了部门，无法修改权限。请在解除其部门关系后重试");
+            }
+        }
         userMapper.updateUserAccountInfoByUid(uid, req);
         // 检查密码或权限是否更改，判断是否需要销毁令牌
         if (!encoder.matches(newPassword, oldPassword) || !Objects.equals(req.getAuth_id(), oldAuthId)){
