@@ -3,15 +3,13 @@ package com.training.department.service.Impl;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.training.common.entity.DataFailRespond;
-import com.training.common.entity.DataPagingSuccessRespond;
-import com.training.common.entity.DataRespond;
-import com.training.common.entity.MsgRespond;
+import com.training.common.entity.*;
 import com.training.common.entity.req.UserInfoListReq;
 import com.training.department.client.UserClient;
 import com.training.department.entity.request.DeptReq;
 import com.training.department.entity.request.MembersReq;
 import com.training.department.entity.result.MembersInfo;
+import com.training.department.entity.table.DeptTable;
 import com.training.department.mapper.DeptMapper;
 import com.training.department.mapper.DeptWorkerMapper;
 import com.training.department.service.DepartmentService;
@@ -211,6 +209,30 @@ public class DepartmentServiceImpl implements DepartmentService {
     @Override
     public Integer getDeptIdByUid(Integer uid) {
         return deptWorkerMapper.selectDeptIdByUid(uid);
+    }
+
+    /**
+     * 定义根据部门ID获取部门存在状态的具体实现
+     * @param deptId 部门ID
+     * @return null或者整数ID
+     */
+    @Override
+    public Integer getDeptExistStatus(Integer deptId) {
+        return deptMapper.selectDeptExist(deptId);
+    }
+
+    /**
+     * 定义获取指定部门信息的具体实现
+     * @param deptId 部门ID
+     * @return 部门信息或错误提示
+     */
+    @Override
+    public DataRespond getDeptInfoByDeptId(Integer deptId) {
+        DeptTable deptTable = deptMapper.selectDeptInfoByDeptId(deptId);
+        if (Objects.isNull(deptTable)){
+            return new DataFailRespond("此部门不存在，请重新指定");
+        }
+        return new DataSuccessRespond("已成功获取该部门信息", deptTable);
     }
 
 

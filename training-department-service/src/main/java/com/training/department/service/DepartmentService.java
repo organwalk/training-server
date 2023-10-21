@@ -34,4 +34,10 @@ public interface DepartmentService {
 
     // 获取指定员工的部门ID
     Integer getDeptIdByUid(Integer uid);
+
+    // 获取部门存在状态
+    Integer getDeptExistStatus(Integer deptId);
+
+    // 获取指定部门信息
+    DataRespond getDeptInfoByDeptId(Integer deptId);
 }

@@ -34,6 +34,9 @@ public class GatewayConfig {
                 .route("training-department-service",r -> r.path("/api/dept/**")
                         .filters(f -> f.filter(authenticationFilter))
                         .uri("lb://training-department-service"))
+                .route("training-resource",r -> r.path("/api/resource/**")
+                        .filters(f -> f.filter(authenticationFilter))
+                        .uri("lb://training-resource"))
                 .build();
     }
 }

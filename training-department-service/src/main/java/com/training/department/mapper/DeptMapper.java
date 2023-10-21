@@ -49,4 +49,8 @@ public interface DeptMapper {
     // 检查成员是否是负责人身份
     @Select("select id from t_dept where head_id = #{uid}")
     Integer selectIdentityStatusByUid(Integer uid);
+
+    // 根据部门ID获取指定部门信息
+    @Select("select * from t_dept where id = #{deptId}")
+    DeptTable selectDeptInfoByDeptId(Integer deptId);
 }

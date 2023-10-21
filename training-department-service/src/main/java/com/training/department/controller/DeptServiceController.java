@@ -94,7 +94,21 @@ public class DeptServiceController {
 
     // 获取指定员工的部门ID
     @GetMapping("/v1/department/{uid}")
-    public Integer getDeptId(@PathVariable Integer uid){
-        return  deptService.getDeptIdByUid(uid);
+    public Integer getDeptId(@PathVariable Integer uid) {
+        return deptService.getDeptIdByUid(uid);
+    }
+
+    // 获取部门存在状态
+    @GetMapping("/v1/department/status/{dept_id}")
+    public Integer getDeptExistStatus(@PathVariable Integer dept_id) {
+        return deptService.getDeptExistStatus(dept_id);
+    }
+
+    // 获取指定部门信息
+    @GetMapping("/v1/department/info/{dept_id}")
+    public DataRespond getDeptInfo(@PathVariable
+                                   @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "dept_id必须为纯数字字段")
+                                   Integer dept_id) {
+        return deptService.getDeptInfoByDeptId(dept_id);
     }
 }
