@@ -7,6 +7,7 @@ import com.training.common.entity.MsgRespond;
 import com.training.resource.client.DeptClient;
 import com.training.resource.entity.request.TagReq;
 import com.training.resource.entity.respond.TagRespond;
+import com.training.resource.mapper.ResourceNormalMapper;
 import com.training.resource.mapper.TagMapper;
 import com.training.resource.service.TagService;
 import lombok.AllArgsConstructor;
@@ -26,7 +27,7 @@ import java.util.Objects;
 public class TagServiceImpl implements TagService {
     private final TagMapper tagMapper;
     private final DeptClient deptClient;
-
+    private final ResourceNormalMapper resourceNormalMapper;
     /**
      * 创建资源分类标签
      * @param req 请求实体，包含部门ID和分类标签名
@@ -83,6 +84,11 @@ public class TagServiceImpl implements TagService {
         Integer tagMark = tagMapper.selectTagExistById(tagId);
         if (Objects.isNull(tagMark)){
             return MsgRespond.fail("此分类标签不存在，无需删除");
+        }
+        // 检查此标签下是否具有资源
+        Integer sumMark = resourceNormalMapper.selectResourceNormalSumByTagId(tagId);
+        if (sumMark != 0){
+            return MsgRespond.fail("此分类标签下存在资源，无法删除。请在清除此分类标签下的资源后重试");
         }
         // 删除标签
         tagMapper.deleteTagByTagId(tagId);

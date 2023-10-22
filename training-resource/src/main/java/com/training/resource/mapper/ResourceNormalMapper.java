@@ -23,7 +23,7 @@ public interface ResourceNormalMapper {
 
     // 分页获取指定部门、分类标签下的上传资源列表
     @Select("select id, resource_name, up_id, up_datetime from t_resource_normal where dept_id = #{dept_id} and tag_id = #{tag_id} limit #{pageSize} offset #{offset}")
-    @Results(value = {
+    @Results(id = "resource_normal_list", value = {
             @Result(id = true, column = "id", property = "id"),
             @Result(column = "resource_name", property = "resource_name"),
             @Result(column = "up_id", property = "up_id"),
@@ -70,4 +70,19 @@ public interface ResourceNormalMapper {
     // 根据rid删除指定的资源文件
     @Select("delete from t_resource_normal where id = #{rid}")
     void deleteResourceNormalByRid(Integer rid);
+
+    // 根据tag_id获取资源总数
+    @Select("select count(id) from t_resource_normal where tag_id = #{tagId}")
+    Integer selectResourceNormalSumByTagId(Integer tagId);
+
+    // 根据up_id获取其上传资源列表总数
+    @Select("select count(id) from t_resource_normal where up_id = #{upId}")
+    Integer selectResourceListSumByUpId(Integer upId);
+
+    // 根据up_id获取资源文件列表
+    @Select("select id, resource_name, up_id, up_datetime from t_resource_normal where up_id = #{upId} limit #{pageSize} offset #{offset}")
+    @ResultMap("resource_normal_list")
+    List<ResourceNormalRespond> selectResourceListByUpId(@Param("upId") Integer upId,
+                                                         @Param("pageSize") Integer pageSize,
+                                                         @Param("offset") Integer offset);
 }

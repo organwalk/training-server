@@ -74,7 +74,7 @@ public class ResourceNormalImpl implements ResourceNormalService {
     }
 
     /**
-     * 获取上传资源列表具体是西安
+     * 获取上传资源列表具体实现
      * @param deptId 部门ID
      * @param tagId 分类标签ID
      * @param pageSize 读取记录数
@@ -211,6 +211,32 @@ public class ResourceNormalImpl implements ResourceNormalService {
             resourceNormalMapper.deleteResourceNormalByRid(rid);
         }
         return MsgRespond.success("已成功删除此资源文件");
+    }
+
+    /**
+     * 获取指定用户上传的资源文件列表具体实现
+     * @param upId 上传用户ID
+     * @param pageSize 读取记录数
+     * @param offset 从第几条读起
+     * @return 资源文件列表，若为空，则返回错误提示
+     */
+    @Override
+    public DataRespond getResourceNormalListByUpId(Integer upId, Integer pageSize, Integer offset) {
+        // 检查指定上传者是否存在
+        JSONObject userInfo = userClient.getUserAccountByUid(upId);
+        Integer codeMark = userInfo.getInteger("code");
+        if (Objects.equals(codeMark, 5005)) {
+            return new DataFailRespond("当前指定上传者不存在");
+        }
+        // 获取列表总数
+        Integer sumMark = resourceNormalMapper.selectResourceListSumByUpId(upId);
+        if (sumMark == 0) {
+            return new DataFailRespond("当前用户的上传资源文件列表为空");
+        }
+        List<ResourceNormalRespond> resourceList = resourceNormalMapper.selectResourceListByUpId(upId, pageSize, offset);
+
+        return new DataPagingSuccessRespond("已成功获取该用户的上传资源列表", sumMark,
+                dataUtil.switchUidListToUserInfoList(resourceList));
     }
 
     /**

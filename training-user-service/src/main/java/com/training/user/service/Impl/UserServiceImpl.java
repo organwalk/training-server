@@ -3,6 +3,7 @@ package com.training.user.service.Impl;
 import com.alibaba.fastjson.JSONObject;
 import com.training.common.entity.*;
 import com.training.user.client.DeptClient;
+import com.training.user.client.ResourceClient;
 import com.training.user.entity.request.AccountReq;
 import com.training.user.entity.request.AllAccountInfoReq;
 import com.training.user.entity.request.LoginReq;
@@ -36,6 +37,7 @@ public class UserServiceImpl implements UserService {
     private final BCryptPasswordEncoder encoder;
     private final UserCache userCache;
     private final DeptClient deptClient;
+    private final ResourceClient resourceClient;
 
     /**
      * 获取权限列表具体实现
@@ -198,6 +200,11 @@ public class UserServiceImpl implements UserService {
         UserTable oldInfo = userMapper.selectUserAccountByUid(uid);
         if (Objects.isNull(oldInfo)){
             return MsgRespond.fail("删除失败，该用户不存在");
+        }
+        // 检查用户是否上传了资源
+        Integer codeMark = resourceClient.getTagListByDeptId(uid, 1,0).getInteger("code");
+        if (Objects.equals(codeMark, 2002)){
+            return MsgRespond.fail("该用户存在上传资源，无法删除。请先清除此用户上传的资源");
         }
         // 检查用户是否加入了部门
         Integer deptMark = deptClient.getDeptIdByUid(uid);

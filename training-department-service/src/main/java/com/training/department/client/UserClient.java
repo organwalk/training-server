@@ -23,4 +23,5 @@ public interface UserClient {
     @GetExchange("/v1/info/list")
     JSONArray getUserInfoByUidList(@RequestBody UserInfoListReq req);
 
+
 }

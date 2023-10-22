@@ -68,9 +68,11 @@ public class ResourceController {
     @GetMapping("/v1/file/normal/{dept_id}/{tag_id}/{page_size}/{offset}")
     public DataRespond getResourceNormalList(@PathVariable
                                              @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "dept_id必须为纯数字字段")
-                                             Integer dept_id, @PathVariable
+                                             Integer dept_id,
+                                             @PathVariable
                                              @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "tag_id必须为纯数字字段")
-                                             Integer tag_id, @PathVariable
+                                             Integer tag_id,
+                                             @PathVariable
                                              @Min(value = 1, message = "page_size必须为大于1的整数")
                                              @Digits(integer = Integer.MAX_VALUE, fraction = 0)
                                              Integer page_size,
@@ -111,12 +113,28 @@ public class ResourceController {
     // 删除指定资源文件
     @DeleteMapping("/v1/normal/file/{rid}/{uid}")
     public MsgRespond deleteResourceNormal(@PathVariable
-                                               @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "dept_id必须为纯数字字段")
-                                               Integer rid,
+                                           @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "dept_id必须为纯数字字段")
+                                           Integer rid,
                                            @PathVariable
                                            @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "uid必须为纯数字字段")
-                                           Integer uid,@RequestHeader("username") String username,
-                                           @RequestHeader("auth") String auth){
+                                           Integer uid,
+                                           @RequestHeader("username") String username,
+                                           @RequestHeader("auth") String auth) {
         return resourceNormalService.deleteResourceNormal(rid, uid, username, auth);
+    }
+
+    // 获取指定用户上传的资源文件列表
+    @GetMapping("/v1/file/normal/up/{up_id}/{page_size}/{offset}")
+    public DataRespond getResourceNormalList(@PathVariable
+                                             @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "uid必须为纯数字字段")
+                                             Integer up_id, @PathVariable
+                                             @Min(value = 1, message = "page_size必须为大于1的整数")
+                                             @Digits(integer = Integer.MAX_VALUE, fraction = 0)
+                                             Integer page_size,
+                                             @PathVariable
+                                             @Min(value = 0, message = "offset必须为大于或等于0的整数")
+                                             @Digits(integer = Integer.MAX_VALUE, fraction = 0)
+                                             Integer offset){
+        return resourceNormalService.getResourceNormalListByUpId(up_id, page_size, offset);
     }
 }
