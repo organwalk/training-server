@@ -1,5 +1,6 @@
 package com.training.resource.mapper;
 
+import com.training.resource.entity.request.ResourceNormalReq;
 import com.training.resource.entity.respond.ResourceNormalDetailRespond;
 import com.training.resource.entity.respond.ResourceNormalRespond;
 import com.training.resource.entity.table.ResourceNormalTable;
@@ -48,4 +49,25 @@ public interface ResourceNormalMapper {
             @Result(column = "up_datetime", property = "up_datetime"),
     })
     ResourceNormalDetailRespond selectResourceNormalDetailByRidAnUpId(Integer rid);
+
+    // 根据id获取指定的资源文件路径
+    @Select("select resource_path from t_resource_normal where id = #{rid}")
+    String selectResourcePathByRid(Integer rid);
+
+    // 根据rid编辑指定的资源文件
+    @Update("<script>" +
+            "update t_resource_normal set dept_id = #{req.dept_id}, tag_id = #{req.tag_id}, resource_name = #{req.resource_name}, up_datetime = #{upDatetime} " +
+            "<if test='resourcePath != null'>" +
+            ", resource_path = #{resourcePath} " +
+            "</if>" +
+            "where id = #{rid}" +
+            "</script>")
+    void updateResourceNormalInfoByRid(@Param("req") ResourceNormalReq req,
+                                       @Param("resourcePath") String resourcePath,
+                                       @Param("upDatetime") String upDatetime,
+                                       @Param("rid") Integer rid);
+
+    // 根据rid删除指定的资源文件
+    @Select("delete from t_resource_normal where id = #{rid}")
+    void deleteResourceNormalByRid(Integer rid);
 }

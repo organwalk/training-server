@@ -1,5 +1,6 @@
 package com.training.resource.service.Impl;
 
+import com.alibaba.fastjson.JSONObject;
 import com.training.common.entity.*;
 import com.training.resource.client.DeptClient;
 import com.training.resource.client.UserClient;
@@ -120,15 +121,96 @@ public class ResourceNormalImpl implements ResourceNormalService {
      * 获取指定资源文件详情具体实现
      * @param rid 资源ID
      * @return 资源文件详情或错误提示
+     * by organwalk 2023-10-22
      */
     @Override
     public DataRespond getResourceNormalDetail(Integer rid) {
+        // 检查指定文件是否存在
         ResourceNormalDetailRespond detailObj = resourceNormalMapper.selectResourceNormalDetailByRidAnUpId(rid);
         if (Objects.isNull(detailObj)){
             return new DataFailRespond("此资源文件不存在，请重新指定");
         }
         // 获取部门和人员详细并进行转化
         return new DataSuccessRespond("已成功获取此资源文件详情", dataUtil.switchDeptIdAndUpIdToInfo(detailObj));
+    }
+
+    /**
+     * 编辑指定资源文件信息具体实现
+     * @param rid 部门ID
+     * @param req 编辑请求实体
+     * @return 根据处理结果返回相应提示消息
+     * by organwalk 2023-10-22
+     */
+    @Override
+    public MsgRespond editResourceNormalInfo(Integer rid, ResourceNormalReq req, String username, String auth) {
+        // 检查指定文件是否存在
+        ResourceNormalDetailRespond detailObj = resourceNormalMapper.selectResourceNormalDetailByRidAnUpId(rid);
+        if (Objects.isNull(detailObj)){
+            return MsgRespond.fail("此资源文件不存在，请重新指定");
+        }
+        // 请求实体部门和分类标签存在性检查
+        String checkInfo = checkResourceInfo(req.getDept_id(), req.getTag_id());
+        if (!checkInfo.isBlank()){
+            return MsgRespond.fail(checkInfo);
+        }
+        // 检查是否有权限操作文件
+        String checkAuth = checkResourceAuth(req.getUp_id(), auth, username);
+        if (!checkAuth.isBlank()){
+            return MsgRespond.fail(checkAuth);
+        }
+        // 检查文件是否存在
+        String filePath = null;
+        if (Objects.nonNull(req.getResource_file()) && !req.getResource_file().isEmpty()){
+            // 获取原文件路径
+            String oldFilePath = resourceNormalMapper.selectResourcePathByRid(rid);
+            // 获取文件保存路径
+            filePath = fileUtil.getNormalFilePath(req.getUp_id(), req.getResource_file());
+            try {
+                // 保存文件
+                req.getResource_file().transferTo(new File(filePath));
+                // 删除原文件
+                File oldFile = new File(oldFilePath);
+                if (oldFile.delete()){
+                    resourceNormalMapper.updateResourceNormalInfoByRid(req, filePath, fileUtil.getFileSaveDateTime(), rid);
+                    return MsgRespond.success("已成功编辑此文件");
+                }
+            } catch (IOException e) {
+                return MsgRespond.fail("内部服务错误，文件上传失败，请稍后再试");
+            }
+        }
+        resourceNormalMapper.updateResourceNormalInfoByRid(req, filePath, fileUtil.getFileSaveDateTime(), rid);
+        return MsgRespond.success("已成功编辑此文件");
+    }
+
+    /**
+     * 删除指定资源文件的具体实现
+     * @param rid 资源ID
+     * @return 根据处理结果返回提示消息
+     * by organwalk 2023-10-22
+     */
+    @Override
+    public MsgRespond deleteResourceNormal(Integer rid, Integer uid, String username, String auth) {
+        // 检查文件在数据库中的记录是否存在
+        String filePath = resourceNormalMapper.selectResourcePathByRid(rid);
+        if (Objects.isNull(filePath)){
+            return MsgRespond.fail("此资源文件不存在");
+        }
+        // 检查文件在服务器中的记录是否存在
+        File file = new File(filePath);
+        if (!file.exists()){
+            resourceNormalMapper.deleteResourceNormalByRid(rid);
+            return MsgRespond.fail("此资源文件不存在");
+        }
+        // 检查是否有权限操作文件
+        String checkAuth = checkResourceAuth(uid, auth, username);
+        if (!checkAuth.isBlank()){
+            return MsgRespond.fail(checkAuth);
+        }
+        // 删除文件
+        if (file.delete()){
+            resourceNormalMapper.deleteResourceNormalByRid(rid);
+        }
+        return MsgRespond.success("已成功删除此资源文件");
     }
 
     /**
@@ -148,6 +230,24 @@ public class ResourceNormalImpl implements ResourceNormalService {
         Integer tagMark = tagMapper.selectTagExistById(tagId);
         if (Objects.isNull(tagMark)){
             return "当前指定的分类标签不存在，请联系管理员创建此标签";
+        }
+        return "";
+    }
+
+    private String checkResourceAuth(Integer upId, String auth, String username){
+        // 检查指定上传者是否存在
+        JSONObject userInfo = userClient.getUserAccountByUid(upId);
+        Integer codeMark = userInfo.getInteger("code");
+        if (Objects.equals(codeMark, 5005)){
+            return "当前指定上传者不存在";
+        }
+        // 检查身份是否是管理员
+        if (!Objects.equals(auth, "admin")){
+            // 检查是否是上传者本人
+            String realUsername = userInfo.getJSONObject("data").getString("username");
+            if (!Objects.equals(username, realUsername)){
+                return "当前身份非资源上传者本人，无法进行编辑";
+            }
         }
         return "";
     }

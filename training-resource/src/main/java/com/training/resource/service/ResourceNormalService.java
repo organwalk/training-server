@@ -18,4 +18,8 @@ public interface ResourceNormalService {
     ResponseEntity<?> downloadResourceNormalFile(Integer rid);
     // 获取指定资源文件详情
     DataRespond getResourceNormalDetail(Integer rid);
+    // 编辑指定资源文件信息
+    MsgRespond editResourceNormalInfo(Integer rid, ResourceNormalReq req, String username, String auth);
+    // 删除指定资源文件
+    MsgRespond deleteResourceNormal(Integer rid, Integer uid, String username, String auth);
 }
