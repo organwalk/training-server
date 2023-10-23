@@ -57,12 +57,17 @@ public class AuthenticationFilter implements GatewayFilter {
         String realAccessToken = (String) authInfo.get("access_token");
 
         // 检查请求权限和接口权限标识是否一致
-        Map<String, String> authMap = filterUtil.authMap();
-        if (authMap.containsKey(reqAuthMark)
-                && !Objects.equals(authMap.get(reqAuthMark), headers.getAuthName())
-                && !Objects.equals("v1", reqAuthMark)) {
+        if (Objects.equals("v4", reqAuthMark) && Objects.equals("none", headers.getAuthName())){
             return filterUtil.resAuthFail(exchange, 4003, "当前权限无法访问此接口");
+        }else {
+            Map<String, String> authMap = filterUtil.authMap();
+            if (authMap.containsKey(reqAuthMark)
+                    && !Objects.equals(authMap.get(reqAuthMark), headers.getAuthName())
+                    && !Objects.equals("v1", reqAuthMark)) {
+                return filterUtil.resAuthFail(exchange, 4003, "当前权限无法访问此接口");
+            }
         }
+
 
         // 检查请求权限和实际权限是否一致
         if (!Objects.equals(headers.getAuthName(), realAuthName)){
