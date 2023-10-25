@@ -13,4 +13,5 @@ public class TrainingPlanTeacherTable {
     private int id;
     private int training_teacher_id;
     private int training_plan_id;
+
 }

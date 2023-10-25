@@ -13,4 +13,6 @@ public interface TrainPlanStudentMapper {
     //判断学生是否已经存在
     @Select("select id from t_training_plan_student where training_student_id=#{training_student_id}")
     Integer CheckStuInForm(int training_student_id);
+
+
 }

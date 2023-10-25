@@ -1,9 +1,12 @@
 package com.training.plan.mapper;
 
+import com.training.plan.entity.table.TrainingPlanTeacherTable;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+
+import java.util.List;
 
 @Mapper
 public interface TrainPlanTeacherMapper {
@@ -13,4 +16,14 @@ public interface TrainPlanTeacherMapper {
     //判断教师是否已经存在
     @Select("select Count(id) from t_training_plan_teacher where training_teacher_id=#{training_teacher_id}")
     Integer CheckTeaInForm(int training_teacher_id);
+    //获取指定计划的所有老师id
+    @Select("select training_teacher_id from t_training_plan_teacher where training_plan_id=#{training_plan_id} limit #{page_size} offset #{offset}")
+    List<Integer> getAllTeacherId(@Param("training_plan_id") int training_plan_id,@Param("page_size")int page_size,@Param("offset")int offset);
+
+    @Select("select COUNT(id) from t_training_plan_teacher where training_plan_id=#{training_plan_id}")
+    Integer getCountOfTea(int training_plan_id);
+
+    @Select("select id from t_training_plan_teacher where training_plan_id = #{training_plan_id}")
+    List<Integer> getAllTeaId(int training_plan_id);
+
 }

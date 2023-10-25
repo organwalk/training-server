@@ -17,18 +17,23 @@ public interface TrainingPlanMapper {
     //检查计划是否已经存在
     @Select("select id from t_training_plan where training_title=#{trainingTitle}")
     Integer selectTrainingTitleExist(String trainingTitle);
-
+    //获取计划列表
     @Select("select * from t_training_plan limit #{page_size} offset #{offset}")
     List<TrainingPlanTable> getAllPlan(@Param("page_size") int page_size,@Param("offset") int offset);
-
+    //获取列表总数
     @Select("select COUNT(id) from t_training_plan")
     Integer getPlanCount();
-
+    //获取指定部门计划列表
     @Select("select * from t_training_plan where dept_id = #{dept_id} limit #{page_size} offset #{offset}")
     List<TrainingPlanTable> getDeptAllPlan(@Param("dept_id")int dept_id,@Param("page_size")int page_size,@Param("offset")int offset);
-
+    //获取指定部门计划列表总数
     @Select("select COUNT(id) from t_training_plan where dept_id =#{deot_id}")
     Integer getDeptPlanCount(int dept_id);
+    //通过计划id获取计划详细信息
+    @Select("select * from t_training_plan where id = #{id}")
+    TrainingPlanTable getTrainById(int id);
+
+
 
 
 }

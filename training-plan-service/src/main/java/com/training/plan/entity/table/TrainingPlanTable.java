@@ -1,6 +1,8 @@
 package com.training.plan.entity.table;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.training.plan.entity.result.DeptInfo;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 /**
