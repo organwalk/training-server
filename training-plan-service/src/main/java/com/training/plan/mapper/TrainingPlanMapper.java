@@ -1,5 +1,6 @@
 package com.training.plan.mapper;
 
+import com.training.plan.entity.request.TestReq;
 import com.training.plan.entity.request.TrainingPlanReq;
 import com.training.plan.entity.table.TrainingPlanTable;
 import org.apache.ibatis.annotations.Insert;
@@ -31,4 +32,11 @@ public interface TrainingPlanMapper {
     Integer getDeptPlanCount(int dept_id);
 
 
+    //在视频教材插入测试题,使用param注解给传入的参数命名实现同时传入对象和其他参数
+    @Insert("insert into t_lesson_test (test_title, test_options_a, test_options_b, test_options_c, test_options_d, test_options_answer, test_time, resource_lesson_id, test_state) values (#{testReq.test_title},#{testReq.test_options_a},#{testReq.test_options_b},#{testReq.test_options_c},#{testReq.test_options_d},#{testReq.test_options_answer},#{testReq.test_time},#{lesson_id},#{test_state})")
+    Integer insertTest(@Param("testReq") TestReq testReq,@Param("lesson_id")int lesson_id,@Param("test_state")String test_state);
+
+    //通过视频id检查存在多少个测试题
+    @Select("select count(id) from t_lesson_test where resource_lesson_id=#{lesson_id}")
+    Integer getTestSub(int lesson_id);
 }

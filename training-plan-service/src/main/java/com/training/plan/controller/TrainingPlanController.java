@@ -2,6 +2,7 @@ package com.training.plan.controller;
 
 import com.training.common.entity.DataRespond;
 import com.training.common.entity.MsgRespond;
+import com.training.plan.entity.request.TestReq;
 import com.training.plan.entity.request.TrainingPlanReq;
 import com.training.plan.service.TrainPlanStudentService;
 import com.training.plan.service.TrainPlanTeacherService;
@@ -51,6 +52,10 @@ public class TrainingPlanController {
         return trainingPlanService.getAllPlan(page_size,offset);
     }
 
-
+    //添加指定视频教材测试题
+    @PostMapping("/v2/lesson/test/{resource_lesson_id}")
+    public MsgRespond addTest(@PathVariable("resource_lesson_id")int lesson_id  ,@Validated @RequestBody TestReq req){
+        return trainingPlanService.addTest(lesson_id,req);
+    }
 
 }
