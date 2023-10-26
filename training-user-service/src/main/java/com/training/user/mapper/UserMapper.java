@@ -56,6 +56,7 @@ public interface UserMapper {
             "<if test='authId != 4'>",
             "where auth_id = #{authId}",
             "</if>",
+            "ORDER BY id DESC",
             "limit #{pageSize} offset #{offset}",
             "</script>"
     })
@@ -81,8 +82,17 @@ public interface UserMapper {
     UserTable selectUserAccountByUid(Integer uid);
 
     // 根据用户ID编辑账号信息
-    @Transactional
-    @Update("update t_user set real_name = #{req.real_name}, password = #{req.password}, mobile = #{req.mobile}, auth_id = #{req.auth_id} where id = #{uid}")
+    @Update({"<script>",
+            "update t_user set",
+            "real_name = #{req.real_name}, ",
+            "<if test='req.password != null'>",
+            "password = #{req.password},",
+            "</if>",
+            "mobile = #{req.mobile}, ",
+            "auth_id = #{req.auth_id} ",
+            "where id = #{uid}",
+            "</script>"
+    })
     void updateUserAccountInfoByUid(@Param("uid") Integer uid, @Param("req") AllAccountInfoReq req);
 
     // 根据用户ID删除用户
