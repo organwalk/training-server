@@ -138,4 +138,24 @@ public interface UserMapper {
             "</script>")
     @ResultMap("userInfo")
     List<UserInfo> batchSelectUserByUidList(@Param("uidList") List<Integer> uidList);
+
+    //  根据信息对用户账号信息进行模糊搜索列表总数
+    @Select("SELECT count(*) FROM t_user " +
+            "WHERE username LIKE CONCAT('%', #{keyword}, '%') " +
+            "   OR password LIKE CONCAT('%', #{keyword}, '%') " +
+            "   OR real_name LIKE CONCAT('%', #{keyword}, '%') " +
+            "   OR mobile LIKE CONCAT('%', #{keyword}, '%') and auth_id = #{authId}")
+    Integer selectUserAccountSumByKeywordAuthId(@Param("keyword") String keyword,
+                                         @Param("authId") Integer authId);
+    // 根据信息对用户账号信息进行模糊搜索
+    @Select("SELECT * FROM t_user " +
+            "WHERE (username LIKE CONCAT('%', #{keyword}, '%') " +
+            "   OR password LIKE CONCAT('%', #{keyword}, '%') " +
+            "   OR real_name LIKE CONCAT('%', #{keyword}, '%') " +
+            "   OR mobile LIKE CONCAT('%', #{keyword}, '%') )and auth_id = #{authId} ORDER BY id DESC limit #{pageSize} offset #{offset}")
+    @ResultMap("UserTable")
+    List<UserTable> searchByKeyword(@Param("keyword") String keyword,
+                                    @Param("authId") Integer authId,
+                                    @Param("pageSize") Integer pageSize,
+                                    @Param("offset") Integer offset);
 }

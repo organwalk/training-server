@@ -17,13 +17,9 @@ public class AllAccountInfoReq {
 
     @NotBlank(message = "real_name不能为空")
     private String real_name;   // 真实姓名
-
-
     private String password;    // 密码
-
     @Pattern(regexp = "^1\\d{10}$", message = "mobile为11位数的手机号字符串")
     private String mobile;  // 手机号
-
     @Min(value = 1, message = "auth字段必须是1、2或3的整数类型")
     @Max(value = 3, message = "auth字段必须是1、2或3的整数类型")
     private Integer auth_id; // 权限ID

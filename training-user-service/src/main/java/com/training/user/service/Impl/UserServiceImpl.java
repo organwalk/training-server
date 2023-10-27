@@ -300,9 +300,29 @@ public class UserServiceImpl implements UserService {
      * 根据用户ID列表获取用户信息列表具体实现
      * @param uidList 用户ID列表
      * @return 返回指定用户信息列表
+     * by organwalk 2023-10-19
      */
     @Override
     public List<UserInfo> getUserInfoListByUidList(List<Integer> uidList) {
         return userMapper.batchSelectUserByUidList(uidList);
+    }
+
+    /**
+     * 根据信息进行模糊搜索具体实习
+     * @param keyword 信息
+     * @param type 类别
+     * @param pageSize 读取记录数
+     * @param offset 从第几条开始继续读取
+     * @return 列表或错误提示
+     * by organwalk 2023-10-26
+     */
+    @Override
+    public DataRespond getSearchByKeyword(String keyword, Integer type, Integer pageSize, Integer offset) {
+        Integer sumMark = userMapper.selectUserAccountSumByKeywordAuthId(keyword, type);
+        if (sumMark == 0){
+            return new DataFailRespond("未搜索到相关记录");
+        }
+        return new DataPagingSuccessRespond("已成功搜索到相关记录", sumMark,
+                userMapper.searchByKeyword(keyword, type, pageSize, offset));
     }
 }
