@@ -1,12 +1,10 @@
 package com.training.plan.mapper;
 
+import com.training.plan.entity.request.PlanUpdateReq;
 import com.training.plan.entity.request.TestReq;
 import com.training.plan.entity.request.TrainingPlanReq;
 import com.training.plan.entity.table.TrainingPlanTable;
-import org.apache.ibatis.annotations.Insert;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.*;
 
 import java.util.List;
 
@@ -14,7 +12,7 @@ import java.util.List;
 public interface TrainingPlanMapper {
     //插入一个计划数据
     @Insert("insert into t_training_plan(training_title,training_purpose,training_start_time,training_end_time,dept_id,training_state)values (#{req.training_title},#{req.training_purpose},#{req.training_start_time},#{req.training_end_time},#{req.dept_id},#{req.training_state})")
-    void insertTrainingPlan(@Param("req") TrainingPlanReq req);
+    Integer insertTrainingPlan(@Param("req") TrainingPlanReq req);
     //检查计划是否已经存在
     @Select("select id from t_training_plan where training_title=#{trainingTitle}")
     Integer selectTrainingTitleExist(String trainingTitle);
@@ -33,6 +31,17 @@ public interface TrainingPlanMapper {
     //通过计划id获取计划详细信息
     @Select("select * from t_training_plan where id = #{id}")
     TrainingPlanTable getTrainById(int id);
+    //通过id编辑指定计划
+    @Update("update t_training_plan set training_title=#{req.training_title},training_purpose=#{req.training_purpose},training_end_time=#{req.training_end_time} where id = #{id}")
+    Integer update(@Param("id")int id, @Param("req")PlanUpdateReq req);
+    //通过id编辑指定计划状态
+    @Update("update t_training_plan set training_state=#{training_state} where id = #{id}")
+    Integer changeState(@Param("training_state")String training_state,@Param("id")int id);
+    //根据id删除计划
+    @Delete("delete from t_training_plan where id = #{id}")
+    Integer DeletePlan(int id);
+
+
 
 
 

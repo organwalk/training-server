@@ -1,7 +1,9 @@
 package com.training.user.reposity;
 
 import org.springframework.stereotype.Repository;
-
+/**
+ * 计划服务的缓存接口实现
+ */
 @Repository
 public interface UserCache {
 

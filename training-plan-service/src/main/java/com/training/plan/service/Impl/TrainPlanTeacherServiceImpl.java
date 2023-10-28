@@ -1,5 +1,6 @@
 package com.training.plan.service.Impl;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.training.common.entity.DataFailRespond;
@@ -13,15 +14,16 @@ import com.training.plan.entity.result.User;
 import com.training.plan.entity.table.TrainingPlanTable;
 import com.training.plan.mapper.TrainPlanTeacherMapper;
 import com.training.plan.mapper.TrainingPlanMapper;
+import com.training.plan.reposoty.PlanCache;
 import com.training.plan.service.TrainPlanTeacherService;
 import lombok.AllArgsConstructor;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 /**
  * 计划教师管理业务具体实现
@@ -33,6 +35,7 @@ public class TrainPlanTeacherServiceImpl implements TrainPlanTeacherService {
     private final TrainPlanTeacherMapper trainPlanTeacherMapper;
     private final UserClient userClient;
     private final TrainingPlanMapper PlanMapper;
+    private final PlanCache planCache;
     /**
      * 创建计划的具体实现
      * @param training_teacher_id 教师id
@@ -62,22 +65,52 @@ public class TrainPlanTeacherServiceImpl implements TrainPlanTeacherService {
         }
         //获取教师数量
         Integer sumMark = trainPlanTeacherMapper.getCountOfTea(plan_id);
+        //判断redis是否拥有有则从redis获取
+        String key = String.valueOf(plan_id+page_size+offset);
+        if(planCache!=null){
+            String result = (String) planCache.getTeaList(key);
+            List<TeacherInfo> info = JSON.parseArray(result, TeacherInfo.class);
+            return  new DataPagingSuccessRespond("查询成功！",sumMark,info);
+        }
         //获取教师详情
         List<Integer> teacherIdList = trainPlanTeacherMapper.getAllTeacherId(plan_id,page_size,offset);
         JSONArray TeaList = userClient.getUserInfoByUidList(new UserInfoListReq(teacherIdList));
         List<User> userList = JSONArray.parseArray(TeaList.toJSONString(),User.class);
         List<Integer> IdList = trainPlanTeacherMapper.getAllTeaId(plan_id);
         List<TeacherInfo> list = new ArrayList<>();
-        for(User user:userList){
-            TeacherInfo teacherInfo = new TeacherInfo();
-            BeanUtils.copyProperties(teacherInfo,user);
+        for(int i =0;i<userList.size();i++){
+            TeacherInfo teacherInfo = new TeacherInfo(IdList.get(i),teacherIdList.get(i),userList.get(i));
             list.add(teacherInfo);
         }
-        for(int i = 0;i<=list.size();i++){
-            list.get(i).setId(IdList.get(i));
-        }
 
-        return new DataPagingSuccessRespond("查询到全部教师信息",sumMark,);
+        planCache.saveStu(key,list);
+        return new DataPagingSuccessRespond("查询到全部教师信息",sumMark,list);
+    }
+    /**
+     * 获取指定计划下教师列表具体实现
+     * @param t_id 教师数据ID
+     * @return 返回教师列表
+     */
+    @Override
+    public MsgRespond deleteTea(int t_id) {
+        Integer ExitMark = trainPlanTeacherMapper.ExitJudge(t_id);
+        if (Objects.equals(ExitMark,0)){
+            return MsgRespond.fail("改教师未在该计划内");
+        }
+        Integer i = trainPlanTeacherMapper.deleteByTId(t_id);
+        if (i<=0){
+            return MsgRespond.fail("删除失败!");
+        }
+        Map<Object, Object> teaList = planCache.getTeaAll();
+        for (Object key:teaList.keySet()){
+            String StrKey = key.toString();
+            String[] parts = StrKey.split("-");
+            String value = parts[0];
+            if (value.equals(String.valueOf(t_id))){
+                planCache.DeleteTea(key);
+            }
+        }
+        return MsgRespond.success("删除成功！");
     }
 
     /**

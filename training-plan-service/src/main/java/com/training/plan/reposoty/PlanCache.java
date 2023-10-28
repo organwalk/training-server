@@ -1,0 +1,26 @@
+package com.training.plan.reposoty;
+
+import com.alibaba.fastjson.JSONArray;
+import com.training.plan.entity.respond.TeacherInfo;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Map;
+
+@Repository
+public interface PlanCache {
+    void saveTea(String key, List<TeacherInfo> infoList);
+    void saveStu(String key, List<TeacherInfo> infoList);
+
+    Object getStuList(String key);
+
+    Object getTeaList(String key);
+
+    Map<Object,Object> getStuAll();
+
+    Map<Object,Object> getTeaAll();
+
+    void DeleteStu(Object key);
+
+    void DeleteTea(Object key);
+}
