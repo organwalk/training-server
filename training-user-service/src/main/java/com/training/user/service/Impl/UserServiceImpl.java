@@ -163,6 +163,9 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public MsgRespond editUserAccountInfoByUid(Integer uid, AllAccountInfoReq req) {
+        if (!req.getPassword().isBlank() && req.getPassword().length() < 6){
+            return MsgRespond.fail("password长度不可小于6位");
+        }
         // 获取编辑前的旧密码和权限
         UserTable oldAccountInfo = userMapper.selectUserAccountByUid(uid);
         if (Objects.isNull(oldAccountInfo)){
@@ -171,8 +174,12 @@ public class UserServiceImpl implements UserService {
         String oldPassword = oldAccountInfo.getPassword();
         Integer oldAuthId = oldAccountInfo.getAuthId();
         String newPassword = req.getPassword();
-        // 哈希加密密码，并进行修改操作
-        req.setPassword(encoder.encode(newPassword));
+        if (Objects.nonNull(newPassword) && !newPassword.isBlank()){
+            // 哈希加密密码，并进行修改操作
+            req.setPassword(encoder.encode(newPassword));
+        }else {
+            req.setPassword(null);
+        }
         // 检查用户是否加入了部门
         Integer deptMark = deptClient.getDeptIdByUid(uid);
         if (Objects.nonNull(deptMark)){
@@ -183,7 +190,7 @@ public class UserServiceImpl implements UserService {
         }
         userMapper.updateUserAccountInfoByUid(uid, req);
         // 检查密码或权限是否更改，判断是否需要销毁令牌
-        if (!encoder.matches(newPassword, oldPassword) || !Objects.equals(req.getAuth_id(), oldAuthId)){
+        if ((!encoder.matches(newPassword, oldPassword) && Objects.nonNull(newPassword)) || !Objects.equals(req.getAuth_id(), oldAuthId)){
             userCache.deleteAccessToken(oldAccountInfo.getUsername());
         }
         return MsgRespond.success("已成功更新此账号信息");
@@ -293,9 +300,29 @@ public class UserServiceImpl implements UserService {
      * 根据用户ID列表获取用户信息列表具体实现
      * @param uidList 用户ID列表
      * @return 返回指定用户信息列表
+     * by organwalk 2023-10-19
      */
     @Override
     public List<UserInfo> getUserInfoListByUidList(List<Integer> uidList) {
         return userMapper.batchSelectUserByUidList(uidList);
+    }
+
+    /**
+     * 根据信息进行模糊搜索具体实习
+     * @param keyword 信息
+     * @param type 类别
+     * @param pageSize 读取记录数
+     * @param offset 从第几条开始继续读取
+     * @return 列表或错误提示
+     * by organwalk 2023-10-26
+     */
+    @Override
+    public DataRespond getSearchByKeyword(String keyword, Integer type, Integer pageSize, Integer offset) {
+        Integer sumMark = userMapper.selectUserAccountSumByKeywordAuthId(keyword, type);
+        if (sumMark == 0){
+            return new DataFailRespond("未搜索到相关记录");
+        }
+        return new DataPagingSuccessRespond("已成功搜索到相关记录", sumMark,
+                userMapper.searchByKeyword(keyword, type, pageSize, offset));
     }
 }
