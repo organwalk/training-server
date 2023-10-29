@@ -131,9 +131,8 @@ public interface UserMapper {
 
     // 根据用户ID列表获取用户信息列表
     @Select("<script>" +
-            "SELECT id, real_name, mobile, auth_id, extra FROM t_user WHERE id IN " +
-            "<foreach item='id' collection='uidList' open='(' separator=',' close=')'>" +
-            "#{id}" +
+            "<foreach item='id' collection='uidList' separator='UNION ALL'>" +
+            "SELECT id, real_name, mobile, auth_id, extra FROM t_user WHERE id = #{id}" +
             "</foreach>" +
             "</script>")
     @ResultMap("userInfo")

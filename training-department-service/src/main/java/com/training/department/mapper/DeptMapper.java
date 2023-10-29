@@ -26,7 +26,7 @@ public interface DeptMapper {
     Integer selectDeptIdByHeadId(Integer headId);
 
     // 获取所有部门列表总数
-    @Select("select concat(id) from t_dept")
+    @Select("select count(id) from t_dept")
     Integer selectDeptListSum();
 
     // 获取所有部门列表
