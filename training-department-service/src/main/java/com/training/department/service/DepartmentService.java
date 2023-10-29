@@ -4,6 +4,9 @@ import com.training.common.entity.DataRespond;
 import com.training.common.entity.MsgRespond;
 import com.training.department.entity.request.DeptReq;
 import com.training.department.entity.request.MembersReq;
+import com.training.department.entity.table.DeptTable;
+
+import java.util.List;
 
 /**
  * 定义部门管理业务接口
@@ -40,4 +43,7 @@ public interface DepartmentService {
 
     // 获取指定部门信息
     DataRespond getDeptInfoByDeptId(Integer deptId);
+
+    // 根据部门ID列表获取部门信息列表
+    List<DeptTable> getDeptListByDeptList(List<Integer> deptIdList);
 }

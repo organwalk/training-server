@@ -1,7 +1,10 @@
 package com.training.resource.client;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.training.common.entity.req.DeptListReq;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
 
@@ -19,4 +22,8 @@ public interface DeptClient {
     // 获取指定部门信息
     @GetExchange("/v1/department/info/{dept_id}")
     JSONObject getDeptInfo(@PathVariable Integer dept_id);
+
+    // 根据部门ID列表获取部门信息列表
+    @GetExchange("/v1/info/list")
+    JSONArray getDeptInfoByDeptIdList(@RequestBody DeptListReq req);
 }

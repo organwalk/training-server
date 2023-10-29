@@ -242,6 +242,16 @@ public class DepartmentServiceImpl implements DepartmentService {
         return new DataSuccessRespond("已成功获取该部门信息", deptTable);
     }
 
+    /**
+     * 定义根据部门ID获取部门列表的具体实现
+     * @param deptIdList 部门ID列表
+     * @return 部门列表 或 空列表
+     */
+    @Override
+    public List<DeptTable> getDeptListByDeptList(List<Integer> deptIdList) {
+        return deptMapper.batchSelectDeptByDeptList(deptIdList);
+    }
+
 
     /**
      * 定义创建或编辑的部门信息进行通用检查方法

@@ -24,4 +24,8 @@ public interface ResourceNormalService {
     MsgRespond deleteResourceNormal(Integer rid, Integer uid, String username, String auth);
     // 获取指定用户上传的资源文件列表
     DataRespond getResourceNormalListByUpId(Integer upId, Integer pageSize, Integer offset);
+    // 获取所有上传资源列表
+    DataRespond getAllResourceNormalList(Integer pageSize, Integer offset);
+    // 模糊查询资源名
+    DataRespond getNormalResourceByKeyword(Integer deptId, Integer tagId, String keyword, Integer pageSize, Integer offset);
 }

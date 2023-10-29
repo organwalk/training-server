@@ -2,14 +2,18 @@ package com.training.department.controller;
 
 import com.training.common.entity.DataRespond;
 import com.training.common.entity.MsgRespond;
+import com.training.common.entity.req.DeptListReq;
 import com.training.department.entity.request.DeptReq;
 import com.training.department.entity.request.MembersReq;
+import com.training.department.entity.table.DeptTable;
 import com.training.department.service.DepartmentService;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Min;
 import lombok.AllArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * 定义部门管理服务接口
@@ -110,5 +114,11 @@ public class DeptServiceController {
                                    @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "dept_id必须为纯数字字段")
                                    Integer dept_id) {
         return deptService.getDeptInfoByDeptId(dept_id);
+    }
+
+    // 根据部门ID列表获取部门列表
+    @GetMapping("/v1/info/list")
+    public List<DeptTable> getDeptList(@RequestBody DeptListReq req){
+        return deptService.getDeptListByDeptList(req.getDeptIdList());
     }
 }

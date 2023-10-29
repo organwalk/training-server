@@ -6,6 +6,7 @@ import com.training.resource.client.DeptClient;
 import com.training.resource.client.UserClient;
 import com.training.resource.config.AppConfig;
 import com.training.resource.entity.request.ResourceNormalReq;
+import com.training.resource.entity.respond.ResourceNormalAllListRespond;
 import com.training.resource.entity.respond.ResourceNormalDetailRespond;
 import com.training.resource.entity.respond.ResourceNormalRespond;
 import com.training.resource.entity.table.ResourceNormalTable;
@@ -237,6 +238,48 @@ public class ResourceNormalImpl implements ResourceNormalService {
 
         return new DataPagingSuccessRespond("已成功获取该用户的上传资源列表", sumMark,
                 dataUtil.switchUidListToUserInfoList(resourceList));
+    }
+
+    /**
+     * 获取上传资源所有列表具体实现
+     * @param pageSize 读取记录数
+     * @param offset 从第几条读起
+     * @return List或者失败消息
+     *
+     * by organwalk 2023-10-29
+     */
+    @Override
+    public DataRespond getAllResourceNormalList(Integer pageSize, Integer offset) {
+        // 获取列表总数
+        Integer sumMark = resourceNormalMapper.selectResourceListSum();
+        if (sumMark == 0){
+            return new DataFailRespond("上传资源文件列表为空");
+        }
+        List<ResourceNormalAllListRespond> result = resourceNormalMapper.selectResourceList(pageSize, offset);
+        return new DataPagingSuccessRespond("已成功获取上传资源文件列表", sumMark,
+                dataUtil.switchUidAndDeptListToUserAndDeptInfoList(result));
+    }
+
+    /**
+     * 获取模糊查询普通资源的结果
+     * @param deptId 部门ID（非必须）
+     * @param tagId 分类标签ID （非必须）
+     * @param keyword 关键词搜索
+     * @param pageSize 读取记录数
+     * @param offset 第几条读起
+     * @return List 或 失败消息
+     *
+     * by organwalk 2023-10-29
+     */
+    @Override
+    public DataRespond getNormalResourceByKeyword(Integer deptId, Integer tagId, String keyword, Integer pageSize, Integer offset) {
+        Integer sumMark = resourceNormalMapper.selectResourceListByKeywordSum(deptId, tagId, keyword, pageSize, offset);
+        if (sumMark == 0){
+            return new DataFailRespond("该关键词查询结果为空");
+        }
+        List<ResourceNormalAllListRespond> result = resourceNormalMapper.selectResourceListByKeyword(deptId, tagId, keyword, pageSize, offset);
+        return new DataPagingSuccessRespond("已成功查询到相关结果", sumMark, dataUtil.switchUidAndDeptListToUserAndDeptInfoList(result));
+
     }
 
     /**

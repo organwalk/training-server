@@ -53,4 +53,12 @@ public interface DeptMapper {
     // 根据部门ID获取指定部门信息
     @Select("select * from t_dept where id = #{deptId}")
     DeptTable selectDeptInfoByDeptId(Integer deptId);
+
+    // 根据部门ID列表获取部门信息列表
+    @Select("<script>" +
+            "<foreach item='id' collection='deptIdList' separator='UNION ALL'>" +
+            "SELECT id, dept_name, head_id, extra FROM t_dept WHERE id = #{id}" +
+            "</foreach>" +
+            "</script>")
+    List<DeptTable> batchSelectDeptByDeptList(@Param("deptIdList") List<Integer> deptIdList);
 }
