@@ -14,8 +14,14 @@ public class User {
     private Auth auth;
 
     @Data
-    private static class Auth{
+
+    public static class Auth{
         private int id;
         private String auth_name;
+
+        public Auth(int authId, String authName) {
+            this.id = authId;
+            this.auth_name = authName;
+        }
     }
 }

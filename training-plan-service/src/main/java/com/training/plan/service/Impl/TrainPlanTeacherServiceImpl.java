@@ -44,7 +44,8 @@ public class TrainPlanTeacherServiceImpl implements TrainPlanTeacherService {
      */
     @Override
     public MsgRespond insertTrainPlanTeacher(int train_plan_id,int training_teacher_id) {
-        String CheckResult = judgeTeaExit(training_teacher_id);
+        //判断教师是否已经在该计划内
+        String CheckResult = judgeTeaExit(training_teacher_id,train_plan_id);
         if (!CheckResult.isBlank()){
             return MsgRespond.fail(CheckResult);
         }
@@ -67,7 +68,7 @@ public class TrainPlanTeacherServiceImpl implements TrainPlanTeacherService {
         Integer sumMark = trainPlanTeacherMapper.getCountOfTea(plan_id);
         //判断redis是否拥有有则从redis获取
         String key = String.valueOf(plan_id+page_size+offset);
-        if(planCache!=null){
+        if(planCache.getTeaList(key)!=null){
             String result = (String) planCache.getTeaList(key);
             List<TeacherInfo> info = JSON.parseArray(result, TeacherInfo.class);
             return  new DataPagingSuccessRespond("查询成功！",sumMark,info);
@@ -83,7 +84,7 @@ public class TrainPlanTeacherServiceImpl implements TrainPlanTeacherService {
             list.add(teacherInfo);
         }
 
-        planCache.saveStu(key,list);
+        planCache.saveTea(key,list);
         return new DataPagingSuccessRespond("查询到全部教师信息",sumMark,list);
     }
     /**
@@ -93,14 +94,17 @@ public class TrainPlanTeacherServiceImpl implements TrainPlanTeacherService {
      */
     @Override
     public MsgRespond deleteTea(int t_id) {
+        //判断该教师是否在计划内
         Integer ExitMark = trainPlanTeacherMapper.ExitJudge(t_id);
         if (Objects.equals(ExitMark,0)){
             return MsgRespond.fail("改教师未在该计划内");
         }
+        //删除教师
         Integer i = trainPlanTeacherMapper.deleteByTId(t_id);
         if (i<=0){
             return MsgRespond.fail("删除失败!");
         }
+        //删除缓存
         Map<Object, Object> teaList = planCache.getTeaAll();
         for (Object key:teaList.keySet()){
             String StrKey = key.toString();
@@ -118,8 +122,8 @@ public class TrainPlanTeacherServiceImpl implements TrainPlanTeacherService {
      * @param training_teacher_id 教师id
      * @return 根据处理结果返回对应消息
      */
-    private String  judgeTeaExit(int training_teacher_id){
-        Integer IdMark = trainPlanTeacherMapper.CheckTeaInForm(training_teacher_id);
+    private String  judgeTeaExit(int training_teacher_id,int id){
+        Integer IdMark = trainPlanTeacherMapper.CheckTeaInForm(training_teacher_id,id);
         if(IdMark != 0){
             return "该教师已经存在！";
         }

@@ -31,7 +31,7 @@ public class TrainPlanStudentServiceImpl implements TrainPlanStudentService {
     private final UserClient userClient;
     private final PlanCache planCache;
     /**
-     * 创建计划的具体实现
+     * 添加学生进入计划的具体实现
      * @param student_id 学生id
      * @param plan_id 计划id
      * @return 根据处理结果返回对应消息
@@ -39,10 +39,12 @@ public class TrainPlanStudentServiceImpl implements TrainPlanStudentService {
 
     @Override
     public MsgRespond insertTrainPlanStudent(int student_id,int plan_id) {
+        //判断计划名是否存在
         String CheckResult = judgeExit(student_id);
         if (!CheckResult.isBlank()){
             return MsgRespond.fail(CheckResult);
         }
+        //添加学生
         trainPlanStudentMapper.insertTrainPlanStudent(student_id,plan_id);
         return MsgRespond.success("添加成功！");
     }
@@ -59,23 +61,26 @@ public class TrainPlanStudentServiceImpl implements TrainPlanStudentService {
             return new DataFailRespond(CheckMark);
         }
         Integer sumMark = trainPlanStudentMapper.getPlanStuCount(plan_id);
-        //判断redis是否拥有，有则从redis获取
+        //判断缓存中是否拥有，有则从redis获取
         String key = plan_id+"-"+page_size+"-"+offset;
         if (planCache.getStuList(key)!=null){
             String result = (String) planCache.getStuList(key);
             List<TeacherInfo> info = JSON.parseArray(result, TeacherInfo.class);
             return  new DataPagingSuccessRespond("查询成功！",sumMark,info);
         }
+        //获取计划中所有学生id
         List<Integer> AllStuId = trainPlanStudentMapper.getAllStuId(plan_id);
+        //调用远程接口获取学生详细信息
         JSONArray StuList = userClient.getUserInfoByUidList(new UserInfoListReq(AllStuId));
         List<User> userList = JSONArray.parseArray(StuList.toJSONString(),User.class);
+        //获取所有id
         List<Integer> IdList = trainPlanStudentMapper.getAllIdByPlanID(plan_id);
         List<TeacherInfo> AllStuList = new ArrayList<>();
         for(int i= 0;i<userList.size();i++){
             TeacherInfo teacherInfo = new TeacherInfo(IdList.get(i),AllStuId.get(i),userList.get(i));
             AllStuList.add(teacherInfo);
         }
-        //将数据存储进redis
+        //将数据缓存
         planCache.saveStu(key,AllStuList);
         return new DataPagingSuccessRespond("查询成功！",sumMark,AllStuList);
     }
@@ -86,14 +91,17 @@ public class TrainPlanStudentServiceImpl implements TrainPlanStudentService {
      */
     @Override
     public MsgRespond deleteStu(int id) {
+        //判断学生是否在该计划
         Integer ExitMark = trainPlanStudentMapper.ExitJudge(id);
         if(Objects.equals(ExitMark,0)){
             return MsgRespond.fail("该学生未在该计划内！");
         }
+        //删除学生
         Integer i = trainPlanStudentMapper.DeleteStu(id);
         if (i<=0){
             return MsgRespond.fail("删除失败！");
         }
+        //删除缓存
         Map<Object, Object> stuList = planCache.getStuAll();
         for(Object key:stuList.keySet()){
             String StrKey = key.toString();
@@ -137,6 +145,8 @@ public class TrainPlanStudentServiceImpl implements TrainPlanStudentService {
         }
         return "";
     }
+
+
 
 
 

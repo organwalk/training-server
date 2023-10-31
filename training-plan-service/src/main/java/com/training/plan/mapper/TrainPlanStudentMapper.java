@@ -1,6 +1,6 @@
 package com.training.plan.mapper;
 
-import com.training.plan.entity.table.TrainingPlanStudentTable;
+
 import org.apache.ibatis.annotations.*;
 
 import java.util.List;
@@ -31,6 +31,11 @@ public interface TrainPlanStudentMapper {
 
     @Select("select COUNT(training_student_id) from t_training_plan_student where id =#{id}")
     Integer ExitJudge(int id);
+
+    @Delete("delete from t_training_plan_student where training_plan_id=#{training_plan_id}")
+    void DeleteStuByPlanId(int training_plan_id);
+
+    
 
 
 }

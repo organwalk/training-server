@@ -1,6 +1,6 @@
 package com.training.plan.mapper;
 
-import com.training.plan.entity.table.TrainingPlanTeacherTable;
+
 import org.apache.ibatis.annotations.*;
 
 import java.util.List;
@@ -11,8 +11,8 @@ public interface TrainPlanTeacherMapper {
     @Insert("insert into t_training_plan_teacher(training_plan_id,training_teacher_id) VALUES (#{training_plan_id},#{training_teacher_id})")
     void insertTrainPlanTeacher(@Param("training_plan_id")int training_plan_id,@Param("training_teacher_id") int training_teacher_id);
     //判断教师是否已经存在
-    @Select("select Count(id) from t_training_plan_teacher where training_teacher_id=#{training_teacher_id}")
-    Integer CheckTeaInForm(int training_teacher_id);
+    @Select("select Count(id) from t_training_plan_teacher where training_teacher_id=#{training_teacher_id} and training_plan_id=#{training_plan_id}")
+    Integer CheckTeaInForm(@Param("training_teacher_id") int training_teacher_id,@Param("training_plan_id")int training_plan_id);
     //获取指定计划的所有老师id
     @Select("select training_teacher_id from t_training_plan_teacher where training_plan_id=#{training_plan_id} limit #{page_size} offset #{offset}")
     List<Integer> getAllTeacherId(@Param("training_plan_id") int training_plan_id,@Param("page_size")int page_size,@Param("offset")int offset);
@@ -28,5 +28,8 @@ public interface TrainPlanTeacherMapper {
     //判断指定教师是否在该计划内
     @Select("select COUNT(training_teacher_id) from t_training_plan_teacher where id=#{id}")
     Integer ExitJudge(int id);
+
+    @Delete("delete from t_training_plan_teacher where training_plan_id=#{training_plan_id}")
+    void deleteTeaByPlanId(int id);
 
 }

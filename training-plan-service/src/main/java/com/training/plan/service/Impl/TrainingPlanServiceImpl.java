@@ -9,6 +9,8 @@ import com.training.plan.entity.request.TrainingPlanReq;
 import com.training.plan.entity.result.DeptInfo;
 import com.training.plan.entity.result.TrainPlanInfo;
 import com.training.plan.entity.table.TrainingPlanTable;
+import com.training.plan.mapper.TrainPlanStudentMapper;
+import com.training.plan.mapper.TrainPlanTeacherMapper;
 import com.training.plan.reposoty.PlanCache;
 import com.training.plan.service.TrainingPlanService;
 import com.training.plan.mapper.TrainingPlanMapper;
@@ -34,6 +36,8 @@ public class TrainingPlanServiceImpl implements TrainingPlanService {
     private final TrainingPlanMapper trainingPlanMapper;
     private final DeptClient deptClient;
     private final PlanCache planCache;
+    private final TrainPlanStudentMapper studentMapper;
+    private final TrainPlanTeacherMapper teacherMapper;
 
 
     /**
@@ -44,6 +48,7 @@ public class TrainingPlanServiceImpl implements TrainingPlanService {
      */
     @Override
     public MsgRespond creatTrainingPlan(TrainingPlanReq req) throws ParseException {
+        //判断计划名是否已经存在
         String checkResult = checkPlanNameExit(req.getTraining_title());
         if (!checkResult.isBlank()) {
             return MsgRespond.fail(checkResult);
@@ -52,7 +57,7 @@ public class TrainingPlanServiceImpl implements TrainingPlanService {
         SimpleDateFormat si = new SimpleDateFormat("yyyy-MM-dd");
         if (si.parse(req.getTraining_start_time()).getTime() < si.parse(req.getTraining_end_time()).getTime() ||
                 si.parse(req.getTraining_start_time()).getTime() >= System.currentTimeMillis()) {
-            return MsgRespond.fail("结束时间必须在起始时间之后");
+            return MsgRespond.fail("结束时间必须在起始时间之后！");
         }
         req.setTraining_state("ongoing");
         Integer Mark =trainingPlanMapper.insertTrainingPlan(req);
@@ -67,6 +72,7 @@ public class TrainingPlanServiceImpl implements TrainingPlanService {
     @Override
     public DataRespond getAllPlan(int page_size, int offset) {
         Integer count = trainingPlanMapper.getPlanCount();
+        //判断计划列表是否为空
         if (count == 0) {
             return new DataFailRespond("计划列表为空！");
         }
@@ -80,11 +86,14 @@ public class TrainingPlanServiceImpl implements TrainingPlanService {
      */
     @Override
     public DataRespond getDeptAllPlan(int dept_id, int page_size, int offset) {
+        //判断指定部门是否存在
         Integer count = trainingPlanMapper.getDeptPlanCount(dept_id);
         if (count == 0) {
             return new DataFailRespond("该部门未创建计划！");
         }
+        //获取指定部门信息
         DeptInfo deptInfo = getDeptInfo(dept_id);
+        //获取指定部门计划列表
         List<TrainingPlanTable> tables = trainingPlanMapper.getDeptAllPlan(dept_id,page_size,offset);
         List<TrainPlanInfo> list = new ArrayList<>();
         for(TrainingPlanTable table:tables){
@@ -93,7 +102,12 @@ public class TrainingPlanServiceImpl implements TrainingPlanService {
         }
         return new DataPagingSuccessRespond("已获取到指定部门的列表！", count,list);
     }
-
+    /**
+     * 通过id获取指定计划具体实现
+     * @param lesson_id 课程id
+     * @param req 请求试题
+     * @return 根据处理结果返回对应消息
+     */
     @Override
     public MsgRespond addTest(int lesson_id, TestReq req) {
         String test_state;
@@ -124,10 +138,12 @@ public class TrainingPlanServiceImpl implements TrainingPlanService {
      */
     @Override
     public DataRespond getTrainPlanById(int plan_id) {
+        //判断计划是否存在
         TrainingPlanTable trainingPlanTable = trainingPlanMapper.getTrainById(plan_id);
         if (trainingPlanTable == null){
             return new DataFailRespond("该计划未存在！");
         }
+        //获取计划对应的部门信息
         DeptInfo deptInfo = getDeptInfo(trainingPlanTable.getDept_id());
         TrainPlanInfo trainPlanInfo = new TrainPlanInfo(trainingPlanTable,deptInfo);
         return new DataSuccessRespond("查询成功！",trainPlanInfo);
@@ -163,16 +179,18 @@ public class TrainingPlanServiceImpl implements TrainingPlanService {
      */
     @Override
     public MsgRespond changeState(String state, int id) {
+        //判断计划是否存在
         String CheckMark = checkPlanExit(id);
         if (CheckMark.isBlank()){
             return MsgRespond.fail(CheckMark);
         }
+        //判断计划状态是否与要修改的状态一致
         TrainingPlanTable planTable = trainingPlanMapper.getTrainById(id);
         if (Objects.equals(planTable.getTraining_state(), state)){
             return MsgRespond.fail("当前状态已是"+state);
         }
         Integer i = trainingPlanMapper.changeState(state,id);
-        return i>0?MsgRespond.success("修改成功！"):MsgRespond.fail("修改失败");
+        return i>0?MsgRespond.success("修改成功！"):MsgRespond.fail("修改失败!");
     }
     /**
      * 根据id删除指定计划的具体实现
@@ -181,14 +199,20 @@ public class TrainingPlanServiceImpl implements TrainingPlanService {
      */
     @Override
     public MsgRespond deletePlan(int id) {
+        //判断计划是否存在
         TrainingPlanTable trainingPlanTable = trainingPlanMapper.getTrainById(id);
         if (trainingPlanTable == null){
             return MsgRespond.fail("未找到该计划！");
         }
+        //删除计划
         int i = trainingPlanMapper.DeletePlan(id);
         if(i<=0){
             return MsgRespond.fail("删除失败！");
         }
+        //删除计划对应的教师表和学生表
+        studentMapper.DeleteStuByPlanId(id);
+        teacherMapper.deleteTeaByPlanId(id);
+        //删除缓存
         Map<Object, Object> teaList = planCache.getTeaAll();
         Map<Object, Object> stuList = planCache.getStuAll();
         for(Object key:stuList.keySet()){
