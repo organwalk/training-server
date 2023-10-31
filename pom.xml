@@ -21,6 +21,8 @@
         <module>training-department-service</module>
         <module>training-resource</module>
         <module>training-plan-service</module>
+        <module>training-progress-service</module>
+        <module>training-learn-service</module>
     </modules>
     <repositories>
         <!-- 下载mybatis-plus SNAPSHOT 版本所需仓库 -->
