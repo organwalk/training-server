@@ -1,8 +1,8 @@
+3.数据库表设计
+
 # 数据库表设计
 
 # 1. 概述
-
-此文档基于《0.需求说明书》和《1.总体架构设计》要求，定义企业内部培训系统MySQL及Redis数据库表设计，供开发人员参考。
 
 # 2. MySQL表设计
 
@@ -26,7 +26,7 @@
 | password  | varchar | （必须）密码                     |
 | real_name | varchar | （必须）真实姓名                 |
 | mobile    | varchar | （必须）手机号码                 |
-| auth      | varchar | （必须）权限                     |
+| auth_id   | int     | （外键关联t_auth表id字段）权限ID |
 | extra     | varchar | （非必须）保留字段，便于后期拓展 |
 
 ## 2.3 t_dept表
@@ -164,6 +164,41 @@
 | training_student_id | int  | （外键关联t_user表id字段）学员ID              |
 | training_plan_id    | int  | （外键关联t_training_plan表id字段）培训计划ID |
 
+## 2.14 t_progress_chapter表
+
+**描述：**该表定义了课程下学员的章节学习进度
+
+| 字段            | 类型           | 解释                                             |
+| --------------- | -------------- | ------------------------------------------------ |
+| id              | int            | （自增）主键                                     |
+| lesson_id       | int            | （外键关联t_lesson表id字段）课程ID               |
+| student_id      | int            | （外键关联t_user表id字段）学员ID                 |
+| over_chapter_id | int            | （外键关联t_lesson_chapter表id字段）已完成章节ID |
+| completion_date | varchar（255） | 完成日期，yyyy-mm-dd hh:mm:ss                    |
+
+## 2.15 t_progress_lesson表
+
+**描述：**该表定义了课程总体总体完成进度
+
+| 字段               | 类型 | 解释                               |
+| ------------------ | ---- | ---------------------------------- |
+| id                 | int  | （自增）主键                       |
+| lesson_id          | int  | （外键关联t_lesson表id字段）课程ID |
+| student_id         | int  | （外键关联t_user表id字段）学员ID   |
+| over_chapter_sum   | int  | （必须）课程完成章节总数           |
+| lesson_chapter_sum | int  | （必须）课程章节总数               |
+
+## 2.16 t_progress_plan表
+
+**描述：**该表定义了计算培训计划进度所需要的要素
+
+| 字段       | 类型 | 解释                                          |
+| ---------- | ---- | --------------------------------------------- |
+| id         | int  | （自增）主键                                  |
+| plan_id    | int  | （外键关联t_training_plan表id字段）培训计划ID |
+| teacher_id | int  | （外键关联t_user表id字段）教师ID              |
+| lesson_id  | int  | （外键关联t_lesson表id字段）课程ID            |
+
 # 3.Redis表设计
 
 ## 3.1 Training-User-Service-Token哈希表设计
@@ -197,4 +232,3 @@
 | 键                               | 值         |
 | -------------------------------- | ---------- |
 | [计划ID]-[读取记录]-[第几条读起] | [员工列表] |
-
