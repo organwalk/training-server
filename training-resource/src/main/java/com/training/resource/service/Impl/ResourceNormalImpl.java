@@ -28,6 +28,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
 
@@ -108,13 +110,16 @@ public class ResourceNormalImpl implements ResourceNormalService {
     @Override
     public ResponseEntity<?> downloadResourceNormalFile(Integer rid) {
         String downloadUrl = resourceNormalMapper.selectPathByRid(rid);
-        if (Objects.isNull(downloadUrl)){
+        if (Objects.isNull(downloadUrl) || !new File(downloadUrl).exists()){
             return ResponseEntity.status(HttpStatus.OK).body(MsgRespond.fail("未找到资源，请修改后重试"));
         }
+        String fileName = URLEncoder.encode(resourceNormalMapper.selectFileNameByRid(rid), StandardCharsets.UTF_8);
+        String fileExtension = downloadUrl.substring(downloadUrl.lastIndexOf("."));
         Resource file = new FileSystemResource(downloadUrl);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(appConfig.tika().detect(new File(downloadUrl))))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getFilename() + "\"")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + fileExtension + "\"")
+                .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.CONTENT_DISPOSITION) // 暴露Content-Disposition字段
                 .body(file);
     }
 

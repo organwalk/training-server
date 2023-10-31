@@ -56,6 +56,9 @@ public interface ResourceNormalMapper {
     // 根据ID获取文件下载路径
     @Select("select resource_path from t_resource_normal where id = #{rid}")
     String selectPathByRid(Integer rid);
+    // 根据rid获取文件名
+    @Select("select resource_name from t_resource_normal where id = #{rid}")
+    String selectFileNameByRid(Integer rid);
 
     // 根据资源ID获取资源详情
     @Select("select resource_name, dept_id, tag_id, up_id, up_datetime from t_resource_normal where id = #{rid}")
