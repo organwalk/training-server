@@ -2,6 +2,7 @@ package com.training.progress.servier.Impl;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.training.common.entity.DataRespond;
 import com.training.common.entity.MsgRespond;
 import com.training.progress.client.PlanClient;
 import com.training.progress.client.UserClient;
@@ -61,6 +62,18 @@ public class ProgressServiceImpl implements ProgressService {
         }
         return MsgRespond.success("已成功标记该章节为完成");
     }
+
+    /**
+     * 获取培训计划进度列表
+     * @param page_size
+     * @param offset
+     * @return
+     */
+    @Override
+    public DataRespond getAllPlanProgressList(int page_size, int offset) {
+        return null;
+    }
+
     /**
      *  根据id判断学生是否存在
      * @param id 学生id
