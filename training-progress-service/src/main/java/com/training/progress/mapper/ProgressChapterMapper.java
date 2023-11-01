@@ -2,10 +2,14 @@ package com.training.progress.mapper;
 
 
 import com.training.progress.entity.request.ProgressChapterLessonReq;
+import com.training.progress.entity.table.ProgressChapter;
 import org.apache.ibatis.annotations.*;
+
+import java.util.List;
 
 @Mapper
 public interface ProgressChapterMapper {
+    //插入数据
     @Insert("insert into t_progress_chapter(lesson_id, student_id, over_chapter_id, completion_date) VALUES (#{req.lesson_id},#{req.student_id},#{req.over_chapter_id},#{req.completion_date})")
     Integer insertChapterCompletion(@Param("req") ProgressChapterLessonReq req);
 
@@ -17,4 +21,13 @@ public interface ProgressChapterMapper {
 
     @Select("select COUNT(id) from t_progress_chapter where over_chapter_id=#{over_chapter_id} and lesson_id=#{lesson_id} and student_id=#{student_id}")
     Integer judgeExitInTable(@Param("over_chapter_id")int over_chapter_id,@Param("lesson_id")int lesson_id,@Param("student_id")int student_id);
+
+    @Select("select * from t_progress_chapter where lesson_id=#{lesson_id} limit #{page_size} offset #{offset}")
+    List<ProgressChapter> getStuProChatByLessId(@Param("lesson_id")int lesson_id, @Param("page_size")int page_size, @Param("offset")int offset);
+
+    @Select("select * from t_progress_chapter where student_id=#{student_id} ORDER BY id DESC ")
+    ProgressChapter getProChapByStuId(int student_id);
+
+   @Select("select student_id from t_progress_chapter where lesson_id=#{lesson_id}")
+    List<Integer> getAllStuIdByLessonId(@Param("lesson_id")int lesson_id);
 }

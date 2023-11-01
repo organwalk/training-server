@@ -37,6 +37,8 @@ public interface ChapterMapper {
     @Select("select * from t_lesson_chapter where id=#{id}")
     ChapterTable getChapterByID(int id);
 
+    @Select("select * from t_lesson_chapter where lesson_id=#{lesson_id} and id=#{id}")
+    ChapterTable ForHttp(@Param("lesson_id")int lesson_id,@Param("id")int id);
 
 
 }

@@ -2,7 +2,6 @@ package com.training.progress.servier.Impl;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.training.common.entity.DataRespond;
 import com.training.common.entity.MsgRespond;
 import com.training.progress.client.PlanClient;
 import com.training.progress.client.UserClient;
@@ -16,6 +15,8 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -57,11 +58,51 @@ public class ProgressServiceImpl implements ProgressService {
         String nowTime = ToolConfig.getTime();
         ProgressChapterLessonReq progressChapterLessonReq = new ProgressChapterLessonReq(lesson_id,student_id,chapter_id,nowTime);
         Integer i = chapterMapper.insertChapterCompletion(progressChapterLessonReq);
+        Integer j =0;
         if (i>0){
-            lessonMapper.updateChapterSum(lesson_id,student_id);
+            j=lessonMapper.updateChapterSum(lesson_id,student_id);
         }
-        return MsgRespond.success("已成功标记该章节为完成");
+        return j>0?MsgRespond.success("已成功标记该章节为完成"):MsgRespond.fail("标记失败！");
     }
+
+    @Override
+    public MsgRespond insertStuLessonProgress(int lesson_id, int student_id, int over_chapter_sum, int lesson_chapter_sum) {
+        //判断学生，课程是否存在
+        String StuExitMark = judgeStuExit(student_id);
+        if (!StuExitMark.isBlank()){
+            return MsgRespond.fail(StuExitMark);
+        }
+        String LessonExit = judgeLessonExit(lesson_id);
+        if (!LessonExit.isBlank()){
+            return MsgRespond.fail(LessonExit);
+        }
+        Integer ExitMark = lessonMapper.judgeExitInTable(lesson_id,student_id);
+        if (!Objects.equals(ExitMark,0)){
+            return MsgRespond.fail("该学生已经在表中");
+        }
+        Integer i = lessonMapper.insertPorLesson(lesson_id,student_id,over_chapter_sum,lesson_chapter_sum);
+        return i>0?MsgRespond.success("已成功设置学员课程总体进度"):MsgRespond.fail("设置学员课程总体进度失败！");
+    }
+
+    @Override
+    public DataRespond getStuAllByLessonId(int lesson_id, int page_size, int offset) {
+        String LessonMark = judgeLessonExit(lesson_id);
+        if (!LessonMark.isBlank()){
+            return new DataFailRespond("该课程不存在！");
+        }
+        List<Integer> Stulist = chapterMapper.getAllStuIdByLessonId(lesson_id);
+        List<StuChapterAll> alls = new ArrayList<>();
+        for (Integer i :Stulist){
+            ProgressChapter progressChapter = chapterMapper.getProChapByStuId(i);
+            Chapter chapter = getChapter(lesson_id,progressChapter.getOver_chapter_id());
+            StuChapterAll stuChapterAll = new StuChapterAll(lesson_id,progressChapter.getStudent_id(),progressChapter.getOver_chapter_id(),chapter,progressChapter.getCompletion_date());
+            alls.add(stuChapterAll);
+        }
+        Integer endIndx = Math.min(offset+page_size,alls.size());
+        List<StuChapterAll> result =alls.subList(offset,endIndx);
+        return new DataPagingSuccessRespond("已成功获取学员进度列表",alls.size(),result);
+    }
+
 
     /**
      * 获取培训计划进度列表
@@ -98,9 +139,14 @@ public class ProgressServiceImpl implements ProgressService {
         }
         return "";
     }
-
+    /**
+     *  根据id判断章节是否存在
+     * @param id 章节id
+     * @param chapter_id 章节id
+     * @return 根据处理结果返回对应消息
+     */
     private String judgeChapterExit(int id,int chapter_id){
-        JSONArray req = planClient.getAllChapterByLessonId(id);
+        JSONObject req = planClient.getAllChapterByLessonId(id);
         List<Chapter> chapters = JSONArray.parseArray(req.toJSONString(),Chapter.class);
         boolean found = false;
         for (Chapter chapter:chapters){
@@ -110,5 +156,29 @@ public class ProgressServiceImpl implements ProgressService {
             }
         }
         return found?"":"该章节不存在";
+    }
+    /**
+     *  根据id获取所有章节是否存在
+     * @param id 章节id
+     * @return 根据处理结果返回对应消息
+     */
+    private List<Chapter> getChapterList(int id){
+        JSONObject list = planClient.getAllChapterByLessonId(id);
+        JSONArray req = JSON.parseObject(String.valueOf(list)).getJSONArray("data");
+        return JSONArray.parseArray(req.toJSONString(), Chapter.class);
+    }
+
+    private Chapter getChapter(int id,int chapter_id){
+        JSONObject list = planClient.getAllChapterByLessonId(id);
+        JSONArray req = JSON.parseObject(String.valueOf(list)).getJSONArray("data");
+        List<Chapter> chapters = JSONArray.parseArray(req.toJSONString(), Chapter.class);
+        Chapter trachapter = null;
+        for (Chapter chapter:chapters){
+            if (chapter.getId()==chapter_id){
+                trachapter = chapter;
+                break;
+            }
+        }
+        return trachapter;
     }
 }
