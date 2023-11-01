@@ -10,7 +10,7 @@ public interface ChapterMapper {
     @Insert("insert into t_lesson_chapter(chapter_name, lesson_id) VALUES (#{chapter_name},#{lesson_id})")
     Integer insertChapter(@Param("chapter_name")String chapter_name,@Param("lesson_id")int lesson_id);
 
-    @Select("select COunt(id) from t_lesson_chapter where chapter_name = #{chapter_name} and lesson_id = #{lesson_id}")
+    @Select("select COUNT(id) from t_lesson_chapter where chapter_name = #{chapter_name} and lesson_id = #{lesson_id}")
     Integer getIdByCName(@Param("chapter_name") String chapter_name,@Param("lesson_id")int lesson_id);
 
     @Select(("select * from t_lesson_chapter where lesson_id = #{lessson_id}"))

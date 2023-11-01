@@ -135,7 +135,7 @@ public class TrainPlanStudentServiceImpl implements TrainPlanStudentService {
     }
     /**
      * 判断计划是否存在具体实现
-     * @param plan_id 学生id
+     * @param plan_id 计划id
      * @return 根据处理结果返回对应消息
      */
     private String judgePlanExit(int plan_id){

@@ -6,9 +6,11 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-@TableName("t_lesson_chapter")
-public class ChapterTable {
+@TableName("t_progress_lesson")
+public class ProgressLesson {
     private int id;
-    private String chapter_name;
     private int lesson_id;
+    private int student_id;
+    private int over_chapter_sum;
+    private int lesson_chapter_sum;
 }

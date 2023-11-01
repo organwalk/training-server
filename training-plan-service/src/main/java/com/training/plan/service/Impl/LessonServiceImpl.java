@@ -9,15 +9,18 @@ import com.training.plan.entity.result.User;
 import com.training.plan.entity.table.LessonTable;
 import com.training.plan.mapper.ChapterMapper;
 import com.training.plan.mapper.LessonMapper;
+import com.training.plan.mapper.TrainPlanStudentMapper;
 import com.training.plan.service.LessonService;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Objects;
 
 @Service
 @AllArgsConstructor
+@Transactional
 public class LessonServiceImpl implements LessonService {
     private final LessonMapper lessonMapper;
     private final UserClient userClient;
@@ -36,10 +39,10 @@ public class LessonServiceImpl implements LessonService {
         if (!Objects.equals(user.getAuth_id(),2)){
             return MsgRespond.fail("该用户不是教师，请重新选择");
         }
-        System.out.println("test2");
         req.setLesson_state(0);
         //加入课程
         Integer i = lessonMapper.insertLesson(req);
+
         return i>0?MsgRespond.success("添加课程成功！"):MsgRespond.fail("添加课程失败！");
     }
     /**

@@ -1,10 +1,12 @@
 package com.training.plan.entity.table;
 
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
 @AllArgsConstructor
+@TableName("t_lesson_test")
 public class TestTable {
     private int id;
     private String test_title;
