@@ -1,4 +1,4 @@
-package com.training.learn.entity.table;
+package com.training.progress.entity.table;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;

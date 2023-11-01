@@ -1,4 +1,4 @@
-package com.training.learn.mapper;
+package com.training.progress.mapper;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;

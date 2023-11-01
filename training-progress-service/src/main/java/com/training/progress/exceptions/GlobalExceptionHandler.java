@@ -1,4 +1,4 @@
-package com.training.learn.exceptions;
+package com.training.progress.exceptions;
 
 import com.training.common.entity.MsgRespond;
 import jakarta.validation.ConstraintViolation;

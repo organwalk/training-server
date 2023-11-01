@@ -1,7 +1,7 @@
-package com.training.learn.mapper;
+package com.training.progress.mapper;
 
 
-import com.training.learn.entity.result.ProgressChapterLessonReq;
+import com.training.progress.entity.request.ProgressChapterLessonReq;
 import org.apache.ibatis.annotations.*;
 
 @Mapper

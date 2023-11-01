@@ -1,4 +1,4 @@
-package com.training.learn.servier;
+package com.training.progress.servier;
 
 import com.training.common.entity.MsgRespond;
 

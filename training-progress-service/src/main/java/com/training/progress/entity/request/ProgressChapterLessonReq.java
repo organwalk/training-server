@@ -1,4 +1,4 @@
-package com.training.learn.entity.result;
+package com.training.progress.entity.request;
 
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Pattern;
