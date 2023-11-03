@@ -3,16 +3,14 @@ package com.training.progress.servier.Impl;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.training.common.entity.DataFailRespond;
-import com.training.common.entity.DataPagingSuccessRespond;
-import com.training.common.entity.DataRespond;
-import com.training.common.entity.MsgRespond;
+import com.training.common.entity.*;
 import com.training.progress.client.PlanClient;
 import com.training.progress.client.UserClient;
 import com.training.progress.config.ToolConfig;
 import com.training.progress.entity.request.ProgressChapterLessonReq;
 import com.training.progress.entity.respond.StuChapterAll;
 import com.training.progress.entity.result.Chapter;
+import com.training.progress.entity.result.ChapterList;
 import com.training.progress.entity.table.ProgressChapter;
 import com.training.progress.mapper.ProgressChapterMapper;
 import com.training.progress.mapper.ProgressLessonMapper;
@@ -126,6 +124,32 @@ public class ProgressServiceImpl implements ProgressService {
     public DataRespond getAllPlanProgressList(int page_size, int offset) {
         return null;
     }
+
+
+
+
+
+    @Override
+    public DataRespond getChapterListByStuIdAndLessonId(int student_id, int lesson_id) {
+        String StuExitMark = judgeStuExit(student_id);
+        if (!StuExitMark.isBlank()){
+            return new DataFailRespond("该学生不存在!");
+        }
+        String LessonExitMark = judgeLessonExit(lesson_id);
+        if (!LessonExitMark.isBlank()){
+            return new DataFailRespond("该课程不存在！");
+        }
+        List<Integer> chapterList = chapterMapper.getChapterListByStuIdAndLessonId(student_id,lesson_id);
+        return new DataSuccessRespond("已成功返回该学员所学最新章节及其已学章节列表",new ChapterList(chapterList.size(),chapterList));
+    }
+
+
+
+
+
+
+
+
 
 
     /**

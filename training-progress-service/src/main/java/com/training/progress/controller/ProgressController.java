@@ -74,4 +74,22 @@ public class ProgressController {
     }
 
 
+
+
+
+
+
+    // 获取指定学员课程章节的所学进度及百分比列表
+    @GetMapping("/v1/plan/lesson/chapter/persent/{lesson_id}/{student_id}")
+    public DataRespond getChapterByLIdAndSId(@PathVariable
+                                             @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "lesson_id必须为纯数字字段")
+                                             int lesson_id,
+                                             @PathVariable
+                                             @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "student_id必须为纯数字字段")
+                                             int student_id){
+        return progressService.getChapterListByStuIdAndLessonId(student_id,lesson_id);
+
+    }
+
+
 }

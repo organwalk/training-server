@@ -11,4 +11,6 @@ public interface ProgressService {
     DataRespond getStuAllByLessonId(int lesson_id, int page_size, int offset);
 
     DataRespond getAllPlanProgressList(int page_size, int offset);
+
+    DataRespond getChapterListByStuIdAndLessonId(int student_id,int lesson_id);
 }

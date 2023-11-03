@@ -30,4 +30,7 @@ public interface ProgressChapterMapper {
 
    @Select("select student_id from t_progress_chapter where lesson_id=#{lesson_id}")
     List<Integer> getAllStuIdByLessonId(@Param("lesson_id")int lesson_id);
+
+    @Select("select over_chapter_id from t_progress_chapter where student_id=#{student_id} and lesson_id=#{lesson_id}")
+    List<Integer> getChapterListByStuIdAndLessonId(@Param("student_id")int student_id,@Param("lesson_id")int lesson_id);
 }
