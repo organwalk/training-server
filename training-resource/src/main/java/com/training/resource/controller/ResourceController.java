@@ -2,8 +2,10 @@ package com.training.resource.controller;
 
 import com.training.common.entity.DataRespond;
 import com.training.common.entity.MsgRespond;
+import com.training.resource.entity.request.ResourceLessonReq;
 import com.training.resource.entity.request.ResourceNormalReq;
 import com.training.resource.entity.request.TagReq;
+import com.training.resource.service.ResourceLessonService;
 import com.training.resource.service.ResourceNormalService;
 import com.training.resource.service.TagService;
 import jakarta.validation.constraints.Digits;
@@ -24,6 +26,7 @@ public class ResourceController {
 
     private final TagService tagService;
     private final ResourceNormalService resourceNormalService;
+    private final ResourceLessonService resourceLessonService;
 
     // 创建资源分类标签
     @GetMapping("/v3/tag")
@@ -115,5 +118,23 @@ public class ResourceController {
                                                       @RequestParam(required = false) Integer deptId,
                                                       @RequestParam(required = false) Integer tagId) {
         return resourceNormalService.getNormalResourceByKeyword(deptId, tagId, keyword, page_size, offset);
+    }
+
+    // 上传教材资源
+    @PostMapping("/v2/lesson")
+    public MsgRespond uploadLessonResource(@Validated @ModelAttribute ResourceLessonReq req){
+        if (Objects.isNull(req.getResource_file())) {
+            return MsgRespond.fail("上传文件不能为空");
+        }
+        return resourceLessonService.uploadResourceLesson(req);
+    }
+
+    // 重传教材资源
+    @PutMapping("/v2/lesson")
+    public MsgRespond reUploadLessonResource(@Validated @ModelAttribute ResourceLessonReq req){
+        if (Objects.isNull(req.getResource_file())) {
+            return MsgRespond.fail("上传文件不能为空");
+        }
+        return resourceLessonService.reUploadResourceLesson(req);
     }
 }

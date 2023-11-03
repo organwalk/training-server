@@ -11,6 +11,8 @@ import org.springframework.context.annotation.Configuration;
 public class AppConfig {
     @Value("${upload.normal-path}")
     private String resourceNormalPath;
+    @Value("${upload.lesson-path}")
+    private String lessonPath;
     @Bean
     public Tika tika(){
         return new Tika();

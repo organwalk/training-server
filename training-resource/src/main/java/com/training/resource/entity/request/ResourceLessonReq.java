@@ -5,6 +5,13 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.springframework.web.multipart.MultipartFile;
 
+<<<<<<< HEAD
+=======
+/**
+ * 定义上传普通资源的请求
+ * by organwalk 2023-11-03
+ */
+>>>>>>> taffy
 @Data
 @AllArgsConstructor
 public class ResourceLessonReq {

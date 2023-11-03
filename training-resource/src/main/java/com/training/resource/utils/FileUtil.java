@@ -25,6 +25,14 @@ public class FileUtil {
         return appConfig.getResourceNormalPath() + File.separator + customFileName;
     }
 
+    public String getLessonFilePath(Integer teacherId, Integer lessonId, Integer chapterId, MultipartFile file){
+        String originalFilename = file.getOriginalFilename();
+        String fileExtension = Objects.requireNonNull(originalFilename).substring(originalFilename.lastIndexOf("."));
+        // 生成"课程编号+章节编号+UUID.后缀"的文件名
+        String customFileName = '/' + teacherId.toString() + '/' + lessonId + '/' + lessonId + chapterId + UUID.randomUUID() + fileExtension;
+        return appConfig.getLessonPath() + File.separator + customFileName;
+    }
+
     public String getFileSaveDateTime(){
         LocalDateTime currentDateTime = LocalDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
