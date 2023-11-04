@@ -69,19 +69,19 @@ public class ResourceController {
 
     // 下载指定资源文件
     @GetMapping("/v1/normal/file/{rid}")
-    public ResponseEntity<?> downloadResourceNormalFile(@PathVariable @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "dept_id必须为纯数字字段") Integer rid) {
+    public ResponseEntity<?> downloadResourceNormalFile(@PathVariable @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "rid必须为纯数字字段") Integer rid) {
         return resourceNormalService.downloadResourceNormalFile(rid);
     }
 
     // 获取指定资源文件详情
     @GetMapping("/v1/normal/file/info/{rid}")
-    public DataRespond getResourceNormalInfo(@PathVariable @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "dept_id必须为纯数字字段") Integer rid) {
+    public DataRespond getResourceNormalInfo(@PathVariable @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "rid必须为纯数字字段") Integer rid) {
         return resourceNormalService.getResourceNormalDetail(rid);
     }
 
     // 编辑指定资源文件信息
     @PutMapping("/v1/normal/file/info/{rid}")
-    public MsgRespond editResourceNormalInfo(@PathVariable @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "dept_id必须为纯数字字段") Integer rid, @Validated @ModelAttribute ResourceNormalReq req, @RequestHeader("username") String username, @RequestHeader("auth") String auth) {
+    public MsgRespond editResourceNormalInfo(@PathVariable @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "rid必须为纯数字字段") Integer rid, @Validated @ModelAttribute ResourceNormalReq req, @RequestHeader("username") String username, @RequestHeader("auth") String auth) {
         return resourceNormalService.editResourceNormalInfo(rid, req, username, auth);
     }
 
@@ -136,5 +136,20 @@ public class ResourceController {
             return MsgRespond.fail("上传文件不能为空");
         }
         return resourceLessonService.reUploadResourceLesson(req);
+    }
+
+    // 删除指定课程章节教材文件
+    @DeleteMapping("/v2/lesson/{teacher_id}/{lesson_id}/{chapter_id}")
+    public MsgRespond deleteOneLessonResource(@PathVariable @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "teacher_id必须为纯数字字段") Integer teacher_id,
+                                              @PathVariable @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "lesson_id必须为纯数字字段") Integer lesson_id,
+                                              @PathVariable @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "chapter_id必须为纯数字字段") Integer chapter_id){
+        return resourceLessonService.deleteOneLessonResource(teacher_id, lesson_id, chapter_id);
+    }
+
+    // 删除指定课程下所有教材文件
+    @PostMapping("/v2/lesson/{teacher_id}/{lesson_id}")
+    public MsgRespond deleteAllLessonResource(@PathVariable @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "teacher_id必须为纯数字字段") Integer teacher_id,
+                                              @PathVariable @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "lesson_id必须为纯数字字段") Integer lesson_id){
+        return resourceLessonService.deleteAllLessonResource(teacher_id, lesson_id);
     }
 }

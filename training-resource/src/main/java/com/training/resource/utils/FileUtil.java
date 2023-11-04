@@ -38,4 +38,9 @@ public class FileUtil {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         return currentDateTime.format(formatter);
     }
+
+    public String getLessonFolderPath(Integer teacherId, Integer lessonId){
+        String customPath = '/' + teacherId.toString() + '/' + lessonId;
+        return appConfig.getLessonPath() +  customPath.replace("/", File.separator);
+    }
 }
