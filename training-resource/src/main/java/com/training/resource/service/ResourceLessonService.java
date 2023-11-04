@@ -12,4 +12,8 @@ public interface ResourceLessonService {
     MsgRespond uploadResourceLesson(ResourceLessonReq req);
     // 重传课程教材
     MsgRespond reUploadResourceLesson(ResourceLessonReq req);
+    // 删除指定课程章节教材文件
+    MsgRespond deleteOneLessonResource(Integer teacherId, Integer lessonId, Integer chapterId);
+    // 删除指定课程下所有教材文件
+    MsgRespond deleteAllLessonResource(Integer teacherId, Integer lessonId);
 }

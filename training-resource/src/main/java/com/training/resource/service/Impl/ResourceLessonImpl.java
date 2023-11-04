@@ -16,6 +16,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
@@ -31,6 +34,7 @@ public class ResourceLessonImpl implements ResourceLessonService {
      * 上传教材资源文件具体实现
      * @param req 教材对象
      * @return 根据处理结果返回消息提示
+     * by organwalk 2023-11-03
      */
     @Override
     public MsgRespond uploadResourceLesson(ResourceLessonReq req) {
@@ -69,6 +73,7 @@ public class ResourceLessonImpl implements ResourceLessonService {
      * 重传教材资源文件的具体实现
      * @param req 教材对象
      * @return 处理提示
+     * by organwalk 2023-11-03
      */
     @Override
     public MsgRespond reUploadResourceLesson(ResourceLessonReq req) {
@@ -96,6 +101,70 @@ public class ResourceLessonImpl implements ResourceLessonService {
         return MsgRespond.success("教材资源重传成功");
     }
 
+    /**
+     * 删除指定课程章节教材文件具体实现
+     * @param teacherId 教师ID
+     * @param lessonId 课程ID
+     * @param chapterId 章节ID
+     * @return 根据处理结果返回消息提示
+     * by organwalk 2023-11-04
+     */
+    @Override
+    public MsgRespond deleteOneLessonResource(Integer teacherId, Integer lessonId, Integer chapterId) {
+        // 检查课程、章节、教程存在性
+        Integer idMark = resourceLessonMapper.selectIdByReUpdateArgs(lessonId, teacherId, chapterId);
+        if (Objects.isNull(idMark)){
+            return MsgRespond.fail("重新检查指定的讲师、课程和章节是否正确");
+        }
+        // 检查教材资源是否存储于服务器中,并删除
+        String filePath = resourceLessonMapper.selectOldFilePath(lessonId, teacherId, chapterId);
+        File file = new File(filePath);
+        if (!file.exists() || file.delete()){
+            resourceLessonMapper.deleteOneLessonResource(teacherId, lessonId, chapterId);
+        }
+        return MsgRespond.success("已成功删除此课程文件");
+    }
+
+    /**
+     * 删除指定课程下所有教材文件
+     * @param teacherId 教师ID
+     * @param lessonId 课程ID
+     * @return 根据处理结果返回消息提示
+     * by organwalk 2023-11-04
+     */
+    @Override
+    public MsgRespond deleteAllLessonResource(Integer teacherId, Integer lessonId) {
+        // 检查教师、课程存在性
+        Integer idMark = resourceLessonMapper.selectIdByDeleteAllLessonArgs(lessonId, teacherId);
+        if (Objects.isNull(idMark)){
+            return MsgRespond.fail("重新检查指定的讲师、课程是否正确");
+        }
+        // 检查教材文件夹是否存储于服务器中，并删除
+        String folderPath = fileUtil.getLessonFolderPath(teacherId, lessonId);
+        File file = new File(folderPath);
+        if (!file.exists()){
+            resourceLessonMapper.deleteAllLessonResource(teacherId, lessonId);
+        }else {
+            try {
+                Files.walk(Path.of(folderPath))
+                        .sorted(Comparator.reverseOrder())
+                        .map(Path::toFile)
+                        .forEach(File::delete);
+                resourceLessonMapper.deleteAllLessonResource(teacherId, lessonId);
+            } catch (IOException e) {
+                return MsgRespond.fail("内部服务错误，删除失败，请稍后重试");
+            }
+        }
+        return MsgRespond.success("已成功删除此课程教材文件");
+    }
+
+    /**
+     * 检查教师和课程是否存在和一致的内部方法
+     * @param teacherId 教师ID
+     * @param lessonId 课程ID
+     * @return 消息提示，若为空，则表示校验通过
+     * by organwalk by 2023-11-04
+     */
     private String validTeacher(Integer teacherId, Integer lessonId){
         // 获取课程列表
         JSONObject lessonListObj = trainingClient.getLessonListByTeacher(teacherId, 999999, 0);
@@ -112,6 +181,13 @@ public class ResourceLessonImpl implements ResourceLessonService {
         return null;
     }
 
+    /**
+     * 检查章节是否存在
+     * @param lessonId 课程ID
+     * @param chapterId 章节ID
+     * @return 消息提示， 若为空，则表示校验通过
+     * by organwalk by 2023-11-04
+     */
     private String validChapter(Integer lessonId, Integer chapterId){
         JSONObject chapterListObj = trainingClient.getChapterListByLesson(lessonId);
         if (Objects.equals(chapterListObj.getInteger("code"), 5005)){

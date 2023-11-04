@@ -91,7 +91,7 @@ public interface ResourceNormalMapper {
                                        @Param("rid") Integer rid);
 
     // 根据rid删除指定的资源文件
-    @Select("delete from t_resource_normal where id = #{rid}")
+    @Delete("delete from t_resource_normal where id = #{rid}")
     void deleteResourceNormalByRid(Integer rid);
 
     // 根据tag_id获取资源总数
