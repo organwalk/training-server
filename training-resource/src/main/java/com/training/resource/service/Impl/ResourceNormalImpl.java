@@ -63,16 +63,19 @@ public class ResourceNormalImpl implements ResourceNormalService {
         if (Objects.equals(codeMark, 5005)){
             return MsgRespond.fail("当前指定上传者不存在");
         }
-        // 获取文件保存路径
-        String filePath = fileUtil.getNormalFilePath(req.getUp_id(), req.getResource_file());
-        // 保存文件
-        try {
-            req.getResource_file().transferTo(new File(filePath));
-        } catch (IOException e) {
-            return MsgRespond.fail("内部服务错误，文件上传失败，请稍后再试");
+        String filePath = resourceNormalMapper.selectPathByFileHash(req.getFile_hash());
+        if (Objects.isNull(filePath)){
+            // 获取文件保存路径
+            filePath = fileUtil.getNormalFilePath(req.getUp_id(), req.getResource_file());
+            // 保存文件
+            try {
+                req.getResource_file().transferTo(new File(filePath));
+            } catch (IOException e) {
+                return MsgRespond.fail("内部服务错误，文件上传失败，请稍后再试");
+            }
         }
         resourceNormalMapper.insertResourceNormal(new ResourceNormalTable(null,
-                req.getResource_name(), filePath, req.getDept_id(), req.getTag_id(), req.getUp_id(), fileUtil.getFileSaveDateTime()));
+                req.getResource_name(), filePath, req.getDept_id(), req.getTag_id(), req.getUp_id(), fileUtil.getFileSaveDateTime(), req.getFile_hash()));
         return MsgRespond.success("资源上传成功");
     }
 

@@ -15,4 +15,5 @@ public class ResourceNormalTable {
     private Integer tagId;
     private Integer upId;
     private String upDatetime;
+    private String fileHash;
 }

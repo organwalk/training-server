@@ -13,9 +13,13 @@ import java.util.List;
 @Mapper
 public interface ResourceNormalMapper {
 
+    // 查询与请求文件哈希值相同的文件路径
+    @Select("select resource_path from t_resource_normal where file_hash = #{fileHash} limit 1")
+    String selectPathByFileHash(String fileHash);
+
     // 插入一条文件记录
-    @Insert("insert into t_resource_normal(resource_name, resource_path, dept_id, tag_id, up_id, up_datetime) " +
-            "values (#{obj.resourceName}, #{obj.resourcePath}, #{obj.deptId}, #{obj.tagId}, #{obj.upId}, #{obj.upDatetime})")
+    @Insert("insert into t_resource_normal(resource_name, resource_path, dept_id, tag_id, up_id, up_datetime, file_hash) " +
+            "values (#{obj.resourceName}, #{obj.resourcePath}, #{obj.deptId}, #{obj.tagId}, #{obj.upId}, #{obj.upDatetime}, #{obj.fileHash})")
     void insertResourceNormal(@Param("obj") ResourceNormalTable obj);
 
     // 获取指定部门、分类标签下上传资源列表总数
