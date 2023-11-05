@@ -51,6 +51,7 @@ public class ResourceNormalImpl implements ResourceNormalService {
      * @return 根据处理结果返回消息
      * by organwalk 2023-10-21
      */
+    @SneakyThrows
     @Override
     public MsgRespond uploadResourceNormalFile(ResourceNormalReq req) {
         // 对请求进行检查
@@ -67,13 +68,14 @@ public class ResourceNormalImpl implements ResourceNormalService {
         String filePath = resourceNormalMapper.selectPathByFileHash(req.getFile_hash());
         if (Objects.isNull(filePath)){
             // 获取文件保存路径
-            filePath = fileUtil.getNormalFilePath(req.getUp_id(), req.getResource_file());
-            System.out.println(filePath);
-            // 保存文件
-            try {
-                req.getResource_file().transferTo(new File(filePath));
-            } catch (IOException e) {
-                return MsgRespond.fail("内部服务错误，文件上传失败，请稍后再试");
+            filePath = fileUtil.getNormalFilePath(req.getUp_id(), req.getFile_origin_name());
+            String processResult = fileUtil.chunkSaveFile(req.getFile_hash(), filePath, req.getFile_chunks_sum(), req.getFile_now_chunk(), req.getFile_size(), req.getResource_file());
+            if (Objects.isNull(processResult)){
+                return MsgRespond.success("当前文件片段上传成功");
+            }else if (Objects.equals(processResult, "true")){
+                resourceNormalMapper.insertResourceNormal(new ResourceNormalTable(null,
+                        req.getResource_name(), filePath, req.getDept_id(), req.getTag_id(), req.getUp_id(), fileUtil.getFileSaveDateTime(), req.getFile_hash()));
+                return MsgRespond.success("资源文件上传成功");
             }
         }
         resourceNormalMapper.insertResourceNormal(new ResourceNormalTable(null,
@@ -175,7 +177,7 @@ public class ResourceNormalImpl implements ResourceNormalService {
             // 获取原文件路径
             String oldFilePath = resourceNormalMapper.selectResourcePathByRid(rid);
             // 获取文件保存路径
-            filePath = fileUtil.getNormalFilePath(req.getUp_id(), req.getResource_file());
+            filePath = fileUtil.getNormalFilePath(req.getUp_id(), req.getFile_origin_name());
             try {
                 // 保存文件
                 req.getResource_file().transferTo(new File(filePath));
@@ -289,7 +291,6 @@ public class ResourceNormalImpl implements ResourceNormalService {
         }
         List<ResourceNormalAllListRespond> result = resourceNormalMapper.selectResourceListByKeyword(deptId, tagId, keyword, pageSize, offset);
         return new DataPagingSuccessRespond("已成功查询到相关结果", sumMark, dataUtil.switchUidAndDeptListToUserAndDeptInfoList(result));
-
     }
 
     /**

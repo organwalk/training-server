@@ -22,6 +22,7 @@ import java.util.Objects;
 @RequestMapping("/api/resource")
 @AllArgsConstructor
 @Validated
+@CrossOrigin
 public class ResourceController {
 
     private final TagService tagService;
