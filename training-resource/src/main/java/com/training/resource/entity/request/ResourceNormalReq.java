@@ -22,5 +22,6 @@ public class ResourceNormalReq {
     private MultipartFile resource_file;
     @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "up_id必须为纯数字字段")
     private Integer up_id;
+    @NotBlank(message = "file_hash字段不能为空")
     private String file_hash;
 }

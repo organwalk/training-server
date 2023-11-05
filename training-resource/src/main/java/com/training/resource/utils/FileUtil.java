@@ -33,6 +33,11 @@ public class FileUtil {
         return appConfig.getLessonPath() + File.separator + customFileName;
     }
 
+    private String getFolderDateTime(){
+        LocalDateTime currentDateTime = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+        return currentDateTime.format(formatter);
+    }
     public String getFileSaveDateTime(){
         LocalDateTime currentDateTime = LocalDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");

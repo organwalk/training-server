@@ -63,10 +63,12 @@ public class ResourceNormalImpl implements ResourceNormalService {
         if (Objects.equals(codeMark, 5005)){
             return MsgRespond.fail("当前指定上传者不存在");
         }
+        // 检查是否具有相同哈希值的文件
         String filePath = resourceNormalMapper.selectPathByFileHash(req.getFile_hash());
         if (Objects.isNull(filePath)){
             // 获取文件保存路径
             filePath = fileUtil.getNormalFilePath(req.getUp_id(), req.getResource_file());
+            System.out.println(filePath);
             // 保存文件
             try {
                 req.getResource_file().transferTo(new File(filePath));

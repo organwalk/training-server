@@ -276,7 +276,7 @@ public class DepartmentServiceImpl implements DepartmentService {
         }
         // 检查部门负责人是否已经负责了某部门
         Integer deptIdMark = deptMapper.selectDeptIdByHeadId(req.getHead_id());
-        if (deptIdMark != null && !Objects.equals(deptIdMark, idMark)){
+        if (deptIdMark != null && !Objects.equals(deptIdMark, deptId)){
             return "该员工已负责其他部门，请重新指派负责人";
         }
         return "";
