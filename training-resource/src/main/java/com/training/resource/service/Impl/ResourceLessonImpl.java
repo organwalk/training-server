@@ -9,6 +9,7 @@ import com.training.resource.entity.request.ResourceLessonReq;
 import com.training.resource.entity.table.ResourceLessonTable;
 import com.training.resource.mapper.ResourceLessonMapper;
 import com.training.resource.service.ResourceLessonService;
+import com.training.resource.utils.DataUtil;
 import com.training.resource.utils.FileUtil;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -30,6 +31,7 @@ public class ResourceLessonImpl implements ResourceLessonService {
     private final ResourceLessonMapper resourceLessonMapper;
     private final TrainingClient trainingClient;
     private final FileUtil fileUtil;
+    private final DataUtil dataUtil;
     /**
      * 上传教材资源文件具体实现
      * @param req 教材对象
@@ -49,7 +51,7 @@ public class ResourceLessonImpl implements ResourceLessonService {
             return MsgRespond.fail(teacherMark);
         }
         // 检查章节存在性
-        String chapterMark = validChapter(lessonId, req.getChapter_id());
+        String chapterMark = dataUtil.validChapter(lessonId, req.getChapter_id());
         if (Objects.nonNull(chapterMark)){
             return MsgRespond.fail(chapterMark);
         }
@@ -181,23 +183,4 @@ public class ResourceLessonImpl implements ResourceLessonService {
         return null;
     }
 
-    /**
-     * 检查章节是否存在
-     * @param lessonId 课程ID
-     * @param chapterId 章节ID
-     * @return 消息提示， 若为空，则表示校验通过
-     * by organwalk by 2023-11-04
-     */
-    private String validChapter(Integer lessonId, Integer chapterId){
-        JSONObject chapterListObj = trainingClient.getChapterListByLesson(lessonId);
-        if (Objects.equals(chapterListObj.getInteger("code"), 5005)){
-            return chapterListObj.getString("msg");
-        }
-        List<ChapterInfo> chapters = chapterListObj.getJSONArray("data").toJavaList(ChapterInfo.class);
-        boolean checkChapterId = chapters.stream().anyMatch(chapterInfo -> Objects.equals(chapterInfo.getId(), chapterId));
-        if (!checkChapterId){
-            return "该课程下不存在此章节";
-        }
-        return null;
-    }
 }
