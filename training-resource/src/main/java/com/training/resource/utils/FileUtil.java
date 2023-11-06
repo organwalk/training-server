@@ -6,28 +6,79 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 @Component
 @AllArgsConstructor
 public class FileUtil {
     private final AppConfig appConfig;
-    public String getNormalFilePath(Integer upId, MultipartFile file){
+    private static final ConcurrentMap<String, File> SHA_CACHE = new ConcurrentHashMap<>();
+    public String chunkSaveFile(String hashValue,
+                                String filePath,
+                                Integer fileChunksSum,
+                                Integer fileNowChunk,
+                                Integer fileSize,
+                                MultipartFile multipartFile) throws IOException {
+        File targetFile = SHA_CACHE.get(hashValue);
+        if (targetFile == null) {
+            targetFile = new File(filePath.replace("\\", File.separator));
+            targetFile.getParentFile().mkdirs();
+            SHA_CACHE.put(hashValue, targetFile);
+        }
+        // 对文件的任意位置进行读写
+        RandomAccessFile accessFile = new RandomAccessFile(targetFile, "rw");
+        boolean finished = Objects.equals(fileNowChunk, fileChunksSum);//是否最后一片
+        if (finished) {
+            accessFile.seek(fileSize - multipartFile.getSize());
+        }else {
+            accessFile.seek((fileNowChunk - 1) * multipartFile.getSize());
+        }
+        // 写入分片的数据
+        accessFile.write(multipartFile.getBytes());
+        accessFile.close();
+        if (finished) {
+            SHA_CACHE.remove(hashValue);
+            return "true";
+        }
+        return null;
+    }
+    public String getNormalFilePath(Integer upId, String fileOriginName){
         // 获取上传的文件扩展名
-        String originalFilename = file.getOriginalFilename();
-        String fileExtension = Objects.requireNonNull(originalFilename).substring(originalFilename.lastIndexOf("."));
+        String fileExtension = Objects.requireNonNull(fileOriginName).substring(fileOriginName.lastIndexOf("."));
         // 生成"上传者ID + UUID.后缀"的文件名
-        String customFileName = upId.toString() + UUID.randomUUID() + fileExtension;
+        String customFileName = '/' + getFolderDateTime() + '/' + upId.toString() + UUID.randomUUID() + fileExtension;
         // 构建文件保存路径
         return appConfig.getResourceNormalPath() + File.separator + customFileName;
     }
 
+    public String getLessonFilePath(Integer teacherId, Integer lessonId, Integer chapterId, MultipartFile file){
+        String originalFilename = file.getOriginalFilename();
+        String fileExtension = Objects.requireNonNull(originalFilename).substring(originalFilename.lastIndexOf("."));
+        // 生成"课程编号+章节编号+UUID.后缀"的文件名
+        String customFileName = '/' + teacherId.toString() + '/' + lessonId + '/' + lessonId + chapterId + UUID.randomUUID() + fileExtension;
+        return appConfig.getLessonPath() + customFileName.replace("/", File.separator);
+    }
+
+    private String getFolderDateTime(){
+        LocalDateTime currentDateTime = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+        return currentDateTime.format(formatter);
+    }
     public String getFileSaveDateTime(){
         LocalDateTime currentDateTime = LocalDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         return currentDateTime.format(formatter);
+    }
+
+    public String getLessonFolderPath(Integer teacherId, Integer lessonId){
+        String customPath = '/' + teacherId.toString() + '/' + lessonId;
+        return appConfig.getLessonPath() +  customPath.replace("/", File.separator);
     }
 }

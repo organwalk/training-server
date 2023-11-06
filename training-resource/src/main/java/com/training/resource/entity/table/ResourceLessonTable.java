@@ -5,15 +5,13 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
-@TableName("t_resource_normal")
+@TableName("t_resource_lesson")
 @AllArgsConstructor
-public class ResourceNormalTable {
+public class ResourceLessonTable {
     private Integer id;
-    private String resourceName;
+    private Integer lessonId;
+    private Integer teacherId;
+    private Integer chapterId;
     private String resourcePath;
-    private Integer deptId;
-    private Integer tagId;
-    private Integer upId;
     private String upDatetime;
-    private String fileHash;
 }

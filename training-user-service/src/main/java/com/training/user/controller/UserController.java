@@ -116,7 +116,7 @@ public class UserController {
     }
 
     // 获取指定用户信息
-    @GetMapping("\"$2a$10$DstxnMRTNaIysP.A4tDE3.9TxMkzm/sSRepMY3HNAEi4yPnTB0baq\"")
+    @GetMapping("/v1/info/{uid}")
     public DataRespond getUserInfoByUid(@PathVariable
                                         @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "uid必须为纯数字字段")
                                         Integer uid) {
