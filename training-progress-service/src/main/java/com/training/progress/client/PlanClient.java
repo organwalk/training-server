@@ -14,4 +14,7 @@ public interface PlanClient {
 
     @GetExchange("/v1/lesson/chapter/{lesson_id}")
     JSONObject getAllChapterByLessonId(@PathVariable int lesson_id);
+
+    @GetExchange("/v1/plan/info/{plan_id}")
+    JSONObject getPlanByPlanId(@PathVariable int plan_id);
 }

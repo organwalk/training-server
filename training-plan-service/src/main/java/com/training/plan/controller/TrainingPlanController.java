@@ -165,9 +165,12 @@ public class TrainingPlanController {
 
     }
     //添加课程
-    @PostMapping("/v2/lesson")
-    public MsgRespond insertLesson(@Validated @RequestBody LessonReq req){
-        return lessonService.insertLesson(req);
+    @PostMapping("/v2/lesson/{plan_id}")
+    public MsgRespond insertLesson(@Validated @RequestBody LessonReq req,
+                                   @PathVariable
+                                   @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "plan_id必须为纯数字字段")
+                                   int plan_id){
+        return lessonService.insertLesson(req,plan_id);
     }
     //获取指定教师的所有课程
     @GetMapping("/v1/lesson/{teacher_id}/{page_size}/{offset}")

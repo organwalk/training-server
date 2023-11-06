@@ -9,11 +9,10 @@ import com.training.plan.entity.request.TrainingPlanReq;
 import com.training.plan.entity.result.DeptInfo;
 import com.training.plan.entity.result.TrainPlanInfo;
 import com.training.plan.entity.table.TrainingPlanTable;
-import com.training.plan.mapper.TrainPlanStudentMapper;
-import com.training.plan.mapper.TrainPlanTeacherMapper;
+import com.training.plan.mapper.*;
+import com.training.plan.reposoty.LessonCache;
 import com.training.plan.reposoty.PlanCache;
 import com.training.plan.service.TrainingPlanService;
-import com.training.plan.mapper.TrainingPlanMapper;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +37,10 @@ public class TrainingPlanServiceImpl implements TrainingPlanService {
     private final PlanCache planCache;
     private final TrainPlanStudentMapper studentMapper;
     private final TrainPlanTeacherMapper teacherMapper;
+    private final LessonMapper lessonMapper;
+    private final ChapterMapper chapterMapper;
+    private final LessonCache lessonCache;
+
 
 
     /**
@@ -55,9 +58,12 @@ public class TrainingPlanServiceImpl implements TrainingPlanService {
         }
         //判断起始时间是否早于现在，且结束时间是否早于起始时间
         SimpleDateFormat si = new SimpleDateFormat("yyyy-MM-dd");
-        if (si.parse(req.getTraining_start_time()).getTime() < si.parse(req.getTraining_end_time()).getTime() ||
-                si.parse(req.getTraining_start_time()).getTime() >= System.currentTimeMillis()) {
+        if (si.parse(req.getTraining_start_time()).getTime() > si.parse(req.getTraining_end_time()).getTime()
+        ) {
             return MsgRespond.fail("结束时间必须在起始时间之后！");
+        }
+        if (si.parse(req.getTraining_start_time()).getTime() <= System.currentTimeMillis()){
+            return MsgRespond.fail("起始时间不能早于今天！");
         }
         req.setTraining_state("ongoing");
         Integer Mark =trainingPlanMapper.insertTrainingPlan(req);
@@ -149,7 +155,7 @@ public class TrainingPlanServiceImpl implements TrainingPlanService {
         return new DataSuccessRespond("查询成功！",trainPlanInfo);
     }
     /**
-     * 通过id获取指定计划具体实现
+     * 通过id修改指定计划具体实现
      * @param id 计划id
      * @param req 请求实体
      * @return 根据处理结果返回对应消息
@@ -230,6 +236,13 @@ public class TrainingPlanServiceImpl implements TrainingPlanService {
             if (value.equals(String.valueOf(id))){
                 planCache.DeleteTea(key);
             }
+        }
+        //删除计划列表下的课程与其对应章节
+        List<Integer> LessonIdList = lessonMapper.getLIDByPId(id);
+        for (Integer j : LessonIdList){
+            lessonMapper.deleteLessonById(j);
+            chapterMapper.deleteAllChapterByLessonId(j);
+            lessonCache.deleteChapter(String.valueOf(j));
         }
         return MsgRespond.success("删除成功！");
     }

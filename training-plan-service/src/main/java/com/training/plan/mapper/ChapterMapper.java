@@ -3,6 +3,7 @@ package com.training.plan.mapper;
 import com.training.plan.entity.table.ChapterTable;
 import org.apache.ibatis.annotations.*;
 
+
 import java.util.List;
 
 @Mapper
@@ -40,5 +41,7 @@ public interface ChapterMapper {
     @Select("select * from t_lesson_chapter where lesson_id=#{lesson_id} and id=#{id}")
     ChapterTable ForHttp(@Param("lesson_id")int lesson_id,@Param("id")int id);
 
+    @Select("select COUNT(id) from t_lesson_chapter where lesson_id=#{lesson_id}")
+    Integer getChapCountByLessonId(int lesson_id);
 
 }

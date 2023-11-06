@@ -2,6 +2,7 @@ package com.training.plan.service.Impl;
 
 import com.alibaba.fastjson.JSONObject;
 import com.training.common.entity.*;
+import com.training.plan.client.ProgressClient;
 import com.training.plan.client.UserClient;
 import com.training.plan.entity.request.LessonReq;
 import com.training.plan.entity.request.LessonUpdate;
@@ -10,6 +11,7 @@ import com.training.plan.entity.table.LessonTable;
 import com.training.plan.mapper.ChapterMapper;
 import com.training.plan.mapper.LessonMapper;
 import com.training.plan.mapper.TrainPlanStudentMapper;
+import com.training.plan.reposoty.LessonCache;
 import com.training.plan.service.LessonService;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,9 +27,12 @@ public class LessonServiceImpl implements LessonService {
     private final LessonMapper lessonMapper;
     private final UserClient userClient;
     private final ChapterMapper chapterMapper;
+    private final TrainPlanStudentMapper trainPlanStudentMapper;
+    private final ProgressClient progressClient;
+    private final LessonCache lessonCache;
 
     @Override
-    public MsgRespond insertLesson(LessonReq req) {
+    public MsgRespond insertLesson(LessonReq req,int plan_id) {
         //判断是否存在该课程
         String resultMark = CheckExit(req.getLesson_name());
         if (!resultMark.isBlank()){
@@ -42,8 +47,10 @@ public class LessonServiceImpl implements LessonService {
         req.setLesson_state(0);
         //加入课程
         Integer i = lessonMapper.insertLesson(req);
+        Integer lesson_id = lessonMapper.getIdByL_Name(req.getLesson_name());
+        JSONObject j = progressClient.insertInProPlan(plan_id,lesson_id, req.getTeacher_id());
 
-        return i>0?MsgRespond.success("添加课程成功！"):MsgRespond.fail("添加课程失败！");
+        return i>0&&(!Objects.equals(j.get("code"),5005))?MsgRespond.success("添加课程成功！"):MsgRespond.fail("添加课程失败！");
     }
     /**
      * 根据教师id获取教师的所有课程的具体实现
@@ -103,6 +110,7 @@ public class LessonServiceImpl implements LessonService {
         Integer i = lessonMapper.deleteLessonById(id);
         //删除指定课程对应的章节
         Integer j = chapterMapper.deleteAllChapterByLessonId(id);
+        lessonCache.deleteChapter(String.valueOf(id));
         return i>0&&j>0?MsgRespond.success("已成功删除此课程"):MsgRespond.fail("删除失败！");
     }
     /**
@@ -140,6 +148,15 @@ public class LessonServiceImpl implements LessonService {
         }
         //将状态改为发布
         Integer i = lessonMapper.updateState(1,id);
+        if(i>0){
+            Integer planId = trainPlanStudentMapper.getPlanIdByLessonId(id);
+            Integer over_chapter = 0;
+            Integer chapterSum = chapterMapper.getCountByLId(id);
+            List<Integer> StuIdList = trainPlanStudentMapper.getAllStuId(planId);
+            for (Integer j:StuIdList){
+                progressClient.insertProgress(id,j,over_chapter,chapterSum);
+            }
+        }
         return i>0?MsgRespond.success("已成功发布课程"):MsgRespond.fail("发布失败");
     }
 

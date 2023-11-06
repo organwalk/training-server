@@ -46,5 +46,7 @@ public interface LessonMapper {
     @Select("select id from t_lesson where teacher_id=#{teacher_id}")
     List<Integer> getTeaLessIdList(int teacher_id);
 
+    @Select("select lesson_id from t_progress_plan where plan_id=#{plan_id}")
+    List<Integer> getLIDByPId(int plan_id);
 
 }

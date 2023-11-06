@@ -1,9 +1,12 @@
 package com.training.progress.mapper;
 
+import com.training.progress.entity.table.ProgressLesson;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+
+import java.util.List;
 
 @Mapper
 public interface ProgressLessonMapper {
@@ -17,6 +20,21 @@ public interface ProgressLessonMapper {
 
     @Select("select COUNT(id) from t_progress_lesson where lesson_id=#{lesson_id} and student_id=#{student_id}")
     Integer judgeExitInTable(@Param("lesson_id")int lesson_id,@Param("student_id")int student_id);
+
+    @Select("select student_id from t_progress_lesson where lesson_id=#{lesson_id}")
+    Integer getStuIdByLessonId(int lesson_id);
+
+    @Select("select * from t_progress_lesson where lesson_id=#{lesson_id}")
+    List<ProgressLesson> getAllProLessByLessonId(int lesson_id);
+
+    @Select("select * from t_progress_lesson where lesson_id=#{lesson_id}")
+    List<ProgressLesson> getAllProgressByLessonId(int lesson_id);
+
+    @Select("select * from t_progress_lesson where lesson_id=#{lesson_id} and student_id=#{student_id}")
+    ProgressLesson getByLessIdAndStuID(@Param("lesson_id")int lesson_id,@Param("student_id")int student_id);
+
+
+
 
     //获取培训计划进度列表()开发中
     //@Select("")

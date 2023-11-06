@@ -40,7 +40,7 @@ public class TrainPlanStudentServiceImpl implements TrainPlanStudentService {
     @Override
     public MsgRespond insertTrainPlanStudent(int student_id,int plan_id) {
         //判断计划名是否存在
-        String CheckResult = judgeExit(student_id);
+        String CheckResult = judgeExit(student_id,plan_id);
         if (!CheckResult.isBlank()){
             return MsgRespond.fail(CheckResult);
         }
@@ -119,8 +119,8 @@ public class TrainPlanStudentServiceImpl implements TrainPlanStudentService {
      * @param training_student_id 学生id
      * @return 根据处理结果返回对应消息
      */
-    private String judgeExit(int training_student_id){
-        Integer Id = trainPlanStudentMapper.CheckStuInForm(training_student_id);
+    private String judgeExit(int training_student_id,int plan_id){
+        Integer Id = trainPlanStudentMapper.CheckStuInForm(training_student_id,plan_id);
         if(Objects.nonNull(Id)){
             return "该用户已在培训计划里";
         }

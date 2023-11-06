@@ -1,6 +1,7 @@
-package com.training.progress.utils;
+package com.training.learn.utils;
 
-import com.training.progress.entity.table.ProgressLesson;
+
+import com.training.learn.entity.result.ProgressLesson;
 
 import java.util.List;
 

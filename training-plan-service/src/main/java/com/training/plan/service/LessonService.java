@@ -7,7 +7,7 @@ import com.training.plan.entity.request.LessonUpdate;
 
 public interface LessonService {
     //加入课程
-    MsgRespond insertLesson(LessonReq req);
+    MsgRespond insertLesson(LessonReq req,int plan_id);
     //获取指定教师的所有课程
     DataRespond getTeaAllLess(int teacher_id,int page_size,int offset);
     //获取指定课程信息

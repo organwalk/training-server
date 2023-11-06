@@ -11,8 +11,8 @@ public interface TrainPlanStudentMapper {
     @Insert("insert into t_training_plan_student(training_student_id, training_plan_id) VALUES (#{training_student_id},#{training_plan_id})")
     void insertTrainPlanStudent(@Param("training_student_id") int training_student_id,@Param("training_plan_id")int training_plan_id);
     //判断学生是否已经存在
-    @Select("select id from t_training_plan_student where training_student_id=#{training_student_id}")
-    Integer CheckStuInForm(int training_student_id);
+    @Select("select id from t_training_plan_student where training_student_id=#{training_student_id} and training_plan_id=#{training_plan_id}")
+    Integer CheckStuInForm(@Param("training_student_id") int training_student_id,@Param("training_plan_id")int training_plan_id);
     //获取指定id的所有学生id
     @Select("select training_student_id from t_training_plan_student where training_plan_id = #{training_plan_id}")
     List<Integer> getAllStuId(int training_plan_id);
@@ -34,6 +34,11 @@ public interface TrainPlanStudentMapper {
 
     @Delete("delete from t_training_plan_student where training_plan_id=#{training_plan_id}")
     void DeleteStuByPlanId(int training_plan_id);
+
+    @Select("select plan_id from t_progress_plan where lesson_id=#{lesson_id}")
+    Integer getPlanIdByLessonId(Integer lesson_id);
+
+
 
     
 
