@@ -1,12 +1,15 @@
 package com.training.resource.controller;
 
+import com.training.common.entity.DataFailRespond;
 import com.training.common.entity.DataRespond;
 import com.training.common.entity.MsgRespond;
 import com.training.resource.entity.request.ResourceLessonReq;
 import com.training.resource.entity.request.ResourceNormalReq;
+import com.training.resource.entity.request.ResourceNoteReq;
 import com.training.resource.entity.request.TagReq;
 import com.training.resource.service.ResourceLessonService;
 import com.training.resource.service.ResourceNormalService;
+import com.training.resource.service.ResourceNoteService;
 import com.training.resource.service.TagService;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Min;
@@ -28,6 +31,7 @@ public class ResourceController {
     private final TagService tagService;
     private final ResourceNormalService resourceNormalService;
     private final ResourceLessonService resourceLessonService;
+    private final ResourceNoteService resourceNoteService;
 
     // 创建资源分类标签
     @GetMapping("/v3/tag")
@@ -152,5 +156,23 @@ public class ResourceController {
     public MsgRespond deleteAllLessonResource(@PathVariable @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "teacher_id必须为纯数字字段") Integer teacher_id,
                                               @PathVariable @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "lesson_id必须为纯数字字段") Integer lesson_id){
         return resourceLessonService.deleteAllLessonResource(teacher_id, lesson_id);
+    }
+
+    // 上传学习笔记
+    @PostMapping("/v1/file/note")
+    public DataRespond uploadNote(@Validated @ModelAttribute ResourceNoteReq req){
+        if (Objects.isNull(req.getNote_file())){
+            return new DataFailRespond("上传笔记不能为空");
+        }
+        return resourceNoteService.uploadNote(req);
+    }
+
+    // 根据笔记ID删除用户发布的笔记
+    @DeleteMapping("/v1/file/note/{user_id}/{note_id}")
+    public MsgRespond deleteOneNote(@PathVariable @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "user_id必须为纯数字字段") Integer user_id,
+                                    @PathVariable @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "note_id必须为纯数字字段") Integer note_id,
+                                    @RequestHeader(name = "username") String username,
+                                    @RequestHeader(name = "auth") String auth){
+        return resourceNoteService.deleteOneNoteByUser(user_id, note_id, username, auth);
     }
 }

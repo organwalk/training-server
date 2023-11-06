@@ -5,7 +5,9 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.training.common.entity.req.DeptListReq;
 import com.training.common.entity.req.UserInfoListReq;
+import com.training.common.entity.result.ChapterInfo;
 import com.training.resource.client.DeptClient;
+import com.training.resource.client.TrainingClient;
 import com.training.resource.client.UserClient;
 import com.training.resource.entity.respond.ResourceNormalAllListRespond;
 import com.training.resource.entity.respond.ResourceNormalDetailRespond;
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 定义数据处理的通用工具方法
@@ -27,6 +30,7 @@ import java.util.List;
 public class DataUtil {
     private final UserClient userClient;
     private final DeptClient deptClient;
+    private final TrainingClient trainingClient;
 
     /**
      * 交换处理Uid列表为用户信息列表
@@ -115,6 +119,44 @@ public class DataUtil {
             }
         }
         return rawDataList;
+    }
+
+    /**
+     * 检查章节是否存在
+     * @param lessonId 课程ID
+     * @param chapterId 章节ID
+     * @return 消息提示， 若为空，则表示校验通过
+     * by organwalk by 2023-11-04
+     */
+    public String validChapter(Integer lessonId, Integer chapterId){
+        JSONObject chapterListObj = trainingClient.getChapterListByLesson(lessonId);
+        if (Objects.equals(chapterListObj.getInteger("code"), 5005)){
+            return chapterListObj.getString("msg");
+        }
+        List<ChapterInfo> chapters = chapterListObj.getJSONArray("data").toJavaList(ChapterInfo.class);
+        boolean checkChapterId = chapters.stream().anyMatch(chapterInfo -> Objects.equals(chapterInfo.getId(), chapterId));
+        if (!checkChapterId){
+            return "该课程下不存在此章节";
+        }
+        return null;
+    }
+
+    public String checkResourceAuth(Integer upId, String auth, String username){
+        // 检查指定上传者是否存在
+        JSONObject userInfo = userClient.getUserAccountByUid(upId);
+        Integer codeMark = userInfo.getInteger("code");
+        if (Objects.equals(codeMark, 5005)){
+            return "当前指定上传者不存在";
+        }
+        // 检查身份是否是管理员
+        if (!Objects.equals(auth, "admin")){
+            // 检查是否是上传者本人
+            String realUsername = userInfo.getJSONObject("data").getString("username");
+            if (!Objects.equals(username, realUsername)){
+                return "当前身份非资源上传者本人，无法进行操作";
+            }
+        }
+        return "";
     }
 
     private List<UpInfo> getUpInfoList(List<Integer> upIds){

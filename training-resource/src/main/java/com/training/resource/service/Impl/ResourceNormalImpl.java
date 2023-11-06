@@ -167,7 +167,7 @@ public class ResourceNormalImpl implements ResourceNormalService {
             return MsgRespond.fail(checkInfo);
         }
         // 检查是否有权限操作文件
-        String checkAuth = checkResourceAuth(req.getUp_id(), auth, username);
+        String checkAuth = dataUtil.checkResourceAuth(req.getUp_id(), auth, username);
         if (!checkAuth.isBlank()){
             return MsgRespond.fail(checkAuth);
         }
@@ -215,7 +215,7 @@ public class ResourceNormalImpl implements ResourceNormalService {
             return MsgRespond.fail("此资源文件不存在");
         }
         // 检查是否有权限操作文件
-        String checkAuth = checkResourceAuth(uid, auth, username);
+        String checkAuth = dataUtil.checkResourceAuth(uid, auth, username);
         if (!checkAuth.isBlank()){
             return MsgRespond.fail(checkAuth);
         }
@@ -314,21 +314,5 @@ public class ResourceNormalImpl implements ResourceNormalService {
         return "";
     }
 
-    private String checkResourceAuth(Integer upId, String auth, String username){
-        // 检查指定上传者是否存在
-        JSONObject userInfo = userClient.getUserAccountByUid(upId);
-        Integer codeMark = userInfo.getInteger("code");
-        if (Objects.equals(codeMark, 5005)){
-            return "当前指定上传者不存在";
-        }
-        // 检查身份是否是管理员
-        if (!Objects.equals(auth, "admin")){
-            // 检查是否是上传者本人
-            String realUsername = userInfo.getJSONObject("data").getString("username");
-            if (!Objects.equals(username, realUsername)){
-                return "当前身份非资源上传者本人，无法进行编辑";
-            }
-        }
-        return "";
-    }
+
 }

@@ -13,6 +13,8 @@ public class AppConfig {
     private String resourceNormalPath;
     @Value("${upload.lesson-path}")
     private String lessonPath;
+    @Value("${upload.note-path}")
+    private String notePath;
     @Bean
     public Tika tika(){
         return new Tika();
