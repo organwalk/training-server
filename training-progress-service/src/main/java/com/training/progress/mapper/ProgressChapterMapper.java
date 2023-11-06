@@ -25,12 +25,12 @@ public interface ProgressChapterMapper {
     @Select("select * from t_progress_chapter where lesson_id=#{lesson_id} limit #{page_size} offset #{offset}")
     List<ProgressChapter> getStuProChatByLessId(@Param("lesson_id")int lesson_id, @Param("page_size")int page_size, @Param("offset")int offset);
 
-    @Select("select * from t_progress_chapter where student_id=#{student_id} ORDER BY id DESC ")
-    ProgressChapter getProChapByStuId(int student_id);
+    @Select("select * from t_progress_chapter where student_id=#{student_id} and lesson_id=#{lesson_id} ORDER BY id DESC ")
+    List<ProgressChapter> getProChapByStuId(@Param("student_id") int student_id,@Param("lesson_id")int lesson_id);
 
    @Select("select student_id from t_progress_chapter where lesson_id=#{lesson_id}")
     List<Integer> getAllStuIdByLessonId(@Param("lesson_id")int lesson_id);
 
-    @Select("select over_chapter_id from t_progress_chapter where student_id=#{student_id} and lesson_id=#{lesson_id}")
+   @Select("select over_chapter_id from t_progress_chapter where student_id=#{student_id} and lesson_id=#{lesson_id}")
     List<Integer> getChapterListByStuIdAndLessonId(@Param("student_id")int student_id,@Param("lesson_id")int lesson_id);
 }
