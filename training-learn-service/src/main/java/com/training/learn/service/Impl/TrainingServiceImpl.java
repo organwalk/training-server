@@ -8,6 +8,8 @@ import com.training.common.entity.DataRespond;
 import com.training.learn.client.PlanClient;
 import com.training.learn.client.UserClient;
 import com.training.learn.entity.respond.Plan;
+import com.training.learn.entity.respond.TeacherInfo;
+import com.training.learn.entity.result.LessonResult;
 import com.training.learn.entity.result.PlanResult;
 import com.training.learn.entity.result.ProgressLesson;
 import com.training.learn.mapper.TrainingMapper;
@@ -59,8 +61,42 @@ public class TrainingServiceImpl implements TrainingService {
 
     @Override
     public DataRespond getLessonByPIdAndStuId(int plan_id, int student_id, int page_size, int offset) {
-        return null;
+        String StuMark = judgeStuExit(student_id);
+        if(!StuMark.isBlank()){
+            return new DataFailRespond(StuMark);
+        }
+        String PlanMark = judgePlanExit(plan_id);
+        if (!PlanMark.isBlank()){
+            return new DataFailRespond(PlanMark);
+        }
+        String Mark = judgeStuInPlan(student_id,plan_id);
+        if (!Mark.isBlank()){
+            return new DataFailRespond(Mark);
+        }
+        List<Integer> lessonIdList = trainingMapper.getLessonIdListByPId(plan_id);
+        List<LessonResult> lessonResults = new ArrayList<>();
+        for (Integer i:lessonIdList){
+            JSONObject req = planClient.getLessonInfo(i);
+            JSONObject data = req.getJSONObject("data");
+            String lessonName = data.getString("lesson_name");
+            String lessonDes = data.getString("lesson_des");
+            String lessonState = data.getString("lesson_state");
+            Integer teacherId = data.getInteger("teacher_id");
+            TeacherInfo teacherInfo = getTeaInfo(teacherId);
+            ProgressLesson lessonProgress = trainingMapper.getLessonProgressByLIdAndStuId(i,student_id);
+            double x =0;
+            if (lessonProgress!=null){
+            x = ComputeUtil.getStuProgress(lessonProgress);
+            }
+            LessonResult lessonResult = new LessonResult(i,lessonName,lessonDes,lessonState,x,teacherId,teacherInfo);
+            lessonResults.add(lessonResult);
+        }
+        int endIndx = Math.min(offset + page_size,lessonResults.size());
+        List<LessonResult> results = lessonResults.subList(offset,endIndx);
+        return new DataPagingSuccessRespond("已成功获取此培训计划下的课程列表",lessonResults.size(),results);
     }
+
+
 
 
     /**
@@ -100,6 +136,71 @@ public class TrainingServiceImpl implements TrainingService {
         }
         return sum;
     }
+
+
+
+    /**
+     *  判断学生是否在该计划内
+     * @param  student_id 学生id
+     * @param  plan_id 计划id
+     * @return 根据处理结果返回对应消息
+     */
+    private String judgeStuInPlan(int student_id,int plan_id){
+        Integer Mark = trainingMapper.judgeExitStuInPlan(plan_id,student_id);
+        if (Objects.equals(Mark,0)){
+            return "该学生不在该计划内！";
+        }
+        return "";
+    }
+
+
+
+
+    /**
+     *  根据id获取教师信息
+     * @param  id 学生id
+     * @return 根据处理结果返回对应消息
+     */
+    private TeacherInfo getTeaInfo(int id){
+        JSONObject req = userClient.getUserAccountByUid(id);
+        JSONObject data = req.getJSONObject("data");
+        String realName = data.getString("realName");
+        String mobile = data.getString("mobile");
+        return new TeacherInfo(realName,mobile);
+    }
+
+
+
+    /**
+     *  判断学生是否存在
+     * @param  student_id 学生id
+     * @return 根据处理结果返回对应消息
+     */
+    private String judgeStuExit(int student_id){
+        JSONObject req = userClient.getUserAccountByUid(student_id);
+        if (Objects.equals(req.get("code"),5005)){
+            return "该学生不存在！";
+        }
+        return "";
+    }
+
+
+
+    /**
+     *  判断计划是否存在
+     * @param  plan_id 计划id
+     * @return 根据处理结果返回对应消息
+     */
+    private String judgePlanExit(int plan_id){
+        JSONObject req = planClient.getPlanInfoById(plan_id);
+        if (Objects.equals(req.get("code"),5005)){
+            return "该计划不存在！";
+        }
+        return "";
+    }
+
+
+
 
 
 
