@@ -62,7 +62,7 @@ public class TrainingPlanServiceImpl implements TrainingPlanService {
         ) {
             return MsgRespond.fail("结束时间必须在起始时间之后！");
         }
-        if (si.parse(req.getTraining_start_time()).getTime() <= System.currentTimeMillis()){
+        if (si.parse(req.getTraining_start_time()).getTime() >= System.currentTimeMillis()){
             return MsgRespond.fail("起始时间不能早于今天！");
         }
         req.setTraining_state("ongoing");
