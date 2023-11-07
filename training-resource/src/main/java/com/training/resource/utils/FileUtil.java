@@ -70,7 +70,7 @@ public class FileUtil {
         // 获取上传的文件扩展名
         String fileExtension = Objects.requireNonNull(fileOriginName).substring(fileOriginName.lastIndexOf("."));
         // 生成"上传者ID + UUID.后缀"的文件名
-        String customFileName = '/' + lessonId.toString() + '/' + chapterId  + '/' + lessonId + chapterId + upId + UUID.randomUUID() + fileExtension;
+        String customFileName = lessonId.toString() + '/' + chapterId  + '/' + lessonId + chapterId + upId + UUID.randomUUID() + fileExtension;
         // 构建文件保存路径
         return appConfig.getNotePath() + File.separator + customFileName;
     }
@@ -89,5 +89,15 @@ public class FileUtil {
     public String getLessonFolderPath(Integer teacherId, Integer lessonId){
         String customPath = '/' + teacherId.toString() + '/' + lessonId;
         return appConfig.getLessonPath() +  customPath.replace("/", File.separator);
+    }
+
+    public String getNoteChapterFolderPath(Integer lessonId, Integer chapterId){
+        String customPath = '/' + lessonId.toString() + '/' + chapterId;
+        return appConfig.getNotePath() + customPath.replace("/", File.separator);
+    }
+
+    public String getNoteLessonFolderPath(Integer lessonId){
+        String customPath = '/' + lessonId.toString();
+        return appConfig.getNotePath() + customPath.replace("/", File.separator);
     }
 }

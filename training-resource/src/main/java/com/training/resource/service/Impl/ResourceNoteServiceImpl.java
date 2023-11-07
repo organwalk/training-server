@@ -11,11 +11,22 @@ import com.training.resource.service.ResourceNoteService;
 import com.training.resource.utils.DataUtil;
 import com.training.resource.utils.FileUtil;
 import lombok.AllArgsConstructor;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Comparator;
 import java.util.Objects;
 
 @Service
@@ -85,8 +96,84 @@ public class ResourceNoteServiceImpl implements ResourceNoteService {
         File file = new File(notePath);
         if (!file.exists() || file.delete()){
             resourceNoteMapper.deleteNoteById(noteId);
+        }else {
+            return MsgRespond.fail("文件处理异常，请稍后再试");
         }
         return MsgRespond.success("已成功删除此笔记");
+    }
+
+    /**
+     * 删除指定章节的学习笔记具体实现
+     * @param chapterId 章节ID
+     * @return 根据处理结果返回消息
+     * by organwalk 2023-11-07
+     */
+    @Override
+    public MsgRespond deleteNoteByChapter(Integer lessonId, Integer chapterId) {
+        Integer idMark = resourceNoteMapper.selectNoteIdCountByChapterId(chapterId);
+        if (idMark == 0){
+            return MsgRespond.fail("指定章节不存在笔记");
+        }
+        String noteFolderPath = fileUtil.getNoteChapterFolderPath(lessonId, chapterId);
+        File file = new File(noteFolderPath);
+        if (!file.exists()){
+            resourceNoteMapper.deleteNoteByChapterId(chapterId);
+        }else {
+            try {
+                Files.walk(Path.of(noteFolderPath))
+                        .sorted(Comparator.reverseOrder())
+                        .map(Path::toFile)
+                        .forEach(File::delete);
+                resourceNoteMapper.deleteNoteByChapterId(chapterId);
+            } catch (IOException e) {
+                return MsgRespond.fail("内部服务错误，删除失败，请稍后重试");
+            }
+        }
+        return MsgRespond.success("已成功删除此章节下笔记");
+    }
+
+    @Override
+    public MsgRespond deleteNoteByLesson(Integer lessonId) {
+        Integer idMark = resourceNoteMapper.selectNoteIdCountByLessonId(lessonId);
+        if (idMark == 0) {
+            return MsgRespond.fail("指定课程下不存在笔记");
+        }
+        String noteFolderPath = fileUtil.getNoteLessonFolderPath(lessonId);
+        File file = new File(noteFolderPath);
+        if (!file.exists()){
+            resourceNoteMapper.deleteNoteByLessonId(lessonId);
+        }else {
+            try {
+                Files.walk(Path.of(noteFolderPath))
+                        .sorted(Comparator.reverseOrder())
+                        .map(Path::toFile)
+                        .forEach(File::delete);
+                resourceNoteMapper.deleteNoteByLessonId(lessonId);
+            } catch (IOException e) {
+                return MsgRespond.fail("内部服务错误，删除失败，请稍后重试");
+            }
+        }
+        return MsgRespond.success("已成功删除此课程下笔记");
+    }
+
+    @Override
+    public ResponseEntity<String> getNoteById(Integer noteId) {
+        String notePath = resourceNoteMapper.selectNotePathById(noteId);
+        Path filePath = Paths.get(notePath);
+        byte[] markdownBytes;
+        try {
+            markdownBytes = Files.readAllBytes(filePath);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        String markdownContent = new String(markdownBytes, StandardCharsets.UTF_8);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.TEXT_MARKDOWN);
+        headers.set(HttpHeaders.CONTENT_ENCODING, "utf-8");
+        headers.set(HttpHeaders.CONTENT_TYPE, "text/markdown; charset=UTF-8");
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(markdownContent);
     }
 
 
