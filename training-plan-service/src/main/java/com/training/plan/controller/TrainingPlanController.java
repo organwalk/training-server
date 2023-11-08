@@ -6,6 +6,7 @@ import com.training.plan.entity.request.*;
 import com.training.plan.service.*;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 
 import org.springframework.validation.annotation.Validated;
@@ -301,6 +302,18 @@ public class TrainingPlanController {
         return testService.updateTest(req,test_id);
     }
 
+    @GetMapping("/v3/plan/keyword/{keyword}/{page_size}/{offset}")
+    public DataRespond getAllPlanByKeyword(@PathVariable @NotBlank(message = "keyword不能为空") String keyword,
+                                           @PathVariable
+                                           @Min(value = 1, message = "page_size必须为大于1的整数")
+                                           @Digits(integer = Integer.MAX_VALUE, fraction = 0)
+                                           int page_size,
+                                           @PathVariable
+                                               @Min(value = 0, message = "offset必须为大于或等于0的整数")
+                                               @Digits(integer = Integer.MAX_VALUE, fraction = 0)
+                                               int offset){
+        return trainingPlanService.getAllPlanByKeyword(keyword, page_size, offset);
+    }
 
 
 

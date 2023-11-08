@@ -247,6 +247,24 @@ public class TrainingPlanServiceImpl implements TrainingPlanService {
         return MsgRespond.success("删除成功！");
     }
 
+    /**
+     * 根据关键词模糊查询计划信息
+     * @param keyword 关键词
+     * @param page_size 读取记录
+     * @param offset 偏移量
+     * @return 结果列表或错误提示
+     * by organwalk 2023-11-08
+     */
+    @Override
+    public DataRespond getAllPlanByKeyword(String keyword, int page_size, int offset) {
+        Integer sumMark = trainingPlanMapper.selectPlanSumByKeyword(keyword);
+        if (sumMark == 0){
+            return new DataFailRespond("搜索结果为空");
+        }
+        return new DataPagingSuccessRespond("已成功获取搜索结果", sumMark,
+                trainingPlanMapper.selectAllPlanByKeyword(keyword, page_size, offset));
+    }
+
 
     /**
      * 判断计划名是否存在的具体实现
