@@ -3,10 +3,12 @@ package com.training.plan.service;
 import com.training.common.entity.DataRespond;
 import com.training.common.entity.MsgRespond;
 
+import java.util.List;
+
 
 public interface TrainPlanTeacherService {
     //加入教师
-    MsgRespond insertTrainPlanTeacher(int train_plan_id,int training_teacher_id);
+    MsgRespond insertTrainPlanTeacher(int train_plan_id, List<Integer> teacherIdList);
     //获取指定计划id的所有教师
     DataRespond getAllTeaByPlanId(int plan_id,int page_size,int offset);
 

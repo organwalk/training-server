@@ -38,18 +38,17 @@ public class TrainPlanTeacherServiceImpl implements TrainPlanTeacherService {
     private final PlanCache planCache;
     /**
      * 创建计划的具体实现
-     * @param training_teacher_id 教师id
+     * @param teacherIdList 教师id列表
      * @param train_plan_id 计划id
      * @return 根据处理结果返回对应消息
      */
     @Override
-    public MsgRespond insertTrainPlanTeacher(int train_plan_id,int training_teacher_id) {
+    public MsgRespond insertTrainPlanTeacher(int train_plan_id,List<Integer> teacherIdList) {
         //判断教师是否已经在该计划内
-        String CheckResult = judgeTeaExit(training_teacher_id,train_plan_id);
-        if (!CheckResult.isBlank()){
-            return MsgRespond.fail(CheckResult);
+        if (teacherIdList.stream().anyMatch(item -> !judgeTeaExit(item, train_plan_id).isBlank())) {
+            return MsgRespond.fail("提供的教师列表中，部分教师已经在计划内");
         }
-        trainPlanTeacherMapper.insertTrainPlanTeacher(train_plan_id,training_teacher_id);
+        trainPlanTeacherMapper.insertTrainPlanTeacher(train_plan_id,teacherIdList);
         return MsgRespond.success("添加教师成功！");
     }
     /**
