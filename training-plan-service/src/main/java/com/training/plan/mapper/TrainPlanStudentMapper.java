@@ -8,8 +8,15 @@ import java.util.List;
 @Mapper
 public interface TrainPlanStudentMapper {
     //插入一个新的记录
-    @Insert("insert into t_training_plan_student(training_student_id, training_plan_id) VALUES (#{training_student_id},#{training_plan_id})")
-    void insertTrainPlanStudent(@Param("training_student_id") int training_student_id,@Param("training_plan_id")int training_plan_id);
+    @Insert("<script>" +
+            "INSERT INTO t_training_plan_student(training_student_id, training_plan_id) " +
+            "VALUES " +
+            "<foreach collection='studentIdList' item='studentId' separator=','>" +
+            "(#{studentId}, #{training_plan_id})" +
+            "</foreach>" +
+            "</script>")
+    void insertTrainPlanStudent(@Param("studentIdList") List<Integer> studentIdList,
+                                @Param("training_plan_id") int training_plan_id);
     //判断学生是否已经存在
     @Select("select id from t_training_plan_student where training_student_id=#{training_student_id} and training_plan_id=#{training_plan_id}")
     Integer CheckStuInForm(@Param("training_student_id") int training_student_id,@Param("training_plan_id")int training_plan_id);

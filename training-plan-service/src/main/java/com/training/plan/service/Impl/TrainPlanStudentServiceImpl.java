@@ -32,20 +32,20 @@ public class TrainPlanStudentServiceImpl implements TrainPlanStudentService {
     private final PlanCache planCache;
     /**
      * 添加学生进入计划的具体实现
-     * @param student_id 学生id
+     * @param studentIdList 学生id列表
      * @param plan_id 计划id
      * @return 根据处理结果返回对应消息
      */
 
     @Override
-    public MsgRespond insertTrainPlanStudent(int student_id,int plan_id) {
+    public MsgRespond insertTrainPlanStudent(List<Integer> studentIdList,int plan_id) {
         //判断计划名是否存在
-        String CheckResult = judgeExit(student_id,plan_id);
-        if (!CheckResult.isBlank()){
-            return MsgRespond.fail(CheckResult);
+        if (studentIdList.stream().anyMatch(item -> !judgeExit(item, plan_id).isBlank())) {
+            return MsgRespond.fail("提供的学生列表中，部分学生已经在计划内");
         }
+
         //添加学生
-        trainPlanStudentMapper.insertTrainPlanStudent(student_id,plan_id);
+        trainPlanStudentMapper.insertTrainPlanStudent(studentIdList,plan_id);
         return MsgRespond.success("添加成功！");
     }
     /**

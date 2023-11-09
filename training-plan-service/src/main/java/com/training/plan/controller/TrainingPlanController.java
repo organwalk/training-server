@@ -40,14 +40,15 @@ public class TrainingPlanController {
         return teacherService.insertTrainPlanTeacher(plan_id,teacherIdList);
     }
     //添加学生进入计划
-    @PostMapping("/v3/plan/student/{plan_id}/{student_id}")
+    @PostMapping("/v3/plan/student/{plan_id}")
     public MsgRespond insertStuInPlan(@PathVariable
                                       @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "plan_id必须为纯数字字段")
                                       int plan_id,
-                                      @PathVariable
-                                      @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "学生id必须为纯数字字段")
-                                      int student_id){
-        return studentService.insertTrainPlanStudent(student_id,plan_id);
+                                      @RequestParam("studentIdList")
+                                      @NotEmpty(message = "studentIdList不能为空")
+                                      @Pattern(regexp = "^\\d+$", message = "列表元素必须为整数")
+                                      List<Integer> studentIdList){
+        return studentService.insertTrainPlanStudent(studentIdList, plan_id);
     }
     //获取所有计划列表
     @GetMapping("/v3/plan/{page_size}/{offset}")
