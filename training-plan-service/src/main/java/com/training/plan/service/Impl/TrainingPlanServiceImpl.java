@@ -19,10 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * 计划管理业务具体实现
@@ -194,6 +191,10 @@ public class TrainingPlanServiceImpl implements TrainingPlanService {
         TrainingPlanTable planTable = trainingPlanMapper.getTrainById(id);
         if (Objects.equals(planTable.getTraining_state(), state)){
             return MsgRespond.fail("当前状态已是"+state);
+        }
+        List<String> stateRules = Arrays.asList("timeout", "end", "over", "ongoing");
+        if (!stateRules.contains(state)){
+            return MsgRespond.fail("支持的状态仅有四种英文形式：timeout超时、end已结束、over已完成，ongoing正在进行");
         }
         Integer i = trainingPlanMapper.changeState(state,id);
         return i>0?MsgRespond.success("修改成功！"):MsgRespond.fail("修改失败!");
