@@ -6,6 +6,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.training.common.entity.*;
 import com.training.common.entity.req.UserInfoListReq;
 import com.training.plan.client.UserClient;
+import com.training.plan.entity.respond.StudentInfo;
 import com.training.plan.entity.respond.TeacherInfo;
 import com.training.plan.entity.result.User;
 import com.training.plan.mapper.TrainPlanStudentMapper;
@@ -65,7 +66,7 @@ public class TrainPlanStudentServiceImpl implements TrainPlanStudentService {
         String key = plan_id+"-"+page_size+"-"+offset;
         if (planCache.getStuList(key)!=null){
             String result = (String) planCache.getStuList(key);
-            List<TeacherInfo> info = JSON.parseArray(result, TeacherInfo.class);
+            List<StudentInfo> info = JSON.parseArray(result, StudentInfo.class);
             return  new DataPagingSuccessRespond("查询成功！",sumMark,info);
         }
         //获取计划中所有学生id
@@ -75,10 +76,10 @@ public class TrainPlanStudentServiceImpl implements TrainPlanStudentService {
         List<User> userList = JSONArray.parseArray(StuList.toJSONString(),User.class);
         //获取所有id
         List<Integer> IdList = trainPlanStudentMapper.getAllIdByPlanID(plan_id);
-        List<TeacherInfo> AllStuList = new ArrayList<>();
+        List<StudentInfo> AllStuList = new ArrayList<>();
         for(int i= 0;i<userList.size();i++){
-            TeacherInfo teacherInfo = new TeacherInfo(IdList.get(i),AllStuId.get(i),userList.get(i));
-            AllStuList.add(teacherInfo);
+            StudentInfo studentInfo = new StudentInfo(IdList.get(i),AllStuId.get(i),userList.get(i));
+            AllStuList.add(studentInfo);
         }
         //将数据缓存
         planCache.saveStu(key,AllStuList);

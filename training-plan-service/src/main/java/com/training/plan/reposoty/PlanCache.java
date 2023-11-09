@@ -1,6 +1,7 @@
 package com.training.plan.reposoty;
 
 import com.alibaba.fastjson.JSONArray;
+import com.training.plan.entity.respond.StudentInfo;
 import com.training.plan.entity.respond.TeacherInfo;
 import org.springframework.stereotype.Repository;
 
@@ -10,7 +11,7 @@ import java.util.Map;
 @Repository
 public interface PlanCache {
     void saveTea(String key, List<TeacherInfo> infoList);
-    void saveStu(String key, List<TeacherInfo> infoList);
+    void saveStu(String key, List<StudentInfo> infoList);
 
     Object getStuList(String key);
 
