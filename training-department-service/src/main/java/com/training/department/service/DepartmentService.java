@@ -46,4 +46,7 @@ public interface DepartmentService {
 
     // 根据部门ID列表获取部门信息列表
     List<DeptTable> getDeptListByDeptList(List<Integer> deptIdList);
+
+    // 根据部门名称模糊查询部门
+    DataRespond getDeptListByKeyword(String keyword, Integer pageSize, Integer offset);
 }
