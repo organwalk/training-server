@@ -164,18 +164,18 @@ public class TrainingPlanServiceImpl implements TrainingPlanService {
     public MsgRespond UpdatePlan(int id, PlanUpdateReq req) throws ParseException {
         //判断是否存在该计划
         String CheckMark = checkPlanExit(id);
-        if (CheckMark.isBlank()){
+        if (!CheckMark.isBlank()){
             return MsgRespond.fail(CheckMark);
         }
         //使结束时间不得早于起始时间
         TrainingPlanTable planTable = trainingPlanMapper.getTrainById(id);
         SimpleDateFormat si = new SimpleDateFormat("yyyy-MM-dd");
-        if(si.parse(req.getTraining_end_time()).getTime()>si.parse(planTable.getTraining_start_time()).getTime()){
+        if(si.parse(req.getTraining_end_time()).getTime()<si.parse(planTable.getTraining_start_time()).getTime()){
             return MsgRespond.fail("结束时间不得早于起始时间");
         }
         //编辑计划
         Integer i = trainingPlanMapper.update(id, req);
-        return i>0?MsgRespond.success("修改成功！"):MsgRespond.fail("修改失败");
+        return i>0?MsgRespond.success("修改成功!"):MsgRespond.fail("修改失败");
     }
     /**
      * 更改计划状态的具体实现

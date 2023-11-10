@@ -8,4 +8,6 @@ public interface TrainingService {
 
     DataRespond getLessonByPIdAndStuId(int plan_id,int student_id,int page_size,int offset);
 
+    DataRespond getChapterByStuIdAndLessId(int student_id,int lesson_id);
+
 }
