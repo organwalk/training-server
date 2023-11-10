@@ -142,7 +142,7 @@ public class TrainPlanStudentServiceImpl implements TrainPlanStudentService {
     private String judgePlanExit(int plan_id){
        Integer ExitCheck = trainPlanStudentMapper.getPlanByPlanId(plan_id);
         if (Objects.equals(ExitCheck,0)){
-            return "该计划不存在！";
+            return "学员列表为空，请进行添加";
         }
         return "";
     }

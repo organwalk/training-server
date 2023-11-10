@@ -74,6 +74,9 @@ public class TrainPlanTeacherServiceImpl implements TrainPlanTeacherService {
         }
         //获取教师详情
         List<Integer> teacherIdList = trainPlanTeacherMapper.getAllTeacherId(plan_id,page_size,offset);
+        if (teacherIdList.isEmpty()){
+            return new DataFailRespond("教师列表为空，请进行添加");
+        }
         JSONArray TeaList = userClient.getUserInfoByUidList(new UserInfoListReq(teacherIdList));
         List<User> userList = JSONArray.parseArray(TeaList.toJSONString(),User.class);
         List<Integer> IdList = trainPlanTeacherMapper.getAllTeaId(plan_id);
