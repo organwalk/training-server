@@ -92,14 +92,14 @@ public class TrainPlanTeacherServiceImpl implements TrainPlanTeacherService {
      * @return 返回教师列表
      */
     @Override
-    public MsgRespond deleteTea(int t_id) {
+    public MsgRespond deleteTea(int p_id, int t_id) {
         //判断该教师是否在计划内
         Integer ExitMark = trainPlanTeacherMapper.ExitJudge(t_id);
         if (Objects.equals(ExitMark,0)){
             return MsgRespond.fail("改教师未在该计划内");
         }
         //删除教师
-        Integer i = trainPlanTeacherMapper.deleteByTId(t_id);
+        Integer i = trainPlanTeacherMapper.deleteByTId(t_id, p_id);
         if (i<=0){
             return MsgRespond.fail("删除失败!");
         }

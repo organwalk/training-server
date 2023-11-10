@@ -33,8 +33,8 @@ public interface TrainPlanStudentMapper {
     @Select("select id from t_training_plan_student where training_plan_id=#{training_plan_id}")
     List<Integer> getAllIdByPlanID(int training_plan_id);
     //根据id删除
-    @Delete("delete from t_training_plan_student where id =#{id}")
-    Integer DeleteStu(int id);
+    @Delete("delete from t_training_plan_student where training_student_id =#{s_id} and training_plan_id = #{p_id}")
+    Integer DeleteStu(@Param("s_id") int studentId, @Param("p_id") int planId);
 
     @Select("select COUNT(training_student_id) from t_training_plan_student where id =#{id}")
     Integer ExitJudge(int id);

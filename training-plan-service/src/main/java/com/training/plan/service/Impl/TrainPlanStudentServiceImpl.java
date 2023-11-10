@@ -91,14 +91,14 @@ public class TrainPlanStudentServiceImpl implements TrainPlanStudentService {
      * @return 根据处理结果返回对应消息
      */
     @Override
-    public MsgRespond deleteStu(int id) {
+    public MsgRespond deleteStu(int planId, int id) {
         //判断学生是否在该计划
         Integer ExitMark = trainPlanStudentMapper.ExitJudge(id);
         if(Objects.equals(ExitMark,0)){
             return MsgRespond.fail("该学生未在该计划内！");
         }
         //删除学生
-        Integer i = trainPlanStudentMapper.DeleteStu(id);
+        Integer i = trainPlanStudentMapper.DeleteStu(id, planId);
         if (i<=0){
             return MsgRespond.fail("删除失败！");
         }

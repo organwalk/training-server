@@ -161,13 +161,13 @@ public class TrainingPlanServiceImpl implements TrainingPlanService {
     public MsgRespond UpdatePlan(int id, PlanUpdateReq req) throws ParseException {
         //判断是否存在该计划
         String CheckMark = checkPlanExit(id);
-        if (CheckMark.isBlank()){
+        if (!CheckMark.isBlank()){
             return MsgRespond.fail(CheckMark);
         }
         //使结束时间不得早于起始时间
         TrainingPlanTable planTable = trainingPlanMapper.getTrainById(id);
         SimpleDateFormat si = new SimpleDateFormat("yyyy-MM-dd");
-        if(si.parse(req.getTraining_end_time()).getTime()>si.parse(planTable.getTraining_start_time()).getTime()){
+        if(si.parse(req.getTraining_end_time()).getTime() < si.parse(planTable.getTraining_start_time()).getTime()){
             return MsgRespond.fail("结束时间不得早于起始时间");
         }
         //编辑计划
@@ -184,7 +184,7 @@ public class TrainingPlanServiceImpl implements TrainingPlanService {
     public MsgRespond changeState(String state, int id) {
         //判断计划是否存在
         String CheckMark = checkPlanExit(id);
-        if (CheckMark.isBlank()){
+        if (!CheckMark.isBlank()){
             return MsgRespond.fail(CheckMark);
         }
         //判断计划状态是否与要修改的状态一致

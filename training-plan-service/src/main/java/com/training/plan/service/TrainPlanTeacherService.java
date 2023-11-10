@@ -13,7 +13,7 @@ public interface TrainPlanTeacherService {
     DataRespond getAllTeaByPlanId(int plan_id,int page_size,int offset);
 
     //删除指定教师
-    MsgRespond deleteTea(int t_id);
+    MsgRespond deleteTea(int plan_id, int t_id);
 
 
 }
