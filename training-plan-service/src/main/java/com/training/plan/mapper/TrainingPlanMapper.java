@@ -17,7 +17,7 @@ public interface TrainingPlanMapper {
     @Select("select id from t_training_plan where training_title=#{trainingTitle}")
     Integer selectTrainingTitleExist(String trainingTitle);
     //获取计划列表
-    @Select("select * from t_training_plan limit #{page_size} offset #{offset}")
+    @Select("select * from t_training_plan ORDER BY id DESC limit #{page_size} offset #{offset}")
     List<TrainingPlanTable> getAllPlan(@Param("page_size") int page_size,@Param("offset") int offset);
     //获取列表总数
     @Select("select COUNT(id) from t_training_plan")
@@ -40,6 +40,19 @@ public interface TrainingPlanMapper {
     //根据id删除计划
     @Delete("delete from t_training_plan where id = #{id}")
     Integer DeletePlan(int id);
+    // 模糊查询的总记录
+    @Select("SELECT count(id) from t_training_plan " +
+            "WHERE (training_title LIKE CONCAT('%', #{keyword}, '%') " +
+            "   OR training_purpose LIKE CONCAT('%', #{keyword}, '%') ) ")
+    Integer selectPlanSumByKeyword(@Param("keyword") String keyword);
+    // 模糊查询计划信息
+    @Select("SELECT * FROM t_training_plan " +
+            "WHERE (training_title LIKE CONCAT('%', #{keyword}, '%') " +
+            "   OR training_purpose LIKE CONCAT('%', #{keyword}, '%') ) " +
+            "ORDER BY id DESC limit #{page_size} offset #{offset}")
+    List<TrainingPlanTable> selectAllPlanByKeyword(@Param("keyword") String keyword,
+                                                @Param("page_size") int page_size,
+                                                @Param("offset") int offset);
 
 
 

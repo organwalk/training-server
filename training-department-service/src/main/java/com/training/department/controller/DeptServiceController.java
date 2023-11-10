@@ -9,6 +9,7 @@ import com.training.department.entity.table.DeptTable;
 import com.training.department.service.DepartmentService;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -64,7 +65,7 @@ public class DeptServiceController {
     }
 
     // 获取指定部门下的成员列表
-    @GetMapping("/v3/department/{dept_id}/{page_size}/{offset}")
+    @GetMapping("/v1/department/{dept_id}/{page_size}/{offset}")
     public DataRespond getDeptMemberList(@PathVariable
                                          @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "dept_id必须为纯数字字段")
                                          Integer dept_id,
@@ -118,7 +119,22 @@ public class DeptServiceController {
 
     // 根据部门ID列表获取部门列表
     @GetMapping("/v1/info/list")
-    public List<DeptTable> getDeptList(@RequestBody DeptListReq req){
+    public List<DeptTable> getDeptList(@RequestBody DeptListReq req) {
         return deptService.getDeptListByDeptList(req.getDeptIdList());
+    }
+
+    // 模糊查询部门
+    @GetMapping("/v1/department/keyword/{keyword}/{page_size}/{offset}")
+    public DataRespond getDeptByKeyword(@PathVariable
+                                        @NotBlank(message = "keyword不能为空")
+                                        String keyword, @PathVariable
+                                        @Min(value = 1, message = "page_size必须为大于1的整数")
+                                        @Digits(integer = Integer.MAX_VALUE, fraction = 0)
+                                        Integer page_size,
+                                        @PathVariable
+                                        @Min(value = 0, message = "offset必须为大于或等于0的整数")
+                                        @Digits(integer = Integer.MAX_VALUE, fraction = 0)
+                                        Integer offset) {
+        return deptService.getDeptListByKeyword(keyword, page_size, offset);
     }
 }

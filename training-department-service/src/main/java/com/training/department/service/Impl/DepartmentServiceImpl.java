@@ -252,6 +252,23 @@ public class DepartmentServiceImpl implements DepartmentService {
         return deptMapper.batchSelectDeptByDeptList(deptIdList);
     }
 
+    /**
+     * 根据关键词搜索部门
+     * @param keyword 关键词
+     * @param pageSize 分页查询单页数量
+     * @param offset 偏移量
+     * @return 部门列表 或 错误提示
+     * by organwalk 2023-11-10
+     */
+    @Override
+    public DataRespond getDeptListByKeyword(String keyword, Integer pageSize, Integer offset) {
+        Integer sumMark = deptMapper.searchDeptSumByKeyword(keyword);
+        if (sumMark == 0){
+            return new DataFailRespond("搜索结果为空");
+        }
+        return new DataPagingSuccessRespond("成功获取搜索结果", sumMark, deptMapper.searchDeptByKeyword(keyword, pageSize, offset));
+    }
+
 
     /**
      * 定义创建或编辑的部门信息进行通用检查方法

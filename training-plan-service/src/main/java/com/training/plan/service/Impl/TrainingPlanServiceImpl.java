@@ -19,10 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * 计划管理业务具体实现
@@ -62,7 +59,7 @@ public class TrainingPlanServiceImpl implements TrainingPlanService {
         ) {
             return MsgRespond.fail("结束时间必须在起始时间之后！");
         }
-        if (si.parse(req.getTraining_start_time()).getTime() <= System.currentTimeMillis()){
+        if (si.parse(req.getTraining_start_time()).getTime() >= System.currentTimeMillis()){
             return MsgRespond.fail("起始时间不能早于今天！");
         }
         req.setTraining_state("ongoing");
@@ -164,13 +161,13 @@ public class TrainingPlanServiceImpl implements TrainingPlanService {
     public MsgRespond UpdatePlan(int id, PlanUpdateReq req) throws ParseException {
         //判断是否存在该计划
         String CheckMark = checkPlanExit(id);
-        if (CheckMark.isBlank()){
+        if (!CheckMark.isBlank()){
             return MsgRespond.fail(CheckMark);
         }
         //使结束时间不得早于起始时间
         TrainingPlanTable planTable = trainingPlanMapper.getTrainById(id);
         SimpleDateFormat si = new SimpleDateFormat("yyyy-MM-dd");
-        if(si.parse(req.getTraining_end_time()).getTime()>si.parse(planTable.getTraining_start_time()).getTime()){
+        if(si.parse(req.getTraining_end_time()).getTime() < si.parse(planTable.getTraining_start_time()).getTime()){
             return MsgRespond.fail("结束时间不得早于起始时间");
         }
         //编辑计划
@@ -187,13 +184,17 @@ public class TrainingPlanServiceImpl implements TrainingPlanService {
     public MsgRespond changeState(String state, int id) {
         //判断计划是否存在
         String CheckMark = checkPlanExit(id);
-        if (CheckMark.isBlank()){
+        if (!CheckMark.isBlank()){
             return MsgRespond.fail(CheckMark);
         }
         //判断计划状态是否与要修改的状态一致
         TrainingPlanTable planTable = trainingPlanMapper.getTrainById(id);
         if (Objects.equals(planTable.getTraining_state(), state)){
             return MsgRespond.fail("当前状态已是"+state);
+        }
+        List<String> stateRules = Arrays.asList("timeout", "end", "over", "ongoing");
+        if (!stateRules.contains(state)){
+            return MsgRespond.fail("支持的状态仅有四种英文形式：timeout超时、end已结束、over已完成，ongoing正在进行");
         }
         Integer i = trainingPlanMapper.changeState(state,id);
         return i>0?MsgRespond.success("修改成功！"):MsgRespond.fail("修改失败!");
@@ -245,6 +246,24 @@ public class TrainingPlanServiceImpl implements TrainingPlanService {
             lessonCache.deleteChapter(String.valueOf(j));
         }
         return MsgRespond.success("删除成功！");
+    }
+
+    /**
+     * 根据关键词模糊查询计划信息
+     * @param keyword 关键词
+     * @param page_size 读取记录
+     * @param offset 偏移量
+     * @return 结果列表或错误提示
+     * by organwalk 2023-11-08
+     */
+    @Override
+    public DataRespond getAllPlanByKeyword(String keyword, int page_size, int offset) {
+        Integer sumMark = trainingPlanMapper.selectPlanSumByKeyword(keyword);
+        if (sumMark == 0){
+            return new DataFailRespond("搜索结果为空");
+        }
+        return new DataPagingSuccessRespond("已成功获取搜索结果", sumMark,
+                trainingPlanMapper.selectAllPlanByKeyword(keyword, page_size, offset));
     }
 
 

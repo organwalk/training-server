@@ -2,6 +2,7 @@ package com.training.plan.reposoty.Impl;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.serializer.SerializerFeature;
+import com.training.plan.entity.respond.StudentInfo;
 import com.training.plan.entity.respond.TeacherInfo;
 import com.training.plan.reposoty.PlanCache;
 import lombok.AllArgsConstructor;
@@ -26,7 +27,7 @@ public class PlanCacheImpl implements PlanCache {
     }
 
     @Override
-    public void saveStu(String key, List<TeacherInfo> infoList) {
+    public void saveStu(String key, List<StudentInfo> infoList) {
         String jsonString = JSONArray.toJSONString(infoList, SerializerFeature.WriteMapNullValue);
         redisTemplate.opsForHash().put(ACCESS_TOKEN_KEY2,key,jsonString);
     }

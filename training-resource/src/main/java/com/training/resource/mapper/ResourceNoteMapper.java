@@ -18,4 +18,17 @@ public interface ResourceNoteMapper {
     // 删除一条笔记记录
     @Delete("delete from t_resource_note where id = #{noteId}")
     void deleteNoteById(Integer noteId);
+    @Select("select count(id) from t_resource_note where chapter_id = #{chapterId}")
+    Integer selectNoteIdCountByChapterId(Integer chapterId);
+    // 根据章节ID删除笔记
+    @Delete("delete from t_resource_note where chapter_id = #{chapterId}")
+    void deleteNoteByChapterId(Integer chapterId);
+    @Select("select count(id) from t_resource_note where lesson_id = #{lessonId}")
+    Integer selectNoteIdCountByLessonId(Integer lessonId);
+    // 根据课程ID删除笔记
+    @Delete("delete from t_resource_note where lesson_id = #{lessonId}")
+    void deleteNoteByLessonId(Integer lessonId);
+    // 根据笔记ID获取笔记名
+    @Select("select note_title from t_resource_note where id = #{noteId}")
+    String selectNoteTitleById(Integer noteId);
 }

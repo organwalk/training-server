@@ -6,6 +6,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.training.common.entity.*;
 import com.training.common.entity.req.UserInfoListReq;
 import com.training.plan.client.UserClient;
+import com.training.plan.entity.respond.StudentInfo;
 import com.training.plan.entity.respond.TeacherInfo;
 import com.training.plan.entity.result.User;
 import com.training.plan.mapper.TrainPlanStudentMapper;
@@ -32,20 +33,20 @@ public class TrainPlanStudentServiceImpl implements TrainPlanStudentService {
     private final PlanCache planCache;
     /**
      * 添加学生进入计划的具体实现
-     * @param student_id 学生id
+     * @param studentIdList 学生id列表
      * @param plan_id 计划id
      * @return 根据处理结果返回对应消息
      */
 
     @Override
-    public MsgRespond insertTrainPlanStudent(int student_id,int plan_id) {
+    public MsgRespond insertTrainPlanStudent(List<Integer> studentIdList,int plan_id) {
         //判断计划名是否存在
-        String CheckResult = judgeExit(student_id,plan_id);
-        if (!CheckResult.isBlank()){
-            return MsgRespond.fail(CheckResult);
+        if (studentIdList.stream().anyMatch(item -> !judgeExit(item, plan_id).isBlank())) {
+            return MsgRespond.fail("提供的学生列表中，部分学生已经在计划内");
         }
         //添加学生
-        trainPlanStudentMapper.insertTrainPlanStudent(student_id,plan_id);
+        trainPlanStudentMapper.insertTrainPlanStudent(studentIdList,plan_id);
+        clearCache(plan_id);
         return MsgRespond.success("添加成功！");
     }
     /**
@@ -65,7 +66,7 @@ public class TrainPlanStudentServiceImpl implements TrainPlanStudentService {
         String key = plan_id+"-"+page_size+"-"+offset;
         if (planCache.getStuList(key)!=null){
             String result = (String) planCache.getStuList(key);
-            List<TeacherInfo> info = JSON.parseArray(result, TeacherInfo.class);
+            List<StudentInfo> info = JSON.parseArray(result, StudentInfo.class);
             return  new DataPagingSuccessRespond("查询成功！",sumMark,info);
         }
         //获取计划中所有学生id
@@ -75,10 +76,10 @@ public class TrainPlanStudentServiceImpl implements TrainPlanStudentService {
         List<User> userList = JSONArray.parseArray(StuList.toJSONString(),User.class);
         //获取所有id
         List<Integer> IdList = trainPlanStudentMapper.getAllIdByPlanID(plan_id);
-        List<TeacherInfo> AllStuList = new ArrayList<>();
+        List<StudentInfo> AllStuList = new ArrayList<>();
         for(int i= 0;i<userList.size();i++){
-            TeacherInfo teacherInfo = new TeacherInfo(IdList.get(i),AllStuId.get(i),userList.get(i));
-            AllStuList.add(teacherInfo);
+            StudentInfo studentInfo = new StudentInfo(IdList.get(i),AllStuId.get(i),userList.get(i));
+            AllStuList.add(studentInfo);
         }
         //将数据缓存
         planCache.saveStu(key,AllStuList);
@@ -90,27 +91,19 @@ public class TrainPlanStudentServiceImpl implements TrainPlanStudentService {
      * @return 根据处理结果返回对应消息
      */
     @Override
-    public MsgRespond deleteStu(int id) {
+    public MsgRespond deleteStu(int planId, int id) {
         //判断学生是否在该计划
-        Integer ExitMark = trainPlanStudentMapper.ExitJudge(id);
+        Integer ExitMark = trainPlanStudentMapper.ExitJudge(planId);
         if(Objects.equals(ExitMark,0)){
             return MsgRespond.fail("该学生未在该计划内！");
         }
         //删除学生
-        Integer i = trainPlanStudentMapper.DeleteStu(id);
+        Integer i = trainPlanStudentMapper.DeleteStu(id, planId);
         if (i<=0){
             return MsgRespond.fail("删除失败！");
         }
         //删除缓存
-        Map<Object, Object> stuList = planCache.getStuAll();
-        for(Object key:stuList.keySet()){
-            String StrKey = key.toString();
-            String[] parts = StrKey.split("-");
-            String value = parts[0];
-            if (value.equals(String.valueOf(id))){
-                planCache.DeleteStu(key);
-            }
-        }
+        clearCache(planId);
         return MsgRespond.success("已成功删除此学员!");
     }
 
@@ -141,13 +134,22 @@ public class TrainPlanStudentServiceImpl implements TrainPlanStudentService {
     private String judgePlanExit(int plan_id){
        Integer ExitCheck = trainPlanStudentMapper.getPlanByPlanId(plan_id);
         if (Objects.equals(ExitCheck,0)){
-            return "该计划不存在！";
+            return "学员列表为空，请进行添加";
         }
         return "";
     }
 
-
-
+    private void clearCache(int planId){
+        Map<Object, Object> stuList = planCache.getStuAll();
+        for(Object key:stuList.keySet()){
+            String StrKey = key.toString();
+            String[] parts = StrKey.split("-");
+            String value = parts[0];
+            if (value.equals(String.valueOf(planId))){
+                planCache.DeleteStu(key);
+            }
+        }
+    }
 
 
 

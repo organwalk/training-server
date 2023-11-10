@@ -30,7 +30,7 @@ public interface DeptMapper {
     Integer selectDeptListSum();
 
     // 获取所有部门列表
-    @Select("select * from t_dept limit #{pageSize} offset #{offset}")
+    @Select("select * from t_dept ORDER BY id DESC limit #{pageSize} offset #{offset}")
     List<DeptTable> selectDeptList(@Param("pageSize") Integer pageSize, @Param("offset") Integer offset);
 
     // 根据部门ID检查部门是否存在
@@ -61,4 +61,15 @@ public interface DeptMapper {
             "</foreach>" +
             "</script>")
     List<DeptTable> batchSelectDeptByDeptList(@Param("deptIdList") List<Integer> deptIdList);
+
+    @Select("SELECT count(id) FROM t_dept " +
+            "WHERE dept_name LIKE CONCAT('%', #{keyword}, '%') ")
+    Integer searchDeptSumByKeyword(@Param("keyword") String keyword);
+    // 根据部门名称进行模糊查询
+    @Select("SELECT * FROM t_dept " +
+            "WHERE dept_name LIKE CONCAT('%', #{keyword}, '%') " +
+            "ORDER BY id DESC limit #{pageSize} offset #{offset}")
+    List<DeptTable> searchDeptByKeyword(@Param("keyword") String keyword,
+                                    @Param("pageSize") Integer pageSize,
+                                    @Param("offset") Integer offset);
 }
