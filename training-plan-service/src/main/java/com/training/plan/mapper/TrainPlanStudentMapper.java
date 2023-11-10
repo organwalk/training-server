@@ -36,7 +36,7 @@ public interface TrainPlanStudentMapper {
     @Delete("delete from t_training_plan_student where training_student_id =#{s_id} and training_plan_id = #{p_id}")
     Integer DeleteStu(@Param("s_id") int studentId, @Param("p_id") int planId);
 
-    @Select("select COUNT(training_student_id) from t_training_plan_student where id =#{id}")
+    @Select("select COUNT(training_student_id) from t_training_plan_student where training_plan_id =#{id}")
     Integer ExitJudge(int id);
 
     @Delete("delete from t_training_plan_student where training_plan_id=#{training_plan_id}")

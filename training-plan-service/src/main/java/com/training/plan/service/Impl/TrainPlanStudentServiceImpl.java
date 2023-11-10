@@ -44,9 +44,9 @@ public class TrainPlanStudentServiceImpl implements TrainPlanStudentService {
         if (studentIdList.stream().anyMatch(item -> !judgeExit(item, plan_id).isBlank())) {
             return MsgRespond.fail("提供的学生列表中，部分学生已经在计划内");
         }
-
         //添加学生
         trainPlanStudentMapper.insertTrainPlanStudent(studentIdList,plan_id);
+        clearCache(plan_id);
         return MsgRespond.success("添加成功！");
     }
     /**
@@ -93,7 +93,7 @@ public class TrainPlanStudentServiceImpl implements TrainPlanStudentService {
     @Override
     public MsgRespond deleteStu(int planId, int id) {
         //判断学生是否在该计划
-        Integer ExitMark = trainPlanStudentMapper.ExitJudge(id);
+        Integer ExitMark = trainPlanStudentMapper.ExitJudge(planId);
         if(Objects.equals(ExitMark,0)){
             return MsgRespond.fail("该学生未在该计划内！");
         }
@@ -103,15 +103,7 @@ public class TrainPlanStudentServiceImpl implements TrainPlanStudentService {
             return MsgRespond.fail("删除失败！");
         }
         //删除缓存
-        Map<Object, Object> stuList = planCache.getStuAll();
-        for(Object key:stuList.keySet()){
-            String StrKey = key.toString();
-            String[] parts = StrKey.split("-");
-            String value = parts[0];
-            if (value.equals(String.valueOf(id))){
-                planCache.DeleteStu(key);
-            }
-        }
+        clearCache(planId);
         return MsgRespond.success("已成功删除此学员!");
     }
 
@@ -147,8 +139,17 @@ public class TrainPlanStudentServiceImpl implements TrainPlanStudentService {
         return "";
     }
 
-
-
+    private void clearCache(int planId){
+        Map<Object, Object> stuList = planCache.getStuAll();
+        for(Object key:stuList.keySet()){
+            String StrKey = key.toString();
+            String[] parts = StrKey.split("-");
+            String value = parts[0];
+            if (value.equals(String.valueOf(planId))){
+                planCache.DeleteStu(key);
+            }
+        }
+    }
 
 
 

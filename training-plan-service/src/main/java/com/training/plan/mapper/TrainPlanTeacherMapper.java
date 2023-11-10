@@ -33,7 +33,7 @@ public interface TrainPlanTeacherMapper {
     @Delete("delete from t_training_plan_teacher where training_teacher_id = #{t_id} and training_plan_id = #{p_id}")
     Integer deleteByTId(@Param("t_id") int teacherId, @Param("p_id") int planId);
     //判断指定教师是否在该计划内
-    @Select("select COUNT(training_teacher_id) from t_training_plan_teacher where id=#{id}")
+    @Select("select COUNT(training_teacher_id) from t_training_plan_teacher where training_plan_id=#{id}")
     Integer ExitJudge(int id);
 
     @Delete("delete from t_training_plan_teacher where training_plan_id=#{training_plan_id}")

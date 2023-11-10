@@ -49,6 +49,7 @@ public class TrainPlanTeacherServiceImpl implements TrainPlanTeacherService {
             return MsgRespond.fail("提供的教师列表中，部分教师已经在计划内");
         }
         trainPlanTeacherMapper.insertTrainPlanTeacher(train_plan_id,teacherIdList);
+        clearCache(train_plan_id);
         return MsgRespond.success("添加教师成功！");
     }
     /**
@@ -66,7 +67,7 @@ public class TrainPlanTeacherServiceImpl implements TrainPlanTeacherService {
         //获取教师数量
         Integer sumMark = trainPlanTeacherMapper.getCountOfTea(plan_id);
         //判断redis是否拥有有则从redis获取
-        String key = String.valueOf(plan_id+page_size+offset);
+        String key = plan_id+"-"+page_size+"-"+offset;
         if(planCache.getTeaList(key)!=null){
             String result = (String) planCache.getTeaList(key);
             List<TeacherInfo> info = JSON.parseArray(result, TeacherInfo.class);
@@ -97,25 +98,16 @@ public class TrainPlanTeacherServiceImpl implements TrainPlanTeacherService {
     @Override
     public MsgRespond deleteTea(int p_id, int t_id) {
         //判断该教师是否在计划内
-        Integer ExitMark = trainPlanTeacherMapper.ExitJudge(t_id);
-        if (Objects.equals(ExitMark,0)){
-            return MsgRespond.fail("改教师未在该计划内");
+        Integer exitMark = trainPlanTeacherMapper.ExitJudge(p_id);
+        if (exitMark == 0){
+            return MsgRespond.fail("该教师未在该计划内");
         }
         //删除教师
         Integer i = trainPlanTeacherMapper.deleteByTId(t_id, p_id);
         if (i<=0){
             return MsgRespond.fail("删除失败!");
         }
-        //删除缓存
-        Map<Object, Object> teaList = planCache.getTeaAll();
-        for (Object key:teaList.keySet()){
-            String StrKey = key.toString();
-            String[] parts = StrKey.split("-");
-            String value = parts[0];
-            if (value.equals(String.valueOf(t_id))){
-                planCache.DeleteTea(key);
-            }
-        }
+        clearCache(p_id);
         return MsgRespond.success("删除成功！");
     }
 
@@ -149,5 +141,18 @@ public class TrainPlanTeacherServiceImpl implements TrainPlanTeacherService {
             return "该计划不存在！";
         }
         return "";
+    }
+
+    private void clearCache(int planId){
+        //删除缓存
+        Map<Object, Object> teaList = planCache.getTeaAll();
+        for (Object key:teaList.keySet()){
+            String StrKey = key.toString();
+            String[] parts = StrKey.split("-");
+            String value = parts[0];
+            if (value.equals(String.valueOf(planId))){
+                planCache.DeleteTea(key);
+            }
+        }
     }
 }
