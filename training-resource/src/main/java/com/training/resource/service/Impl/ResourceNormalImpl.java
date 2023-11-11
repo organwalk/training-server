@@ -10,6 +10,7 @@ import com.training.resource.entity.respond.ResourceNormalAllListRespond;
 import com.training.resource.entity.respond.ResourceNormalDetailRespond;
 import com.training.resource.entity.respond.ResourceNormalRespond;
 import com.training.resource.entity.table.ResourceNormalTable;
+import com.training.resource.exceptions.GlobalExceptionHandler;
 import com.training.resource.mapper.ResourceNormalMapper;
 import com.training.resource.mapper.TagMapper;
 import com.training.resource.service.ResourceNormalService;
@@ -17,6 +18,8 @@ import com.training.resource.utils.DataUtil;
 import com.training.resource.utils.FileUtil;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -32,6 +35,8 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 @Service
 @AllArgsConstructor
@@ -44,6 +49,7 @@ public class ResourceNormalImpl implements ResourceNormalService {
     private final FileUtil fileUtil;
     private final DataUtil dataUtil;
     private final AppConfig appConfig;
+    private static final ConcurrentMap<String, String> Path_CACHE = new ConcurrentHashMap<>();
 
     /**
      * 上传资源文件的具体实现
@@ -67,15 +73,22 @@ public class ResourceNormalImpl implements ResourceNormalService {
         // 检查是否具有相同哈希值的文件
         String filePath = resourceNormalMapper.selectPathByFileHash(req.getFile_hash());
         if (Objects.isNull(filePath)){
-            // 获取文件保存路径
             filePath = fileUtil.getNormalFilePath(req.getUp_id(), req.getFile_origin_name());
+            // 获取文件保存路径
+            String savePath = Path_CACHE.get(req.getFile_hash());
+            if (Objects.isNull(savePath)){
+                Path_CACHE.put(req.getFile_hash(), filePath);
+            }
             String processResult = fileUtil.chunkSaveFile(req.getFile_hash(), filePath, req.getFile_chunks_sum(), req.getFile_now_chunk(), req.getFile_size(), req.getResource_file());
             if (Objects.isNull(processResult)){
                 return MsgRespond.success("当前文件片段上传成功");
             }else if (Objects.equals(processResult, "true")){
                 resourceNormalMapper.insertResourceNormal(new ResourceNormalTable(null,
-                        req.getResource_name(), filePath, req.getDept_id(), req.getTag_id(), req.getUp_id(), fileUtil.getFileSaveDateTime(), req.getFile_hash()));
+                        req.getResource_name(), Path_CACHE.get(req.getFile_hash()), req.getDept_id(), req.getTag_id(), req.getUp_id(), fileUtil.getFileSaveDateTime(), req.getFile_hash()));
+                Path_CACHE.remove(req.getFile_hash());
                 return MsgRespond.success("资源文件上传成功");
+            }else {
+                return MsgRespond.fail(processResult);
             }
         }
         resourceNormalMapper.insertResourceNormal(new ResourceNormalTable(null,
@@ -210,6 +223,7 @@ public class ResourceNormalImpl implements ResourceNormalService {
         }
         // 检查文件在服务器中的记录是否存在
         File file = new File(filePath);
+        System.out.println(filePath);
         if (!file.exists()){
             resourceNormalMapper.deleteResourceNormalByRid(rid);
             return MsgRespond.fail("此资源文件不存在");

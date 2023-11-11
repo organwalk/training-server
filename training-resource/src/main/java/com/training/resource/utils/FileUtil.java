@@ -28,9 +28,17 @@ public class FileUtil {
                                 MultipartFile multipartFile) throws IOException {
         File targetFile = SHA_CACHE.get(hashValue);
         if (targetFile == null) {
-            targetFile = new File(filePath.replace("\\", File.separator));
-            targetFile.getParentFile().mkdirs();
-            SHA_CACHE.put(hashValue, targetFile);
+            targetFile = new File(filePath);
+            File parentDir = targetFile.getParentFile();
+            if (!parentDir.exists()) {
+                if (parentDir.mkdirs()) {
+                    SHA_CACHE.put(hashValue, targetFile);
+                } else {
+                    return "文件处理错误，请稍后再试";
+                }
+            } else {
+                SHA_CACHE.put(hashValue, targetFile);
+            }
         }
         // 对文件的任意位置进行读写
         RandomAccessFile accessFile = new RandomAccessFile(targetFile, "rw");
@@ -49,13 +57,13 @@ public class FileUtil {
         }
         return null;
     }
-    public String getNormalFilePath(Integer upId, String fileOriginName){
+    public String getNormalFilePath(Integer upId, String fileOriginName) {
         // 获取上传的文件扩展名
         String fileExtension = Objects.requireNonNull(fileOriginName).substring(fileOriginName.lastIndexOf("."));
         // 生成"上传者ID + UUID.后缀"的文件名
-        String customFileName = '/' + getFolderDateTime() + '/' + upId.toString() + UUID.randomUUID() + fileExtension;
+        String customFileName = getFolderDateTime() + File.separator + upId.toString() + UUID.randomUUID() + fileExtension;
         // 构建文件保存路径
-        return appConfig.getResourceNormalPath() + File.separator + customFileName;
+        return appConfig.getResourceNormalPath() + customFileName;
     }
 
     public String getLessonFilePath(Integer teacherId, Integer lessonId, Integer chapterId, MultipartFile file){
