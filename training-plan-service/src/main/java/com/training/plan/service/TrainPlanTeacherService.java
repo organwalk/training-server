@@ -15,5 +15,8 @@ public interface TrainPlanTeacherService {
     //删除指定教师
     MsgRespond deleteTea(int plan_id, int t_id);
 
+    // 获取指定教师所处的培训计划列表
+    DataRespond getPlanListByTeacher(Integer teacher);
+
 
 }

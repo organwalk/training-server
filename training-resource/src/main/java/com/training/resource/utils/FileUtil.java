@@ -1,6 +1,8 @@
 package com.training.resource.utils;
 
 import com.training.resource.config.AppConfig;
+import com.training.resource.mapper.ResourceLessonMapper;
+import com.training.resource.mapper.ResourceNormalMapper;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,6 +21,8 @@ import java.util.concurrent.ConcurrentMap;
 @AllArgsConstructor
 public class FileUtil {
     private final AppConfig appConfig;
+    private final ResourceNormalMapper resourceNormalMapper;
+    private final ResourceLessonMapper resourceLessonMapper;
     private static final ConcurrentMap<String, File> SHA_CACHE = new ConcurrentHashMap<>();
     public String chunkSaveFile(String hashValue,
                                 String filePath,
@@ -66,12 +70,11 @@ public class FileUtil {
         return appConfig.getResourceNormalPath() + customFileName;
     }
 
-    public String getLessonFilePath(Integer teacherId, Integer lessonId, Integer chapterId, MultipartFile file){
-        String originalFilename = file.getOriginalFilename();
-        String fileExtension = Objects.requireNonNull(originalFilename).substring(originalFilename.lastIndexOf("."));
+    public String getLessonFilePath(Integer teacherId, Integer lessonId, Integer chapterId, String fileOriginName){
+        String fileExtension = Objects.requireNonNull(fileOriginName).substring(fileOriginName.lastIndexOf("."));
         // 生成"课程编号+章节编号+UUID.后缀"的文件名
-        String customFileName = '/' + teacherId.toString() + '/' + lessonId + '/' + lessonId + chapterId + UUID.randomUUID() + fileExtension;
-        return appConfig.getLessonPath() + customFileName.replace("/", File.separator);
+        String customFileName = teacherId.toString() + File.separator + lessonId + File.separator + lessonId + chapterId + UUID.randomUUID() + fileExtension;
+        return appConfig.getLessonPath() + customFileName;
     }
 
     public String getNoteFilePath(Integer lessonId, Integer chapterId, Integer upId, String fileOriginName){
@@ -82,6 +85,17 @@ public class FileUtil {
         // 构建文件保存路径
         return appConfig.getNotePath() + File.separator + customFileName;
     }
+
+    // 检查是否具有相同哈希值的文件
+    public String checkEqualHashFilePath(String type, String hash){
+        if (Objects.equals(type, "normal")){
+            return resourceNormalMapper.selectPathByFileHash(hash);
+        }else if (Objects.equals(type, "lesson")){
+            return resourceLessonMapper.selectPathByFileHash(hash);
+        }
+        return "";
+    }
+
 
     private String getFolderDateTime(){
         LocalDateTime currentDateTime = LocalDateTime.now();

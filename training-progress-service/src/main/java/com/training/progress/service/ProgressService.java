@@ -15,9 +15,9 @@ public interface ProgressService {
 
     DataRespond getAllStuLessonPresent(int lesson_id,int page_size,int offset);
 
-    MsgRespond insertProgressPlan(int plan_id,int lesson_id,int teacher_id);
+    MsgRespond insertProgressPlan(int plan_id,Integer lesson_id,int teacher_id);
 
-    DataRespond getTeaAllPresent(int teacher_id,String auth,String username);
+    DataRespond getTeaAllPresent(int planId, int teacher_id,String auth,String username);
 
     DataRespond getAllPlanPresent(int page_size,int offset);
 

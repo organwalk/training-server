@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.training.common.entity.*;
+import com.training.common.entity.result.LessonInfo;
 import com.training.progress.client.PlanClient;
 import com.training.progress.client.UserClient;
 import com.training.progress.config.ToolConfig;
@@ -185,11 +186,12 @@ public class ProgressServiceImpl implements ProgressService {
      * @return 根据处理结果返回对应消息
      */
     @Override
-    public MsgRespond insertProgressPlan(int plan_id, int lesson_id, int teacher_id) {
+    public MsgRespond insertProgressPlan(int plan_id, Integer lesson_id, int teacher_id) {
         String Mark = judgePlanExit(plan_id);
         if (!Mark.isBlank()){
             return MsgRespond.fail("该计划不存在!");
         }
+
         Integer i = planMapper.insertToProgressPlan(plan_id,teacher_id,lesson_id);
         return i>0?MsgRespond.success("已成功建立课程跟踪机制"):MsgRespond.fail("创建失败！");
     }
@@ -202,7 +204,7 @@ public class ProgressServiceImpl implements ProgressService {
      * @return 根据处理结果返回对应消息
      */
     @Override
-    public DataRespond getTeaAllPresent(int teacher_id,String auth,String username) {
+    public DataRespond getTeaAllPresent(int planId, int teacher_id,String auth,String username) {
         String name1 = getName(teacher_id);
         if (Objects.equals(auth,"teacher")&&!Objects.equals(username,name1)){
             return new DataFailRespond("只能查看自己的课程进度信息");
@@ -211,7 +213,8 @@ public class ProgressServiceImpl implements ProgressService {
         if (!Mark.isBlank()){
             return new DataFailRespond(Mark);
         }
-        List<Integer> LessonIdList = planMapper.getLessonIdByTeaId(teacher_id);
+
+        List<Integer> LessonIdList = planMapper.getLessonIdByTeaId(planId, teacher_id);
         List<Lesson_Present> lesson_presents = new ArrayList<>();
         double all_total_progresss = 0;
         for (Integer i :LessonIdList){
@@ -223,7 +226,6 @@ public class ProgressServiceImpl implements ProgressService {
             lesson_presents.add(lesson_present);
         }
         List<Lesson_Present> result = reorder(lesson_presents);
-        System.out.println(result);
         double all_total_progress = all_total_progresss/LessonIdList.size();
         TeaPresent teaPresent = new TeaPresent(all_total_progress,result);
         return new DataSuccessRespond("已成功获取百分比进度列表",teaPresent);
@@ -330,7 +332,6 @@ public class ProgressServiceImpl implements ProgressService {
         List<Integer> chapterList = chapterMapper.getChapterListByStuIdAndLessonId(student_id,lesson_id);
         return new DataSuccessRespond("已成功返回该学员所学最新章节及其已学章节列表",new ChapterList(chapterList.size(),chapterList));
     }
-
 
 
 

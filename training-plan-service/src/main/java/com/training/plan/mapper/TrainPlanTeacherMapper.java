@@ -39,4 +39,8 @@ public interface TrainPlanTeacherMapper {
     @Delete("delete from t_training_plan_teacher where training_plan_id=#{training_plan_id}")
     void deleteTeaByPlanId(int id);
 
+    // 根据教师ID获取其所处的培训计划ID
+    @Select("select training_plan_id from t_training_plan_teacher where training_teacher_id = #{teacherId}")
+    List<Integer> selectPlanIdListByTeacherId(Integer teacherId);
+
 }

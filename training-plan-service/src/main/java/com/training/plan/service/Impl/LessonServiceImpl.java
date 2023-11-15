@@ -14,8 +14,13 @@ import com.training.plan.mapper.TrainPlanStudentMapper;
 import com.training.plan.reposoty.LessonCache;
 import com.training.plan.service.LessonService;
 import lombok.AllArgsConstructor;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import java.util.List;
 import java.util.Objects;
@@ -30,8 +35,11 @@ public class LessonServiceImpl implements LessonService {
     private final TrainPlanStudentMapper trainPlanStudentMapper;
     private final ProgressClient progressClient;
     private final LessonCache lessonCache;
+    private final DataSourceTransactionManager transactionManager;
+
 
     @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public MsgRespond insertLesson(LessonReq req,int plan_id) {
         //判断是否存在该课程
         String resultMark = CheckExit(req.getLesson_name());
@@ -45,12 +53,16 @@ public class LessonServiceImpl implements LessonService {
             return MsgRespond.fail("该用户不是教师，请重新选择");
         }
         req.setLesson_state(0);
-        //加入课程
-        Integer i = lessonMapper.insertLesson(req);
-        Integer lesson_id = lessonMapper.getIdByL_Name(req.getLesson_name());
-        JSONObject j = progressClient.insertInProPlan(plan_id,lesson_id, req.getTeacher_id());
+        LessonTable lessonTable = new LessonTable(null, req.getLesson_name(), req.getLesson_des(), req.getTeacher_id(), req.getLesson_state(), null);
 
-        return i>0&&(!Objects.equals(j.get("code"),5005))?MsgRespond.success("添加课程成功！"):MsgRespond.fail("添加课程失败！");
+        Integer result = lessonMapper.insertLesson(lessonTable);
+        if (result == 0){
+            return MsgRespond.fail("内部服务错误添加课程失败");
+        }
+
+        JSONObject j = progressClient.insertInProPlan(plan_id,req.getTeacher_id(),lessonTable.getId());
+
+        return !Objects.equals(j.get("code"),5005) ?MsgRespond.success("添加课程成功！"):MsgRespond.fail("添加课程失败！");
     }
     /**
      * 根据教师id获取教师的所有课程的具体实现

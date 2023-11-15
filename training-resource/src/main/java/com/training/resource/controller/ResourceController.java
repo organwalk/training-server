@@ -134,6 +134,13 @@ public class ResourceController {
         return resourceLessonService.uploadResourceLesson(req);
     }
 
+    // 获取课程下的各章节资源列表
+    @GetMapping("/v2/lesson/list/{lesson_id}")
+    public DataRespond getResourceLessonList(@PathVariable Integer lesson_id){
+        return resourceLessonService.getResourceLessonByLessonId(lesson_id);
+    }
+
+
     // 重传教材资源
     @PutMapping("/v2/lesson")
     public MsgRespond reUploadLessonResource(@Validated @ModelAttribute ResourceLessonReq req){
@@ -156,6 +163,13 @@ public class ResourceController {
     public MsgRespond deleteAllLessonResource(@PathVariable @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "teacher_id必须为纯数字字段") Integer teacher_id,
                                               @PathVariable @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "lesson_id必须为纯数字字段") Integer lesson_id){
         return resourceLessonService.deleteAllLessonResource(teacher_id, lesson_id);
+    }
+
+    // 根据课程教材ID获取教材
+    @GetMapping("/v2/lesson/{resource_lesson_id}")
+    public ResponseEntity<?> getResourceLessonFile(@RequestHeader(name="Range") String rangeString,
+                                                   @PathVariable Integer resource_lesson_id){
+        return resourceLessonService.getResourceLessonById(rangeString, resource_lesson_id);
     }
 
     // 上传学习笔记
@@ -191,7 +205,7 @@ public class ResourceController {
 
     // 根据笔记ID获取笔记
     @GetMapping("/v2/file/note/{note_id}")
-    public ResponseEntity<String> getNote(@PathVariable @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "note_id必须为纯数字字段") @NotNull(message = "note_id不能为空") Integer note_id){
+    public ResponseEntity<?> getNote(@PathVariable @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "note_id必须为纯数字字段") @NotNull(message = "note_id不能为空") Integer note_id){
         return resourceNoteService.getNoteById(note_id);
     }
 }

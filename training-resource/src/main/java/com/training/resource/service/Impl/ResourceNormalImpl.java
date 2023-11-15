@@ -71,7 +71,7 @@ public class ResourceNormalImpl implements ResourceNormalService {
             return MsgRespond.fail("当前指定上传者不存在");
         }
         // 检查是否具有相同哈希值的文件
-        String filePath = resourceNormalMapper.selectPathByFileHash(req.getFile_hash());
+        String filePath = fileUtil.checkEqualHashFilePath("normal", req.getFile_hash());
         if (Objects.isNull(filePath)){
             filePath = fileUtil.getNormalFilePath(req.getUp_id(), req.getFile_origin_name());
             // 获取文件保存路径

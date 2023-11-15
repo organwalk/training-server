@@ -14,4 +14,5 @@ public class ResourceLessonTable {
     private Integer chapterId;
     private String resourcePath;
     private String upDatetime;
+    private String fileHash;
 }

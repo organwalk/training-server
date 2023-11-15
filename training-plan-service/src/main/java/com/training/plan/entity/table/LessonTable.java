@@ -8,7 +8,7 @@ import lombok.Data;
 @AllArgsConstructor
 @TableName("t_lesson")
 public class LessonTable {
-    private int id;
+    private Integer id;
     private String lesson_name;
     private String lesson_des;
     private int teacher_id;

@@ -11,7 +11,8 @@ import java.util.List;
 public interface LessonMapper {
     //添加课程
     @Insert("insert into t_lesson(lesson_name, lesson_des, teacher_id, lesson_state) values(#{req.lesson_name},#{req.lesson_des},#{req.teacher_id},#{req.lesson_state}) ")
-    Integer insertLesson(@Param("req")LessonReq req);
+    @Options(useGeneratedKeys = true, keyProperty = "req.id") // keyProperty 设置为插入后自动生成的主键属性名
+    Integer insertLesson(@Param("req")LessonTable req);
     //根据课程名获取课程id
     @Select("select id from t_lesson where lesson_name = #{lesson_name}")
     Integer getIdByL_Name(String lesson_name);

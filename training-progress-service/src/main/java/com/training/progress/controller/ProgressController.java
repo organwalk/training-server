@@ -113,20 +113,22 @@ public class ProgressController {
                                   int teacher_id,
                                   @PathVariable
                                       @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "lesson_id必须为纯数字字段")
-                                      int lesson_id){
+                                      Integer lesson_id){
             return progressService.insertProgressPlan(plan_id,lesson_id,teacher_id);
     }
 
 
 
 
-    @GetMapping("/v4/lesson/teacher/persent/{teacher_id}")
+    @GetMapping("/v4/lesson/teacher/persent/{planId}/{teacher_id}")
     public DataRespond getTeaPresent(@PathVariable
                                      @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "teacher_id必须为纯数字字段")
                                      int teacher_id,
+                                     @PathVariable
+                                     int planId,
                                      @RequestHeader("auth")String auth,
                                      @RequestHeader("username")String username) {
-        return progressService.getTeaAllPresent(teacher_id,auth,username);
+        return progressService.getTeaAllPresent(planId, teacher_id,auth,username);
     }
 
 

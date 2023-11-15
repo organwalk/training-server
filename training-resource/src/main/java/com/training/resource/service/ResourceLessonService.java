@@ -1,7 +1,9 @@
 package com.training.resource.service;
 
+import com.training.common.entity.DataRespond;
 import com.training.common.entity.MsgRespond;
 import com.training.resource.entity.request.ResourceLessonReq;
+import org.springframework.http.ResponseEntity;
 
 /**
  * 定义课程教材相关业务
@@ -16,4 +18,9 @@ public interface ResourceLessonService {
     MsgRespond deleteOneLessonResource(Integer teacherId, Integer lessonId, Integer chapterId);
     // 删除指定课程下所有教材文件
     MsgRespond deleteAllLessonResource(Integer teacherId, Integer lessonId);
+    // 根据课程教材ID获取教材
+    ResponseEntity<?> getResourceLessonById(String rangeString, Integer rlId);
+
+    // 获取指定教师的教材列表
+    DataRespond getResourceLessonByLessonId(Integer lessonId);
 }

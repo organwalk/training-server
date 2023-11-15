@@ -53,7 +53,13 @@ public interface TrainingPlanMapper {
     List<TrainingPlanTable> selectAllPlanByKeyword(@Param("keyword") String keyword,
                                                 @Param("page_size") int page_size,
                                                 @Param("offset") int offset);
-
+    // 根据培训计划ID列表，批量查询培训计划列表
+    @Select("<script>" +
+            "<foreach item='id' collection='planIdList' separator='UNION ALL'>" +
+            "SELECT * FROM t_training_plan WHERE id = #{id}" +
+            "</foreach>" +
+            "</script>")
+    List<TrainingPlanTable> selectPlanListByIdList(@Param("planIdList") List<Integer> planIdList);
 
 
 

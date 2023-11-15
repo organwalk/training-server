@@ -3,10 +3,7 @@ package com.training.plan.service.Impl;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.training.common.entity.DataFailRespond;
-import com.training.common.entity.DataPagingSuccessRespond;
-import com.training.common.entity.DataRespond;
-import com.training.common.entity.MsgRespond;
+import com.training.common.entity.*;
 import com.training.common.entity.req.UserInfoListReq;
 import com.training.plan.client.UserClient;
 import com.training.plan.entity.respond.TeacherInfo;
@@ -109,6 +106,20 @@ public class TrainPlanTeacherServiceImpl implements TrainPlanTeacherService {
         }
         clearCache(p_id);
         return MsgRespond.success("删除成功！");
+    }
+
+    /**
+     * 根据教师ID获取指定培训计划ID具体实现
+     * @param teacherId 教师ID
+     * @return 培训计划ID列表，若为空时，返回提示消息
+     */
+    @Override
+    public DataRespond getPlanListByTeacher(Integer teacherId) {
+        // 判断讲师是否被分配培训计划
+        List<Integer> planIdList = trainPlanTeacherMapper.selectPlanIdListByTeacherId(teacherId);
+        if (planIdList.isEmpty()) return new DataFailRespond("当前讲师暂未被分配执行培训计划");
+        // 批量查询
+        return new DataSuccessRespond("已成功获取培训计划列表", PlanMapper.selectPlanListByIdList(planIdList));
     }
 
     /**

@@ -338,6 +338,7 @@ public class TrainingPlanController {
         return testService.updateTest(req, test_id);
     }
 
+    // 模糊搜索培训计划
     @GetMapping("/v3/plan/keyword/{keyword}/{page_size}/{offset}")
     public DataRespond getAllPlanByKeyword(@PathVariable @NotBlank(message = "keyword不能为空") String keyword,
                                            @PathVariable
@@ -349,6 +350,12 @@ public class TrainingPlanController {
                                            @Digits(integer = Integer.MAX_VALUE, fraction = 0)
                                            int offset) {
         return trainingPlanService.getAllPlanByKeyword(keyword, page_size, offset);
+    }
+
+    // 获取指定讲师所处的培训计划列表
+    @GetMapping("/v2/teacher/plan/{teacher_id}")
+    public DataRespond getPlanListByTeacherId(@PathVariable Integer teacher_id){
+        return teacherService.getPlanListByTeacher(teacher_id);
     }
 
 

@@ -1,7 +1,10 @@
 package com.training.resource.mapper;
 
+import com.training.resource.entity.result.ResourceLessonInfo;
 import com.training.resource.entity.table.ResourceLessonTable;
 import org.apache.ibatis.annotations.*;
+
+import java.util.List;
 
 @Mapper
 public interface ResourceLessonMapper {
@@ -10,8 +13,8 @@ public interface ResourceLessonMapper {
     Integer selectLessonIdByChapterId(Integer chapter_id);
 
     // 插入课程资源记录
-    @Insert("insert into t_resource_lesson(lesson_id, teacher_id, chapter_id, resource_path, up_datetime) " +
-            "values (#{obj.lessonId}, #{obj.teacherId}, #{obj.chapterId}, #{obj.resourcePath}, #{obj.upDatetime})")
+    @Insert("insert into t_resource_lesson(lesson_id, teacher_id, chapter_id, resource_path, up_datetime, file_hash) " +
+            "values (#{obj.lessonId}, #{obj.teacherId}, #{obj.chapterId}, #{obj.resourcePath}, #{obj.upDatetime}, #{obj.fileHash})")
     void insertLessonResource(@Param("obj") ResourceLessonTable obj);
 
     // 检查重传接口指定课程章节是否存在
@@ -50,4 +53,36 @@ public interface ResourceLessonMapper {
     @Delete("delete from t_resource_lesson where teacher_id = #{teacher_id} and lesson_id = #{lesson_id}")
     void deleteAllLessonResource(@Param("teacher_id") Integer teacherId,
                                  @Param("lesson_id") Integer lessonId);
+
+    // 检查是否具有相同哈希值的文件
+    @Select("select resource_path from t_resource_lesson where file_hash = #{fileHash} limit 1")
+    String selectPathByFileHash(String fileHash);
+
+    // 检查具有文件路径的记录是否不止一条
+    @Select("select COUNT(id) from t_resource_lesson where resource_path = #{resourcePath} limit 2")
+    Integer selectPathIsOverTwo(String resourcePath);
+
+    // 根据相关信息获取文件哈希值
+    @Select("select file_hash from t_resource_lesson " +
+            "where teacher_id = #{teacherId} and lesson_id = #{lessonId} and chapter_id = #{chapterId}")
+    String selectFileHashByInfo(@Param("teacherId") Integer teacherId,
+                                @Param("lessonId") Integer lessonId,
+                                @Param("chapterId") Integer chapterId);
+
+    // 查询相同文件路径列表
+    @Select("SELECT resource_path " +
+            "FROM t_resource_lesson " +  // 替换成你的实际表名
+            "WHERE teacher_id = #{teacherId} and lesson_id = #{lessonId} " +
+            "GROUP BY resource_path " +
+            "HAVING COUNT(resource_path) >= 2")
+    List<String> findDuplicateFilePathsByTeacherId(@Param("teacherId") Integer teacherId,
+                                                   @Param("lessonId") Integer lessonId);
+
+    // 根据课程教材ID获取文件路径
+    @Select("select resource_path from t_resource_lesson where id = #{rlId}")
+    String selectLessonPathById(Integer rlId);
+
+    // 获取指定课程资源列表
+    @Select("select id, chapter_id, up_datetime from t_resource_lesson where lesson_id = #{lessonId}")
+    List<ResourceLessonInfo> selectResourceLessonList(Integer lessonId);
 }

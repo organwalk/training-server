@@ -15,5 +15,5 @@ public interface ResourceNoteService {
     // 删除指定课程的学习笔记
     MsgRespond deleteNoteByLesson(Integer lessonId);
     // 获取指定笔记的内容
-    ResponseEntity<String> getNoteById(Integer noteId);
+    ResponseEntity<?> getNoteById(Integer noteId);
 }

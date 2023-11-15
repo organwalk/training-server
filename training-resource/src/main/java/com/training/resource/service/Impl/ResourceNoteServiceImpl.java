@@ -9,6 +9,7 @@ import com.training.resource.entity.table.ResourceNoteTable;
 import com.training.resource.mapper.ResourceNoteMapper;
 import com.training.resource.service.ResourceNoteService;
 import com.training.resource.utils.DataUtil;
+import com.training.resource.utils.FileResUtil;
 import com.training.resource.utils.FileUtil;
 import lombok.AllArgsConstructor;
 import org.springframework.core.io.ClassPathResource;
@@ -36,6 +37,7 @@ public class ResourceNoteServiceImpl implements ResourceNoteService {
     private final ResourceNoteMapper resourceNoteMapper;
     private final DataUtil dataUtil;
     private final FileUtil fileUtil;
+    private final FileResUtil fileResUtil;
 
     /**
      * 上传笔记具体实现
@@ -157,23 +159,9 @@ public class ResourceNoteServiceImpl implements ResourceNoteService {
     }
 
     @Override
-    public ResponseEntity<String> getNoteById(Integer noteId) {
+    public ResponseEntity<?> getNoteById(Integer noteId) {
         String notePath = resourceNoteMapper.selectNotePathById(noteId);
-        Path filePath = Paths.get(notePath);
-        byte[] markdownBytes;
-        try {
-            markdownBytes = Files.readAllBytes(filePath);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        String markdownContent = new String(markdownBytes, StandardCharsets.UTF_8);
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.TEXT_MARKDOWN);
-        headers.set(HttpHeaders.CONTENT_ENCODING, "utf-8");
-        headers.set(HttpHeaders.CONTENT_TYPE, "text/markdown; charset=UTF-8");
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(markdownContent);
+        return fileResUtil.returnMarkdown(notePath);
     }
 
 

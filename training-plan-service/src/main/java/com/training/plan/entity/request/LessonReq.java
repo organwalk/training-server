@@ -11,7 +11,7 @@ public class LessonReq {
     @Size(max = 15,message = "lesson_name不能超过15字")
     private String lesson_name;
     @NotBlank(message = "lesson_des不能为空")
-    @Size(max = 15,message = "lesson_des不能超过15字")
+    @Size(max = 150,message = "lesson_des不能超过150字")
     private String lesson_des;
     @Digits(message = "teacher_id必须为数字",integer = Integer.MAX_VALUE,fraction = 0)
     private int teacher_id;
