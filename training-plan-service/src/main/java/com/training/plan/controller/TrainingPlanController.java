@@ -232,7 +232,7 @@ public class TrainingPlanController {
         return lessonService.updateLesson(req, lesson_id, teacher_id);
     }
 
-    //删除指定教师的所有课程
+    //删除指定教师的指定课程
     @DeleteMapping("/v2/lesson/{lesson_id}")
     public MsgRespond DeleteLessonById(@PathVariable
                                        @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "lesson_id必须为纯数字字段")

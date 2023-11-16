@@ -8,7 +8,7 @@ import lombok.Data;
 @AllArgsConstructor
 public class LessonReq {
     @NotBlank(message = "lesson_name不能为空")
-    @Size(max = 15,message = "lesson_name不能超过15字")
+    @Size(max = 15,message = "lesson_name不能超过20字")
     private String lesson_name;
     @NotBlank(message = "lesson_des不能为空")
     @Size(max = 150,message = "lesson_des不能超过150字")

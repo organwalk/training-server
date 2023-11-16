@@ -35,7 +35,6 @@ public class LessonServiceImpl implements LessonService {
     private final TrainPlanStudentMapper trainPlanStudentMapper;
     private final ProgressClient progressClient;
     private final LessonCache lessonCache;
-    private final DataSourceTransactionManager transactionManager;
 
 
     @Override
@@ -120,10 +119,22 @@ public class LessonServiceImpl implements LessonService {
         }
         //删除指定课程
         Integer i = lessonMapper.deleteLessonById(id);
-        //删除指定课程对应的章节
-        Integer j = chapterMapper.deleteAllChapterByLessonId(id);
-        lessonCache.deleteChapter(String.valueOf(id));
-        return i>0&&j>0?MsgRespond.success("已成功删除此课程"):MsgRespond.fail("删除失败！");
+        if (i == 0) {
+            return MsgRespond.fail("内部服务错误，删除失败！");
+        }
+        // 如果存在章节，则将章节与缓存删除
+        Integer chapterMark = chapterMapper.existChapter(id);
+        if (Objects.nonNull(chapterMark) && chapterMark == 1){
+            Integer j = chapterMapper.deleteAllChapterByLessonId(id);
+            if (j == 0 ){
+                return MsgRespond.fail("内部服务错误，删除失败！");
+            }
+            lessonCache.deleteChapter(String.valueOf(id));
+        }
+        return MsgRespond.success("已成功删除此课程");
+
+
+
     }
     /**
      *  删除指定教师的所有课程
@@ -152,6 +163,7 @@ public class LessonServiceImpl implements LessonService {
      * @return 根据处理结果返回对应消息
      */
     @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public MsgRespond updateState(int id) {
         //判断课程状态是否已经发布
         Integer state = lessonMapper.getState(id);
@@ -164,8 +176,11 @@ public class LessonServiceImpl implements LessonService {
             Integer planId = trainPlanStudentMapper.getPlanIdByLessonId(id);
             Integer over_chapter = 0;
             Integer chapterSum = chapterMapper.getCountByLId(id);
-            List<Integer> StuIdList = trainPlanStudentMapper.getAllStuId(planId);
-            for (Integer j:StuIdList){
+            List<Integer> stuIdList = trainPlanStudentMapper.getAllStuId(planId);
+            if (stuIdList.isEmpty()){
+                return MsgRespond.fail("当前培训计划尚未分配人员，无法发布课程");
+            }
+            for (Integer j:stuIdList){
                 progressClient.insertProgress(id,j,over_chapter,chapterSum);
             }
         }

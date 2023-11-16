@@ -14,7 +14,7 @@ public interface ChapterMapper {
     @Select("select COUNT(id) from t_lesson_chapter where chapter_name = #{chapter_name} and lesson_id = #{lesson_id}")
     Integer getIdByCName(@Param("chapter_name") String chapter_name,@Param("lesson_id")int lesson_id);
 
-    @Select(("select * from t_lesson_chapter where lesson_id = #{lessson_id}"))
+    @Select("select * from t_lesson_chapter where lesson_id = #{lessson_id}")
     List<ChapterTable>  getChapterByLessonId(int lesson_id);
 
     @Select("select COUNT(id) from t_lesson_chapter where lesson_id = #{lesson_id}")
@@ -43,5 +43,8 @@ public interface ChapterMapper {
 
     @Select("select COUNT(id) from t_lesson_chapter where lesson_id=#{lesson_id}")
     Integer getChapCountByLessonId(int lesson_id);
+
+    @Select("select id from t_lesson_chapter where lesson_id = #{lesson_id} limit 1")
+    Integer existChapter(int lesson_id);
 
 }

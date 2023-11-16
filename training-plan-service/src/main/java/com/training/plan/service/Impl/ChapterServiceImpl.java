@@ -47,6 +47,7 @@ public class ChapterServiceImpl implements ChapterService {
         JSONObject jsonObject = JSON.parseObject(name);
         String chapter_name = jsonObject.getString("chapter_name");
         Integer i = chapterMapper.insertChapter(chapter_name,lesson_id);
+        lessonCache.deleteChapter(String.valueOf(lesson_id));
         return i>0?MsgRespond.success("已成功添加此课程章节"):MsgRespond.fail("添加失败！");
     }
     /**
@@ -92,7 +93,7 @@ public class ChapterServiceImpl implements ChapterService {
         ChapterTable chapterTable = chapterMapper.getChapterByID(id);
         Integer i = chapterMapper.updateChapterName(name,id);
         //判断修改后的章节名与之前是否一致，一致则删除缓存
-        if(!Objects.equals(chapterTable.getChapter_name(),name)){
+        if(!Objects.equals(chapterTable.getChapterName(),name)){
             String key = String.valueOf(chapterMapper.getLessonIdByChapterId(id));
             lessonCache.deleteChapter(key);
         }
@@ -110,12 +111,15 @@ public class ChapterServiceImpl implements ChapterService {
         if (Objects.equals(Mark,0)){
             return MsgRespond.fail("该课程下没有该章节");
         }
+        String key = String.valueOf(chapterMapper.getLessonIdByChapterId(id));
         //删除章节
         Integer i = chapterMapper.deleteChapterById(id);
+        if (i == 0){
+            return MsgRespond.fail("删除失败");
+        }
         //删除缓存
-        String key = String.valueOf(chapterMapper.getLessonIdByChapterId(id));
         lessonCache.deleteChapter(key);
-        return i>0?MsgRespond.success("已成功删除此章节"):MsgRespond.fail("删除失败");
+        return MsgRespond.success("已成功删除此章节");
     }
     /**
      *  删除指定课程下的所有章节

@@ -28,6 +28,10 @@ public class LessonCacheImpl implements LessonCache {
         return result;
     }
 
+    /**
+     * 删除指定课程的章节缓存
+     * @param key 课程ID的字符串形式
+     */
     @Override
     public void deleteChapter(String key) {
         redisTemplate.opsForHash().delete(ACCESS_TOKEN_KEY,key);
