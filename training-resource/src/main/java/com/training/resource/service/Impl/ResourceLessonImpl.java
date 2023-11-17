@@ -109,12 +109,13 @@ public class ResourceLessonImpl implements ResourceLessonService {
             // 如果不存在，则说明同一份文件不存在多重引用，可删除服务器文件
             File oldFile = new File(oldFilePath);
             if (oldFile.exists()){
-                if (oldFile.delete()){
+                if (!oldFile.delete()){
                     return MsgRespond.fail("文件系统错误，请稍后再试");
                 }
             }
         }
         String msg =  uploadVideoLessonResource(filePath, req, "reUpload");
+        resourceLessonMapper.updateLessonResourcePath(filePath, fileUtil.getFileSaveDateTime(), req.getLesson_id(), req.getTeacher_id(), req.getChapter_id());
         return Objects.equals(msg, "当前文件片段上传成功") || Objects.equals(msg, "教材上传成功")
                 ? MsgRespond.success(msg)
                 : MsgRespond.fail(msg);
@@ -275,7 +276,7 @@ public class ResourceLessonImpl implements ResourceLessonService {
         }
         String processResult = fileUtil.chunkSaveFile(req.getFile_hash(), filePath, req.getFile_chunks_sum(), req.getFile_now_chunk(), req.getFile_size(), req.getResource_file());
         if (Objects.isNull(processResult)){
-            return "当前视频教材片段上传成功";
+            return "当前文件片段上传成功";
         }else if (Objects.equals(processResult, "true")){
             if (Objects.equals(type, "upload")){
                 resourceLessonMapper.insertLessonResource(new ResourceLessonTable(null,
@@ -284,7 +285,7 @@ public class ResourceLessonImpl implements ResourceLessonService {
                 resourceLessonMapper.updateLessonResourcePath(Path_CACHE.get(req.getFile_hash()), fileUtil.getFileSaveDateTime(), req.getLesson_id(), req.getTeacher_id(), req.getChapter_id());
             }
             Path_CACHE.remove(req.getFile_hash());
-            return "视频教材上传成功";
+            return "教材上传成功";
         }else {
             return processResult;
         }

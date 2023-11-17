@@ -167,7 +167,7 @@ public class ResourceController {
 
     // 根据课程教材ID获取教材
     @GetMapping("/v2/lesson/{resource_lesson_id}")
-    public ResponseEntity<?> getResourceLessonFile(@RequestHeader(name="Range") String rangeString,
+    public ResponseEntity<?> getResourceLessonFile(@RequestHeader(name="Range", required = false) String rangeString,
                                                    @PathVariable Integer resource_lesson_id){
         return resourceLessonService.getResourceLessonById(rangeString, resource_lesson_id);
     }
