@@ -1,7 +1,6 @@
 package com.training.learn.service.Impl;
 
 import com.training.common.entity.MsgRespond;
-import com.training.learn.entity.request.LikeReq;
 import com.training.learn.mapper.CommentMapper;
 import com.training.learn.mapper.LikeMapper;
 import com.training.learn.mapper.ReplyMapper;
@@ -38,40 +37,63 @@ public class LikeServiceImpl implements LikeService {
      */
     @Override
     public MsgRespond LikeComment(int user_id,int comment_id,int state) {
+        //判断学生是否存在
         String StuMark = judgeUser(user_id);
         if(!StuMark.isBlank()){
             return MsgRespond.fail(StuMark);
         }
+        //判断评论是否存在
         String Comment_Mark = judgeCommentExit(comment_id);
         if (!Comment_Mark.isBlank()){
             return MsgRespond.fail(Comment_Mark);
         }
+        //判断是否已经点赞
         Integer OldState = likeMapper.judgeLikeOrNot(comment_id,user_id);
+        //获取该评论对应的课程id
         Integer lesson_id = commentMapper.getLessonIdByCommentId(comment_id);
         String key = String.valueOf(lesson_id);
         String field = String.valueOf(comment_id);
+        //获取缓存中对应评论的点赞数
+        Integer sum = (Integer) likeCache.getCommentLike(key,field);
         Integer i = 0;
         if (OldState != null){
+            //如果未点赞，且进行取消点赞操作
             if (OldState == 0 && state ==0){
                 return MsgRespond.fail("未对该评论点赞");
             } else if (OldState == 1 && state ==0) {
-                Integer j  = likeMapper.updateStateToZero(comment_id,user_id);
-                likeCache.deleteCommentLike(key,field);
-                return j>0? MsgRespond.success("成功取消点赞！"):MsgRespond.fail("取消点赞失败");
+                //如果已经点赞，且进行取消点赞操作
+                //删除点赞记录
+                likeMapper.DeleteByComIdAndUserId(comment_id,user_id);
+                //判断缓存是否为空，非空则删除缓存
+                if (sum != null){
+                    likeCache.deleteCommentLike(key,field);
+                }
+                return MsgRespond.success("成功取消点赞！");
             } else if (OldState == 0 && state==1) {
+                //如果有表中有记录且未进行点赞，且进行点赞操作
+                //修改点赞状态为1
                 i=likeMapper.updateStateToOne(comment_id,user_id);
-                likeCache.deleteCommentLike(key,field);
+                //判断缓存是否为空，非空则删除记录
+                if (sum != null){
+                    likeCache.deleteCommentLike(key,field);
+                }
             } else if (OldState == 1 && state ==1) {
+                //如果已经点赞，且进行点赞操作
                 return MsgRespond.fail("请勿重复点赞！");
             }
         }
+        //如果没有点赞记录
         if (OldState == null){
+            //若执行取消点赞
             if (state == 0){
                 return MsgRespond.fail("未对该评论点赞");
             } else if (state==1) {
+                //执行点赞
                 String time = getNowTime();
                 i = likeMapper.likeComment(user_id,comment_id,1,time);
-                likeCache.deleteCommentLike(key,field);
+                if (sum != null){
+                    likeCache.deleteCommentLike(key,field);
+                }
             }
         }
         return i>0?MsgRespond.success("点赞成功！"):MsgRespond.fail("点赞失败！");
@@ -91,29 +113,40 @@ public class LikeServiceImpl implements LikeService {
      */
     @Override
     public MsgRespond LikeReply(int user_id, int reply_id, int state) {
+        //判断回复是否存在
         Integer replyMark = replyMapper.judgeReplyExitById(reply_id);
         if (replyMark==null){
             return MsgRespond.fail("该回复不存在");
         }
+        //判断学生存在性
         String StuMark = judgeUser(user_id);
         if(!StuMark.isBlank()){
             return MsgRespond.fail(StuMark);
         }
+        //获取是否拥有点赞记录
         Integer OldState = likeMapper.judgeReplyLikeOrNot(user_id,reply_id);
+        //获取评论id
         Integer CommentId = replyMapper.getCommentIdById(reply_id);
+        //通过评论Id获取课程id
         Integer lessonId = commentMapper.getLessonIdByCommentId(CommentId);
         String Key = String.valueOf(lessonId);
         String field = String.valueOf(reply_id);
+        //获取缓存中的点赞数
+        Integer sum = (Integer) likeCache.getReplyLike(Key,field);
         Integer i = 0;
         if (OldState != null){
             if (OldState==0 && state ==0){
                 return MsgRespond.fail("未对该回复点赞！");
             } else if (OldState==0 && state==1) {
                 i = likeMapper.UpdateReplyStateSetOne(reply_id,user_id);
-                likeCache.deleteReplyLike(Key,field);
+                if (sum!=null){
+                    likeCache.deleteReplyLike(Key,field);
+                }
             } else if(OldState==1 && state==0){
                 Integer j = likeMapper.UpdateReplyStateSetZero(reply_id,user_id);
-                likeCache.deleteReplyLike(Key,field);
+                if (sum!=null){
+                    likeCache.deleteReplyLike(Key,field);
+                }
                 return j>0?MsgRespond.success("取消点赞成！"):MsgRespond.fail("取消点赞失败！");
             } else if (OldState==1 && state==1) {
                 return MsgRespond.fail("请勿重复点赞！");
@@ -125,7 +158,9 @@ public class LikeServiceImpl implements LikeService {
             } else if (state==1) {
                 String time = getNowTime();
                 i = likeMapper.LikeReply(user_id,reply_id,1,time);
-                likeCache.deleteReplyLike(Key,field);
+                if (sum!=null){
+                    likeCache.deleteReplyLike(Key,field);
+                }
             }
         }
         return i>0?MsgRespond.success("点赞成功！"):MsgRespond.fail("点赞失败！");

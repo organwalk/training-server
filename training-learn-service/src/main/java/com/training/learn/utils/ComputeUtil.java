@@ -1,9 +1,11 @@
 package com.training.learn.utils;
 
 
+import com.training.learn.entity.request.QuestionReq;
 import com.training.learn.entity.result.ProgressLesson;
 
 import java.util.List;
+import java.util.Objects;
 
 //计算工具类
 public class ComputeUtil {
@@ -26,6 +28,24 @@ public class ComputeUtil {
 
     public static double getStuProgress(ProgressLesson progressLesson){
         return (double) progressLesson.getOver_chapter_sum() /progressLesson.getLesson_chapter_sum();
+    }
+
+    //计算编辑的试卷总分
+    public static Integer judgeScore(Integer must_score, Integer important_score, Integer general_score, QuestionReq list){
+         Integer sum = 0;
+         List<QuestionReq.Question> list1 = list.getQuestions();
+         for(QuestionReq.Question req:list1){
+             if (Objects.equals(req.getQuestion().getImportance_id(),1)){
+                 sum += must_score;
+             }
+             if (Objects.equals(req.getQuestion().getImportance_id(),2)){
+                 sum += important_score;
+             }
+             if (Objects.equals(req.getQuestion().getImportance_id(),3)){
+                 sum += general_score;
+             }
+         }
+         return sum;
     }
 
 

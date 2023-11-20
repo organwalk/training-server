@@ -26,7 +26,6 @@ import java.util.Objects;
 @RequestMapping("/api/resource")
 @AllArgsConstructor
 @Validated
-@CrossOrigin
 public class ResourceController {
 
     private final TagService tagService;
@@ -195,4 +194,7 @@ public class ResourceController {
     public ResponseEntity<String> getNote(@PathVariable @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "note_id必须为纯数字字段") @NotNull(message = "note_id不能为空") Integer note_id){
         return resourceNoteService.getNoteById(note_id);
     }
+
+
+
 }

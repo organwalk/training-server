@@ -42,4 +42,6 @@ public class WebClientConfig {
         return factory.createClient(TrainingClient.class);
     }
 
+
+
 }
