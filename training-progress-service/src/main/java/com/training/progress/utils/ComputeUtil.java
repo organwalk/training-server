@@ -2,6 +2,7 @@ package com.training.progress.utils;
 
 import com.training.progress.entity.table.ProgressLesson;
 
+import java.text.DecimalFormat;
 import java.util.List;
 
 //计算工具类
@@ -10,6 +11,7 @@ public class ComputeUtil {
 
     //计算一个课程的学习进度 传入t_progress_lesson表的list 计算平均的学习进度为百分比
      public static double comProgress(List<ProgressLesson> list){
+
         //课程完成进度总累加
         double sum = 0;
         //遍历list
@@ -19,12 +21,22 @@ public class ComputeUtil {
             //计算这个课程的完成进度总数（累加）
             sum += progress;
         }
-        //计算平均进度（进度累加除以学生数量）
-        return sum/list.size();
+         //计算平均进度（进度累加除以学生数量）
+         double averageProgress = sum/list.size();
+
+         // 使用 DecimalFormat 类进行格式化
+         DecimalFormat df = new DecimalFormat("#.##");
+         String formattedAverageProgress = df.format(averageProgress);
+
+         //计算平均进度（进度累加除以学生数量）
+        return Double.parseDouble(formattedAverageProgress);
     }
 
     public static double getStuProgress(ProgressLesson progressLesson){
-        return (double) progressLesson.getOver_chapter_sum() /progressLesson.getLesson_chapter_sum();
+        double result = (double) progressLesson.getOver_chapter_sum() /progressLesson.getLesson_chapter_sum();
+        DecimalFormat df = new DecimalFormat("#.##");
+        String formattedResult = df.format(result);
+        return Double.parseDouble(formattedResult);
     }
 
 

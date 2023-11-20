@@ -48,4 +48,14 @@ public interface CommentMapper {
             @Result(column = "create_datetime",property = "createDatetime")
     })
     List<Comment> getCommentByLessonIdAndChapterId(@Param("lesson_id")int lesson_id,@Param("chapter_id")int chapter_id);
+
+
+    @Delete("delete from t_learn_comment where id=#{id}")
+    Integer deleteCommentById(int id);
+
+    @Select("select * from t_learn_comment where id=#{id}")
+    Comment getCommentById(int id);
+
+    @Select("select lesson_id from t_resource_note where id=#{id}")
+    Integer getNoteExit(int id);
 }

@@ -72,4 +72,6 @@ public interface DeptMapper {
     List<DeptTable> searchDeptByKeyword(@Param("keyword") String keyword,
                                     @Param("pageSize") Integer pageSize,
                                     @Param("offset") Integer offset);
+
+
 }

@@ -23,5 +23,15 @@ public interface ReplyMapper {
     Integer getCommentIdById(int id);
 
 
+    @Delete("delete from t_learn_reply where comment_id=#{comment_id}")
+    Integer DeleteReplyByCommentId(int comment_id);
+
+    @Select("select id from t_learn_reply where comment_id=#{comment_id}")
+    List<Integer> getReplyIdByCommentId(int comment_id);
+
+    @Delete("delete from t_learn_reply where id=#{id}")
+    Integer DeleteReplyById(int id);
+
+
 
 }

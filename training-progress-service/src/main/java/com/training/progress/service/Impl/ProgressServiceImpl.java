@@ -140,7 +140,6 @@ public class ProgressServiceImpl implements ProgressService {
 
     /**
      * 获取培训计划进度列表
-     *
      * @param page_size
      * @param offset
      * @return
@@ -222,11 +221,17 @@ public class ProgressServiceImpl implements ProgressService {
             double lessonPresent = ComputeUtil.comProgress(progressLessonList);
             all_total_progresss +=lessonPresent;
             String name = getLessonById(i);
+            if (Double.isNaN(lessonPresent)){
+                lessonPresent=0;
+            }
             Lesson_Present lesson_present = new Lesson_Present(i,name,lessonPresent);
             lesson_presents.add(lesson_present);
         }
         List<Lesson_Present> result = reorder(lesson_presents);
         double all_total_progress = all_total_progresss/LessonIdList.size();
+       if(Double.isNaN(all_total_progress)){
+           all_total_progress = 0;
+       }
         TeaPresent teaPresent = new TeaPresent(all_total_progress,result);
         return new DataSuccessRespond("已成功获取百分比进度列表",teaPresent);
     }
@@ -251,6 +256,9 @@ public class ProgressServiceImpl implements ProgressService {
                 List<ProgressLesson> progressLessonList = lessonMapper.getAllProgressByLessonId(j);
                 double present =  ComputeUtil.comProgress(progressLessonList);
                 allPresent+=present;
+            }
+            if (Double.isNaN(allPresent)){
+                allPresent=0;
             }
             PlanPresent planPresent = new PlanPresent(i,allPresent);
             planPresents.add(planPresent);
@@ -299,6 +307,9 @@ public class ProgressServiceImpl implements ProgressService {
         for(Integer i :LessonIdList){
             ProgressLesson progressLesson = lessonMapper.getByLessIdAndStuID(i,student_id);
             double x = ComputeUtil.getStuProgress(progressLesson);
+            if (Double.isNaN(x)){
+                x = 0;
+            }
             LessPresent lessPresent = new LessPresent(i,x);
             lessPresents.add(lessPresent);
         }
