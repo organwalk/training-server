@@ -11,11 +11,14 @@ import com.training.resource.service.ResourceLessonService;
 import com.training.resource.service.ResourceNormalService;
 import com.training.resource.service.ResourceNoteService;
 import com.training.resource.service.TagService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
+import org.checkerframework.checker.units.qual.C;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -166,10 +169,18 @@ public class ResourceController {
     }
 
     // 根据课程教材ID获取教材
-    @GetMapping("/v2/lesson/{resource_lesson_id}")
+    @GetMapping("/v1/lesson/load/{resource_lesson_id}")
     public ResponseEntity<?> getResourceLessonFile(@RequestHeader(name="Range", required = false) String rangeString,
-                                                   @PathVariable Integer resource_lesson_id){
+                                                   @PathVariable Integer resource_lesson_id,
+                                                   HttpServletRequest request){
         return resourceLessonService.getResourceLessonById(rangeString, resource_lesson_id);
+    }
+
+    // 获取指定教材资源ID
+    @GetMapping("/v2/lesson/id/{lesson_id}/{chapter_id}")
+    public DataRespond getResourceLessonId(@PathVariable("lesson_id")Integer lessonId,
+                                           @PathVariable("chapter_id")Integer chapterId){
+        return resourceLessonService.getResourceLessonId(lessonId, chapterId);
     }
 
     // 上传学习笔记

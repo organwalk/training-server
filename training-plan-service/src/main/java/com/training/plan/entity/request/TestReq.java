@@ -1,6 +1,7 @@
 package com.training.plan.entity.request;
 
 
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.Data;
@@ -20,9 +21,9 @@ public class TestReq {
     private String test_options_c;
     @NotBlank(message = "选项D不能为空")
     private String test_options_d;
-    @Pattern(regexp = "^(a|b|c|d)(,(a|b|c|d))*$", message = "答案格式不正确,只允许\"a\"或\"a,b,c,d\"两种格式的数据")
+    @Pattern(regexp = "^(A|B|C|D)(,(A|B|C|D))*$", message = "答案格式不正确,只允许\"A\"或\"A,B,C,D\"两种格式的数据")
     private String test_options_answer;
-    @Pattern(regexp = "^[0-9]+$", message = "题目出现的实践只能为数字，单位为秒")
-    private String test_time;
+    @Min(value = 0, message = "题目出现的时间只能为数字，单位为秒")
+    private Integer test_time;
 
 }

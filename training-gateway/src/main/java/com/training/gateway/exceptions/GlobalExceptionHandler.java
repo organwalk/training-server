@@ -1,4 +1,4 @@
-package com.training.resource.exceptions;
+package com.training.gateway.exceptions;
 
 import com.training.common.entity.MsgRespond;
 import jakarta.validation.ConstraintViolation;
@@ -48,13 +48,13 @@ public class GlobalExceptionHandler {
         return MsgRespond.fail(errorMsg.toString());
     }
 
-//    @ExceptionHandler(value = {Exception.class, RuntimeException.class, IllegalArgumentException.class})
-//    public MsgRespond handleInternalServerError(Exception e, RuntimeException re, IllegalArgumentException ae) {
-//        logger.error(e);
-//        logger.error(re);
-//        logger.error(ae);
-//        return MsgRespond.fail("内部服务错误，请稍后重试");
-//    }
+    @ExceptionHandler(value = {Exception.class, RuntimeException.class, IllegalArgumentException.class})
+    public MsgRespond handleInternalServerError(Exception e, RuntimeException re, IllegalArgumentException ae) {
+        logger.error(e);
+        logger.error(re);
+        logger.error(ae);
+        return MsgRespond.fail("内部服务错误，请稍后重试");
+    }
 
     // 捕获400 Bad Request异常
     @ExceptionHandler({MissingServletRequestParameterException.class, MethodArgumentTypeMismatchException.class})

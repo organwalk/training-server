@@ -43,6 +43,12 @@ public class AuthenticationFilter implements GatewayFilter {
         if (Objects.equals(reqURL, "/api/user/v1/auth")){
             return chain.filter(exchange);
         }
+
+        // 如果是教材获取请求，也放行
+        if (reqURL.contains("/api/resource/v1/lesson/load")){
+            return chain.filter(exchange);
+        }
+
         // 获取本次请求的URL路径的权限标识
         int thirdSlashIndex = reqURL.indexOf('/', reqURL.indexOf('/') + 1); // 获取第三个斜杠的索引
         int fourthSlashIndex = reqURL.indexOf('/', thirdSlashIndex + 1); // 获取第四个斜杠的索引
@@ -50,9 +56,10 @@ public class AuthenticationFilter implements GatewayFilter {
 
         // 获取请求头上的授权信息
         HeadersAuthInfo headers = filterUtil.getHeadersAuthInfo(exchange);
-
+        System.out.println(headers);
         // 获取真实权限和通行令牌
         JSONObject authInfo =  userClient.getUserAuthInfo(headers.getUsername());
+        System.out.println(authInfo);
         String realAuthName = (String) authInfo.get("auth_name");
         String realAccessToken = (String) authInfo.get("access_token");
 
