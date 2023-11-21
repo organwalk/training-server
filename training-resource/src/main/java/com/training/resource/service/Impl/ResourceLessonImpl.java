@@ -15,6 +15,8 @@ import com.training.resource.service.ResourceLessonService;
 import com.training.resource.utils.DataUtil;
 import com.training.resource.utils.FileResUtil;
 import com.training.resource.utils.FileUtil;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.http.ResponseEntity;
@@ -115,7 +117,6 @@ public class ResourceLessonImpl implements ResourceLessonService {
             }
         }
         String msg =  uploadVideoLessonResource(filePath, req, "reUpload");
-        resourceLessonMapper.updateLessonResourcePath(filePath, fileUtil.getFileSaveDateTime(), req.getLesson_id(), req.getTeacher_id(), req.getChapter_id());
         return Objects.equals(msg, "当前文件片段上传成功") || Objects.equals(msg, "教材上传成功")
                 ? MsgRespond.success(msg)
                 : MsgRespond.fail(msg);
@@ -138,6 +139,8 @@ public class ResourceLessonImpl implements ResourceLessonService {
             return MsgRespond.fail("重新检查指定的讲师、课程和章节是否正确");
         }
 
+        String oldFilePath = resourceLessonMapper.selectOldFilePath(lessonId, teacherId, chapterId);
+
         // 删除数据库记录
         resourceLessonMapper.deleteOneLessonResource(teacherId, lessonId, chapterId);
 
@@ -146,7 +149,6 @@ public class ResourceLessonImpl implements ResourceLessonService {
         String filePath = fileUtil.checkEqualHashFilePath("lesson", fileHash);
         if (Objects.isNull(filePath)){
             // 如果不存在相同哈希值的文件，可以直接删除服务器存储记录
-            String oldFilePath = resourceLessonMapper.selectOldFilePath(lessonId, teacherId, chapterId);
             File file = new File(oldFilePath);
             if (file.exists()){
                 if (!file.delete()){
@@ -236,6 +238,22 @@ public class ResourceLessonImpl implements ResourceLessonService {
             return new DataFailRespond("该课程尚未上传资源");
         }
         return new DataSuccessRespond("已成功获取该课程下的资源列表", resourceLessonList);
+    }
+
+    /**
+     * 获取指定教材资源ID
+     * @param lessonId 课程ID
+     * @param chapterId 章节ID
+     * @return 返回提示消息或ID
+     * by organwalk 2023-11-18
+     */
+    @Override
+    public DataRespond getResourceLessonId(Integer lessonId, Integer chapterId) {
+        Integer id = resourceLessonMapper.getLessonResourceId(lessonId, chapterId);
+        if (Objects.isNull(id)){
+            return new DataFailRespond("该教材资源不存在");
+        }
+        return new DataSuccessRespond("已成功获取该教材资源ID", id);
     }
 
     /**

@@ -3,6 +3,8 @@ package com.training.resource.service;
 import com.training.common.entity.DataRespond;
 import com.training.common.entity.MsgRespond;
 import com.training.resource.entity.request.ResourceLessonReq;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
 
 /**
@@ -23,4 +25,7 @@ public interface ResourceLessonService {
 
     // 获取指定教师的教材列表
     DataRespond getResourceLessonByLessonId(Integer lessonId);
+
+    // 获取指定教材资源ID
+    DataRespond getResourceLessonId(Integer lessonId, Integer chapterId);
 }

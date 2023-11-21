@@ -132,7 +132,7 @@ public class TrainingPlanServiceImpl implements TrainingPlanService {
         int insertMark = trainingPlanMapper.insertTest(req,lesson_id,test_state);
         return insertMark > 0
                 ? MsgRespond.success("成功添加题目")
-                : MsgRespond.fail("创建账号失败，请重试");
+                : MsgRespond.fail("添加题目失败");
     }
     /**
      * 通过id获取指定计划具体实现

@@ -1,9 +1,12 @@
 package com.training.resource.utils;
 
 import com.training.resource.config.AppConfig;
+import com.training.resource.exceptions.GlobalExceptionHandler;
 import com.training.resource.mapper.ResourceLessonMapper;
 import com.training.resource.mapper.ResourceNormalMapper;
 import lombok.AllArgsConstructor;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,6 +26,8 @@ public class FileUtil {
     private final AppConfig appConfig;
     private final ResourceNormalMapper resourceNormalMapper;
     private final ResourceLessonMapper resourceLessonMapper;
+    private final FfmpegUtil ffmpegUtil;
+    private static final Logger logger = LogManager.getLogger(FileUtil.class);
     private static final ConcurrentMap<String, File> SHA_CACHE = new ConcurrentHashMap<>();
     public String chunkSaveFile(String hashValue,
                                 String filePath,
@@ -56,8 +61,11 @@ public class FileUtil {
         accessFile.write(multipartFile.getBytes());
         accessFile.close();
         if (finished) {
+            logger.info("已完成分片上传，移除分片缓存");
             SHA_CACHE.remove(hashValue);
-            return "true";
+            logger.info("开始将MP4转换为FMP4");
+            boolean process = ffmpegUtil.processMP4ToFMP4(filePath);
+            return process ? "true" : null;
         }
         return null;
     }
@@ -96,12 +104,6 @@ public class FileUtil {
         return "";
     }
 
-
-    private String getFolderDateTime(){
-        LocalDateTime currentDateTime = LocalDateTime.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
-        return currentDateTime.format(formatter);
-    }
     public String getFileSaveDateTime(){
         LocalDateTime currentDateTime = LocalDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -121,5 +123,11 @@ public class FileUtil {
     public String getNoteLessonFolderPath(Integer lessonId){
         String customPath = '/' + lessonId.toString();
         return appConfig.getNotePath() + customPath.replace("/", File.separator);
+    }
+
+    private String getFolderDateTime(){
+        LocalDateTime currentDateTime = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+        return currentDateTime.format(formatter);
     }
 }

@@ -3,19 +3,26 @@ package com.training.resource.utils;
 import com.training.common.entity.MsgRespond;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
+import org.springframework.web.servlet.resource.ResourceHttpRequestHandler;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.RandomAccessFile;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Objects;
+import java.util.Optional;
 
 @Component
 public class FileResUtil {
@@ -44,7 +51,7 @@ public class FileResUtil {
     }
 
     public ResponseEntity<?> returnVideo(String rangeString,
-                                               String lessonFilePath) throws IOException {
+                                         String lessonFilePath) throws IOException {
         File file = new File(lessonFilePath);
         long fileLength = file.length();
         RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r");
@@ -65,6 +72,8 @@ public class FileResUtil {
         headers.setContentType(MediaType.parseMediaType("video/mp4"));
         headers.setContentLength(len);
         headers.set("Content-Range", contentRange);
+        headers.set("Accept-Ranges", "bytes");
+        headers.set("Access-Control-Expose-Headers", "Content-Range,Accept-Ranges");
         HttpStatus status = HttpStatus.PARTIAL_CONTENT;
 
         return new ResponseEntity<>(bytes, headers, status);

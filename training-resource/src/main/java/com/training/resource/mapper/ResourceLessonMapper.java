@@ -3,10 +3,12 @@ package com.training.resource.mapper;
 import com.training.resource.entity.result.ResourceLessonInfo;
 import com.training.resource.entity.table.ResourceLessonTable;
 import org.apache.ibatis.annotations.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
 
 import java.util.List;
 
 @Mapper
+@CrossOrigin
 public interface ResourceLessonMapper {
     // 检查是否存在相同课程资源记录
     @Select("select id from t_resource_lesson where chapter_id = #{chapter_id}")
@@ -85,4 +87,9 @@ public interface ResourceLessonMapper {
     // 获取指定课程资源列表
     @Select("select id, chapter_id, up_datetime from t_resource_lesson where lesson_id = #{lessonId}")
     List<ResourceLessonInfo> selectResourceLessonList(Integer lessonId);
+
+    // 获取指定资源ID
+    @Select("select id from t_resource_lesson where lesson_id = #{lesson_id} and chapter_id = #{chapter_id}")
+    Integer getLessonResourceId(@Param("lesson_id")Integer lessonId,
+                                @Param("chapter_id")Integer chapterId);
 }
