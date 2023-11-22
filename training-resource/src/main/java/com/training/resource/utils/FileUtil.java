@@ -1,7 +1,6 @@
 package com.training.resource.utils;
 
 import com.training.resource.config.AppConfig;
-import com.training.resource.exceptions.GlobalExceptionHandler;
 import com.training.resource.mapper.ResourceLessonMapper;
 import com.training.resource.mapper.ResourceNormalMapper;
 import lombok.AllArgsConstructor;
@@ -26,11 +25,12 @@ public class FileUtil {
     private final AppConfig appConfig;
     private final ResourceNormalMapper resourceNormalMapper;
     private final ResourceLessonMapper resourceLessonMapper;
-    private final FfmpegUtil ffmpegUtil;
+    private final MP4BoxUtil mp4BoxUtil;
     private static final Logger logger = LogManager.getLogger(FileUtil.class);
     private static final ConcurrentMap<String, File> SHA_CACHE = new ConcurrentHashMap<>();
     public String chunkSaveFile(String hashValue,
                                 String filePath,
+                                String savePath,
                                 Integer fileChunksSum,
                                 Integer fileNowChunk,
                                 Integer fileSize,
@@ -64,7 +64,7 @@ public class FileUtil {
             logger.info("已完成分片上传，移除分片缓存");
             SHA_CACHE.remove(hashValue);
             logger.info("开始将MP4转换为FMP4");
-            boolean process = ffmpegUtil.processMP4ToFMP4(filePath);
+            boolean process = mp4BoxUtil.processMP4ToFMP4(savePath);
             return process ? "true" : null;
         }
         return null;

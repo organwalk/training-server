@@ -73,7 +73,7 @@ public interface ResourceLessonMapper {
 
     // 查询相同文件路径列表
     @Select("SELECT resource_path " +
-            "FROM t_resource_lesson " +  // 替换成你的实际表名
+            "FROM t_resource_lesson " +
             "WHERE teacher_id = #{teacherId} and lesson_id = #{lessonId} " +
             "GROUP BY resource_path " +
             "HAVING COUNT(resource_path) >= 2")

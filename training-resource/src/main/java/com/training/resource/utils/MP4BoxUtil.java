@@ -12,31 +12,26 @@ import java.util.UUID;
 
 @Component
 @AllArgsConstructor
-public class FfmpegUtil {
-    private static final Logger logger = LogManager.getLogger(FfmpegUtil.class);
+public class MP4BoxUtil {
+    private static final Logger logger = LogManager.getLogger(MP4BoxUtil.class);
 
-    public boolean processMP4ToFMP4(String filePath) throws IOException {
+    public boolean processMP4ToFMP4(String filePath){
+
+        //mp4Box -dash 4000 filePath.mp4 -out output_file_name.mpd
         String outputName = UUID.randomUUID() + ".mp4";
         // 命令参数
-        String[] ffmpegCommand = {
-                "ffmpeg",
-                "-i",
+        String[] mp4boxCommand = {
+                "mp4box",
+                "-dash",
+                "4000",
                 filePath,
-                "-c:v",
-                "copy",
-                "-c:a",
-                "copy",
-                "-movflags",
-                "frag_keyframe+empty_moov",
+                "-out",
                 outputName
         };
-        logger.info("正在使用ffmpeg进行视频处理，命令为：" + Arrays.toString(ffmpegCommand));
+        logger.info("正在使用Mp4box进行视频处理：" + Arrays.toString(mp4boxCommand));
         try {
             // 创建 ProcessBuilder 对象
-            ProcessBuilder processBuilder = new ProcessBuilder(ffmpegCommand);
-
-            // 设置工作目录（如果需要的话）
-            // processBuilder.directory(new File("path/to/ffmpeg/directory"));
+            ProcessBuilder processBuilder = new ProcessBuilder(mp4boxCommand);
 
             logger.info("启动线程并执行命令");
             Process process = processBuilder.start();
@@ -46,22 +41,22 @@ public class FfmpegUtil {
 
             // 如果命令成功执行（exitCode = 0）
             if (exitCode == 0) {
-                logger.info("成功执行命令，删除原始文件");
                 File originalFile = new File(filePath);
-                if (originalFile.exists()) {
-                    originalFile.delete();
+                if (originalFile.exists() && originalFile.delete()) {
+                    logger.info("成功执行命令，删除原始文件");
                 }
-                logger.info("重命名处理文件");
+
                 File processedFile = new File(outputName);
                 if (processedFile.exists()) {
                     File newFileName = new File(filePath);
-                    processedFile.renameTo(newFileName);
+                    if (processedFile.renameTo(newFileName)){
+                        logger.info("重命名处理文件");
+                    }
                 }
                 logger.info("视频处理成功");
                 return true;
             } else {
                 logger.info("视频处理失败");
-                // 处理命令执行失败的情况
                 return false;
             }
         } catch (IOException | InterruptedException e) {

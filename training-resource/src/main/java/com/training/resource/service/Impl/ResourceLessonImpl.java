@@ -11,12 +11,11 @@ import com.training.resource.entity.request.ResourceLessonReq;
 import com.training.resource.entity.result.ResourceLessonInfo;
 import com.training.resource.entity.table.ResourceLessonTable;
 import com.training.resource.mapper.ResourceLessonMapper;
+import com.training.resource.repository.ResourceLessonCache;
 import com.training.resource.service.ResourceLessonService;
 import com.training.resource.utils.DataUtil;
 import com.training.resource.utils.FileResUtil;
 import com.training.resource.utils.FileUtil;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.http.ResponseEntity;
@@ -39,6 +38,7 @@ import java.util.concurrent.ConcurrentMap;
 public class ResourceLessonImpl implements ResourceLessonService {
 
     private final ResourceLessonMapper resourceLessonMapper;
+    private final ResourceLessonCache resourceLessonCache;
     private final TrainingClient trainingClient;
     private final FileUtil fileUtil;
     private final DataUtil dataUtil;
@@ -144,6 +144,8 @@ public class ResourceLessonImpl implements ResourceLessonService {
         // 删除数据库记录
         resourceLessonMapper.deleteOneLessonResource(teacherId, lessonId, chapterId);
 
+//        resourceLessonCache.deleteResourceLessonTypeAndPath();
+
         // 检查是否具有相同哈希值的文件
         String fileHash = resourceLessonMapper.selectFileHashByInfo(teacherId, lessonId, chapterId);
         String filePath = fileUtil.checkEqualHashFilePath("lesson", fileHash);
@@ -208,15 +210,28 @@ public class ResourceLessonImpl implements ResourceLessonService {
     @SneakyThrows
     @Override
     public ResponseEntity<?> getResourceLessonById(String rangeString, Integer rlId) {
+        String filePath = null;
+        String fileExtension= null;
 
-        // 检查教材是否存在
-        String filePath = resourceLessonMapper.selectLessonPathById(rlId);
-        if (Objects.isNull(filePath)){
-            return fileResUtil.returnMsg("fail", "未找到教材资源");
+        // 先从缓存中获取结果
+        String cacheResult = resourceLessonCache.getResourceLessonTypeAndPath(rlId);
+        if (!cacheResult.isBlank()){
+            fileExtension = cacheResult.split("---")[0];
+            filePath = cacheResult.split("---")[1];
+        }else {
+
+            // 如果缓存中不存在结果时，从数据库中获取
+            filePath = resourceLessonMapper.selectLessonPathById(rlId);
+            // 检查教材是否存在
+            if (Objects.isNull(filePath)){
+                return fileResUtil.returnMsg("fail", "未找到教材资源");
+            }
+            fileExtension = Objects.requireNonNull(filePath).substring(filePath.lastIndexOf("."));
+            // 将查询结果保存于缓存中
+            resourceLessonCache.saveResourceLessonTypeAndPath(rlId, fileExtension, filePath);
         }
 
         // 判断属于文档教材还是视频教材
-        String fileExtension = Objects.requireNonNull(filePath).substring(filePath.lastIndexOf("."));
         if (Objects.equals(fileExtension, ".md")){
             // 属于文档教材
             return fileResUtil.returnMarkdown(filePath);
@@ -257,6 +272,23 @@ public class ResourceLessonImpl implements ResourceLessonService {
     }
 
     /**
+     * 获取指定教材资源类型
+     * @param resourceId 教材资源ID
+     * @return 返回提示消息或类型
+     * by organwalk 2023-11-22
+     */
+    @Override
+    public DataRespond getResourceLessonType(Integer resourceId) {
+        String filePath = resourceLessonMapper.selectLessonPathById(resourceId);
+        if (Objects.isNull(filePath)){
+            return new DataFailRespond("不存在此教材资源，无法获取其类型");
+        }
+
+        String fileExtension = Objects.requireNonNull(filePath).substring(filePath.lastIndexOf("."));
+        return new DataSuccessRespond("已成功获取教材资源后缀", fileExtension);
+    }
+
+    /**
      * 检查教师和课程是否存在和一致的内部方法
      * @param teacherId 教师ID
      * @param lessonId 课程ID
@@ -292,7 +324,15 @@ public class ResourceLessonImpl implements ResourceLessonService {
         if (Objects.isNull(savePath)){
             Path_CACHE.put(req.getFile_hash(), filePath);
         }
-        String processResult = fileUtil.chunkSaveFile(req.getFile_hash(), filePath, req.getFile_chunks_sum(), req.getFile_now_chunk(), req.getFile_size(), req.getResource_file());
+
+        String processResult = fileUtil.chunkSaveFile(req.getFile_hash(),
+                filePath,
+                Path_CACHE.get(req.getFile_hash()),
+                req.getFile_chunks_sum(),
+                req.getFile_now_chunk(),
+                req.getFile_size(),
+                req.getResource_file());
+
         if (Objects.isNull(processResult)){
             return "当前文件片段上传成功";
         }else if (Objects.equals(processResult, "true")){

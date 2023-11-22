@@ -28,4 +28,7 @@ public interface ResourceLessonService {
 
     // 获取指定教材资源ID
     DataRespond getResourceLessonId(Integer lessonId, Integer chapterId);
+
+    // 获取指定教材资源类型
+    DataRespond getResourceLessonType(Integer resourceId);
 }
