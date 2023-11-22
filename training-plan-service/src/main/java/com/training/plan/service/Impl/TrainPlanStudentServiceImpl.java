@@ -5,10 +5,13 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.training.common.entity.*;
 import com.training.common.entity.req.UserInfoListReq;
+import com.training.plan.client.ProgressClient;
 import com.training.plan.client.UserClient;
 import com.training.plan.entity.respond.StudentInfo;
 import com.training.plan.entity.respond.TeacherInfo;
 import com.training.plan.entity.result.User;
+import com.training.plan.mapper.ChapterMapper;
+import com.training.plan.mapper.LessonMapper;
 import com.training.plan.mapper.TrainPlanStudentMapper;
 import com.training.plan.reposoty.PlanCache;
 import com.training.plan.service.TrainPlanStudentService;
@@ -31,6 +34,9 @@ public class TrainPlanStudentServiceImpl implements TrainPlanStudentService {
     private final TrainPlanStudentMapper trainPlanStudentMapper;
     private final UserClient userClient;
     private final PlanCache planCache;
+    private final ProgressClient progressClient;
+    private final LessonMapper lessonMapper;
+    private final ChapterMapper chapterMapper;
     /**
      * 添加学生进入计划的具体实现
      * @param studentIdList 学生id列表
@@ -47,6 +53,13 @@ public class TrainPlanStudentServiceImpl implements TrainPlanStudentService {
         //添加学生
         trainPlanStudentMapper.insertTrainPlanStudent(studentIdList,plan_id);
         clearCache(plan_id);
+        List<Integer> lessonIdList = lessonMapper.getLIDByPId(plan_id);
+        for(Integer i:lessonIdList){
+            Integer sum = chapterMapper.getCountByLId(i);
+            for (Integer j:studentIdList){
+                progressClient.insertProgress(i,j,0,sum);
+            }
+        }
         return MsgRespond.success("添加成功！");
     }
     /**

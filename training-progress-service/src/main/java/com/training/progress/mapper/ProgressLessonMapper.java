@@ -1,10 +1,7 @@
 package com.training.progress.mapper;
 
 import com.training.progress.entity.table.ProgressLesson;
-import org.apache.ibatis.annotations.Insert;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.*;
 
 import java.util.List;
 
@@ -33,7 +30,8 @@ public interface ProgressLessonMapper {
     @Select("select * from t_progress_lesson where lesson_id=#{lesson_id} and student_id=#{student_id}")
     ProgressLesson getByLessIdAndStuID(@Param("lesson_id")int lesson_id,@Param("student_id")int student_id);
 
-
+    @Update("update t_progress_lesson set lesson_chapter_sum = #{lesson_chapter_sum} where lesson_id=#{lesson_id}")
+    void UpdateChapterSum(@Param("lesson_chapter_sum")Integer lesson_chapter_sum,@Param("lesson_id")Integer lesson_id);
 
 
     //获取培训计划进度列表()开发中

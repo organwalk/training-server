@@ -26,4 +26,7 @@ public interface ProgressService {
     DataRespond getAllLessonPresentByStuId(int student_id,int plan_id,int page_size,int offset);
 
     DataRespond getChapterListByStuIdAndLessonId(int student_id,int lesson_id);
+
+    MsgRespond updateChapterSum(Integer sum,Integer lesson_id);
+
 }

@@ -13,4 +13,6 @@ public interface ProgressClient {
     @PostExchange("/v2/plan/lesson/teacher/{plan_id}/{teacher_id}/{lesson_id}")
     JSONObject insertInProPlan(@PathVariable Integer plan_id,@PathVariable Integer teacher_id,@PathVariable Integer lesson_id);
 
+    @PostExchange("/v2/lesson/student/{sum}/{lesson_id}")
+    void updateChapterSum(@PathVariable Integer sum,@PathVariable Integer lesson_id);
 }

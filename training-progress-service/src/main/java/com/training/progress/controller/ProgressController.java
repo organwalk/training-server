@@ -185,8 +185,17 @@ public class ProgressController {
                                              @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "student_id必须为纯数字字段")
                                              int student_id){
         return progressService.getChapterListByStuIdAndLessonId(student_id,lesson_id);
-
     }
+
+    //更新章节总数
+    @PostMapping("/v2/lesson/student/{sum}/{lesson_id}")
+    public MsgRespond updateChapterSum(@PathVariable Integer sum,
+                                       @PathVariable
+                                           @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "lesson_id必须为纯数字字段")
+                                           int lesson_id){
+        return progressService.updateChapterSum(sum,lesson_id);
+    }
+
 
 
 

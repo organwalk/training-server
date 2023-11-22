@@ -6,6 +6,7 @@ import com.training.common.entity.DataFailRespond;
 import com.training.common.entity.DataRespond;
 import com.training.common.entity.DataSuccessRespond;
 import com.training.common.entity.MsgRespond;
+import com.training.plan.client.ProgressClient;
 import com.training.plan.entity.table.ChapterTable;
 import com.training.plan.entity.table.LessonTable;
 import com.training.plan.mapper.ChapterMapper;
@@ -26,6 +27,7 @@ public class ChapterServiceImpl implements ChapterService {
     private final ChapterMapper chapterMapper;
     private final LessonCache lessonCache;
     private final LessonMapper lessonMapper;
+    private final ProgressClient progressClient;
     /**
      *  添加课程章节
      * @param name 章节名称
@@ -48,6 +50,10 @@ public class ChapterServiceImpl implements ChapterService {
         String chapter_name = jsonObject.getString("chapter_name");
         Integer i = chapterMapper.insertChapter(chapter_name,lesson_id);
         lessonCache.deleteChapter(String.valueOf(lesson_id));
+        if(i>0){
+            Integer sum = chapterMapper.getCountByLId(lesson_id);
+            progressClient.updateChapterSum(sum,lesson_id);
+        }
         return i>0?MsgRespond.success("已成功添加此课程章节"):MsgRespond.fail("添加失败！");
     }
     /**
@@ -111,6 +117,7 @@ public class ChapterServiceImpl implements ChapterService {
         if (Objects.equals(Mark,0)){
             return MsgRespond.fail("该课程下没有该章节");
         }
+        Integer lesson_id = chapterMapper.getLessonIdByChapterId(id);
         String key = String.valueOf(chapterMapper.getLessonIdByChapterId(id));
         //删除章节
         Integer i = chapterMapper.deleteChapterById(id);
@@ -119,6 +126,8 @@ public class ChapterServiceImpl implements ChapterService {
         }
         //删除缓存
         lessonCache.deleteChapter(key);
+        Integer sum = chapterMapper.getCountByLId(lesson_id);
+        progressClient.updateChapterSum(sum,lesson_id);
         return MsgRespond.success("已成功删除此章节");
     }
     /**
@@ -135,6 +144,7 @@ public class ChapterServiceImpl implements ChapterService {
         }
         Integer i = chapterMapper.deleteAllChapterByLessonId(lesson_id);
         lessonCache.deleteChapter(String.valueOf(lesson_id));
+        progressClient.updateChapterSum(0,lesson_id);
         return i>0?MsgRespond.success("已成功删除该课程的所有章节"):MsgRespond.fail("删除失败！");
     }
 

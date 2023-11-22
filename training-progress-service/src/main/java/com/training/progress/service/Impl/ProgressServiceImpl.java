@@ -40,7 +40,6 @@ public class ProgressServiceImpl implements ProgressService {
 
     /**
      * 标记课程章节为已完成的具体实现
-     *
      * @param lesson_id  课程id
      * @param chapter_id 章节id
      * @param student_id 学生id
@@ -345,6 +344,22 @@ public class ProgressServiceImpl implements ProgressService {
     }
 
 
+
+    /**
+     * 更新进度服务章节总数
+     * @param sum 章节总数
+     * @param lesson_id 课程id
+     * @return 根据处理结果返回对应消息
+     */
+    @Override
+    public MsgRespond updateChapterSum(Integer sum, Integer lesson_id) {
+        String lessonMark = judgeLessonExit(lesson_id);
+        if (!lessonMark.isBlank()){
+            return MsgRespond.fail(lessonMark);
+        }
+        lessonMapper.UpdateChapterSum(sum,lesson_id);
+        return MsgRespond.success("修改成功！");
+    }
 
 
     /**
