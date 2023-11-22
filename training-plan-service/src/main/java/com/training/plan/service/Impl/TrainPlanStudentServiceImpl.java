@@ -8,7 +8,7 @@ import com.training.common.entity.req.UserInfoListReq;
 import com.training.plan.client.ProgressClient;
 import com.training.plan.client.UserClient;
 import com.training.plan.entity.respond.StudentInfo;
-import com.training.plan.entity.respond.TeacherInfo;
+
 import com.training.plan.entity.result.User;
 import com.training.plan.mapper.ChapterMapper;
 import com.training.plan.mapper.LessonMapper;

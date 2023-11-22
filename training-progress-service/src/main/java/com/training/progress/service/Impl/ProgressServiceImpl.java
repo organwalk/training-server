@@ -4,7 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.training.common.entity.*;
-import com.training.common.entity.result.LessonInfo;
+
 import com.training.progress.client.PlanClient;
 import com.training.progress.client.UserClient;
 import com.training.progress.config.ToolConfig;
