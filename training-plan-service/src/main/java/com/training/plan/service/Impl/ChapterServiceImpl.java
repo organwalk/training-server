@@ -149,10 +149,10 @@ public class ChapterServiceImpl implements ChapterService {
         }
 
         // 删除所有该章节下的资源
-        resourceClient.deleteAllLessonResource(lesson_id);
-
-        Integer i = chapterMapper.deleteAllChapterByLessonId(lesson_id);
         lessonCache.deleteChapter(String.valueOf(lesson_id));
+        resourceClient.deleteAllLessonResource(lesson_id);
+        Integer i = chapterMapper.deleteAllChapterByLessonId(lesson_id);
+
 
         return i>0?MsgRespond.success("已成功删除该课程的所有章节"):MsgRespond.fail("删除失败！");
     }

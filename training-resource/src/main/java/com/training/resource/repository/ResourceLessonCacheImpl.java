@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.util.concurrent.TimeUnit;
+
 @Repository
 @AllArgsConstructor
 public class ResourceLessonCacheImpl implements ResourceLessonCache{
@@ -13,6 +15,7 @@ public class ResourceLessonCacheImpl implements ResourceLessonCache{
     @Override
     public void saveResourceLessonTypeAndPath(Integer resourceId, String fileExtension, String filePath) {
         redisTemplate.opsForHash().put(KEY, String.valueOf(resourceId), fileExtension + "---" + filePath);
+        redisTemplate.expire(KEY, 3, TimeUnit.DAYS);
     }
 
     @Override

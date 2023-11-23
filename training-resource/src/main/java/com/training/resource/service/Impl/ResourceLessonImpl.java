@@ -23,11 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -44,7 +40,7 @@ public class ResourceLessonImpl implements ResourceLessonService {
     private final FileUtil fileUtil;
     private final DataUtil dataUtil;
     private final FileResUtil fileResUtil;
-    private static final ConcurrentMap<String, String> Path_CACHE = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<String, String> PATH_CACHE = new ConcurrentHashMap<>();
     private static final ConcurrentMap<Integer, Boolean> UPLOAD_CACHE = new ConcurrentHashMap<>();
     /**
      * 上传教材资源文件具体实现
@@ -113,6 +109,7 @@ public class ResourceLessonImpl implements ResourceLessonService {
         Integer chapterId = req.getChapter_id();
         Boolean checkResult = UPLOAD_CACHE.get(chapterId);
         Integer idMark = null;
+
         if (Objects.isNull(checkResult)) {
             // 检查课程、章节、教程存在性
             idMark = resourceLessonMapper.selectIdByReUpdateArgs(req.getLesson_id(), req.getTeacher_id(), req.getChapter_id());
@@ -131,10 +128,8 @@ public class ResourceLessonImpl implements ResourceLessonService {
         if (pathMark != 2){
             // 如果不存在，则说明同一份文件不存在多重引用，可删除服务器文件
             File oldFile = new File(oldFilePath);
-            if (oldFile.exists()){
-                if (!oldFile.delete()){
-                    return MsgRespond.fail("文件系统错误，请稍后再试");
-                }
+            if (oldFile.exists() && !oldFile.delete()){
+                return MsgRespond.fail("文件系统错误，请稍后再试");
             }
         }
 
@@ -222,8 +217,8 @@ public class ResourceLessonImpl implements ResourceLessonService {
     @SneakyThrows
     @Override
     public ResponseEntity<?> getResourceLessonById(String rangeString, Integer rlId) {
-        String filePath = null;
-        String fileExtension= null;
+        String filePath;
+        String fileExtension;
 
         // 先从缓存中获取结果
         String cacheResult = resourceLessonCache.getResourceLessonTypeAndPath(rlId);
@@ -231,7 +226,6 @@ public class ResourceLessonImpl implements ResourceLessonService {
             fileExtension = cacheResult.split("---")[0];
             filePath = cacheResult.split("---")[1];
         }else {
-
             // 如果缓存中不存在结果时，从数据库中获取
             filePath = resourceLessonMapper.selectLessonPathById(rlId);
             // 检查教材是否存在
@@ -332,14 +326,14 @@ public class ResourceLessonImpl implements ResourceLessonService {
     @SneakyThrows
     private String uploadVideoLessonResource(String filePath, ResourceLessonReq req, String type){
         // 获取文件保存路径
-        String savePath = Path_CACHE.get(req.getFile_hash());
+        String savePath = PATH_CACHE.get(req.getFile_hash());
         if (Objects.isNull(savePath)){
-            Path_CACHE.put(req.getFile_hash(), filePath);
+            PATH_CACHE.put(req.getFile_hash(), filePath);
         }
 
         String processResult = fileUtil.chunkSaveFile(req.getFile_hash(),
                 filePath,
-                Path_CACHE.get(req.getFile_hash()),
+                PATH_CACHE.get(req.getFile_hash()),
                 req.getFile_chunks_sum(),
                 req.getFile_now_chunk(),
                 req.getFile_size(),
@@ -350,11 +344,11 @@ public class ResourceLessonImpl implements ResourceLessonService {
         }else if (Objects.equals(processResult, "true")){
             if (Objects.equals(type, "upload")){
                 resourceLessonMapper.insertLessonResource(new ResourceLessonTable(null,
-                        req.getLesson_id(), req.getTeacher_id(), req.getChapter_id(), Path_CACHE.get(req.getFile_hash()),  fileUtil.getFileSaveDateTime(), req.getFile_hash()));
+                        req.getLesson_id(), req.getTeacher_id(), req.getChapter_id(), PATH_CACHE.get(req.getFile_hash()),  fileUtil.getFileSaveDateTime(), req.getFile_hash()));
             }else {
-                resourceLessonMapper.updateLessonResourcePath(Path_CACHE.get(req.getFile_hash()), fileUtil.getFileSaveDateTime(), req.getLesson_id(), req.getTeacher_id(), req.getChapter_id());
+                resourceLessonMapper.updateLessonResourcePath(PATH_CACHE.get(req.getFile_hash()), fileUtil.getFileSaveDateTime(), req.getLesson_id(), req.getTeacher_id(), req.getChapter_id());
             }
-            Path_CACHE.remove(req.getFile_hash());
+            PATH_CACHE.remove(req.getFile_hash());
             return "教材上传成功";
         }else {
             return processResult;
