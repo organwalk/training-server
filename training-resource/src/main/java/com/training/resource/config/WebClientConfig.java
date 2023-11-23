@@ -1,6 +1,7 @@
 package com.training.resource.config;
 
 import com.training.resource.client.DeptClient;
+import com.training.resource.client.PlanClient;
 import com.training.resource.client.TrainingClient;
 import com.training.resource.client.UserClient;
 import org.springframework.context.annotation.Bean;
@@ -42,6 +43,12 @@ public class WebClientConfig {
         return factory.createClient(TrainingClient.class);
     }
 
+    @Bean
+    public PlanClient planClient(){
+        WebClient client = WebClient.builder().build();
+        HttpServiceProxyFactory factory = HttpServiceProxyFactory.builder(WebClientAdapter.forClient(client)).build();
+        return factory.createClient(PlanClient.class);
+    }
 
 
 }

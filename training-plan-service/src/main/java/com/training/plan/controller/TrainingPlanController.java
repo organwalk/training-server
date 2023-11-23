@@ -315,7 +315,7 @@ public class TrainingPlanController {
 
     //根据id删除指定测试
     @DeleteMapping("/v2/lesson/test/{test_id}")
-    public MsgRespond deleteTsetById(@PathVariable
+    public MsgRespond deleteTestById(@PathVariable
                                      @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "test_id必须为纯数字字段")
                                      Integer test_id) {
         return testService.deleteById(test_id);
@@ -327,7 +327,6 @@ public class TrainingPlanController {
                                    @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "resource_lesson_id必须为纯数字字段")
                                    Integer resource_lesson_id) {
         return testService.deleteAllTest(resource_lesson_id);
-
     }
 
     //编辑测试题

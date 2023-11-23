@@ -6,6 +6,7 @@ import com.training.common.entity.DataRespond;
 import com.training.common.entity.DataSuccessRespond;
 import com.training.common.entity.MsgRespond;
 import com.training.common.entity.result.LessonInfo;
+import com.training.resource.client.PlanClient;
 import com.training.resource.client.TrainingClient;
 import com.training.resource.entity.request.ResourceLessonReq;
 import com.training.resource.entity.result.ResourceLessonInfo;
@@ -40,8 +41,12 @@ public class ResourceLessonImpl implements ResourceLessonService {
     private final FileUtil fileUtil;
     private final DataUtil dataUtil;
     private final FileResUtil fileResUtil;
+    private final PlanClient planClient;
     private static final ConcurrentMap<String, String> PATH_CACHE = new ConcurrentHashMap<>();
     private static final ConcurrentMap<Integer, Boolean> UPLOAD_CACHE = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<Integer, String> OLD_PATH_CACHE = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<Integer, Integer> VALID_SAME_PATH = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<Integer, String> VALID_SAME_HASH_FILE = new ConcurrentHashMap<>();
     /**
      * 上传教材资源文件具体实现
      * @param req 教材对象
@@ -116,15 +121,29 @@ public class ResourceLessonImpl implements ResourceLessonService {
             if (Objects.isNull(idMark)){
                 return MsgRespond.fail("重新检查指定的讲师、课程和章节是否正确");
             }
+
+            // 删除该教材资源的视频测试题
+            planClient.deleteAllVideoTestByResourceLessonId(idMark);
+
             UPLOAD_CACHE.put(chapterId, true);
         }
 
 
         String filePath = fileUtil.getLessonFilePath(req.getTeacher_id(), req.getLesson_id(), req.getChapter_id(), req.getFile_origin_name());
         // 获取原文件路径
-        String oldFilePath = resourceLessonMapper.selectOldFilePath(req.getChapter_id());
+        String oldFilePath = OLD_PATH_CACHE.get(chapterId);
+        if (Objects.isNull(oldFilePath)){
+            oldFilePath = resourceLessonMapper.selectOldFilePath(req.getChapter_id());
+            OLD_PATH_CACHE.put(chapterId, oldFilePath);
+        }
         // 检查是否具有两条相同路径的文件
-        Integer pathMark = resourceLessonMapper.selectPathIsOverTwo(oldFilePath);
+
+        Integer pathMark = VALID_SAME_PATH.get(chapterId);
+        if (Objects.isNull(pathMark)){
+            pathMark = resourceLessonMapper.selectPathIsOverTwo(oldFilePath);
+            VALID_SAME_PATH.put(chapterId, pathMark);
+        }
+
         if (pathMark != 2){
             // 如果不存在，则说明同一份文件不存在多重引用，可删除服务器文件
             File oldFile = new File(oldFilePath);
@@ -135,19 +154,30 @@ public class ResourceLessonImpl implements ResourceLessonService {
 
         // 删除Redis缓存
         resourceLessonCache.deleteResourceLessonTypeAndPath(idMark);
+
         // 检查是否具有相同哈希值的文件
-        String equalHashFilePath = fileUtil.checkEqualHashFilePath("lesson", req.getFile_hash());
+        String equalHashFilePath = VALID_SAME_HASH_FILE.get(chapterId);
         if (Objects.isNull(equalHashFilePath)){
+            equalHashFilePath = fileUtil.checkEqualHashFilePath("lesson", req.getFile_hash());
+            if (Objects.isNull(equalHashFilePath)){
+                VALID_SAME_HASH_FILE.put(chapterId, "");
+            }else {
+                VALID_SAME_HASH_FILE.put(chapterId, equalHashFilePath);
+            }
+        }
+
+        if (Objects.isNull(equalHashFilePath) || equalHashFilePath.isBlank()){
             String msg =  uploadVideoLessonResource(filePath, req, "reUpload");
             if (Objects.equals(msg, "教材上传成功")) {
-                UPLOAD_CACHE.remove(chapterId);
+                removePathCache(chapterId);
             }
             return Objects.equals(msg, "当前文件片段上传成功") || Objects.equals(msg, "教材上传成功")
                     ? MsgRespond.success(msg)
                     : MsgRespond.fail(msg);
         }
 
-        UPLOAD_CACHE.remove(chapterId);
+        removePathCache(chapterId);
+
         resourceLessonMapper.updateLessonResourcePath(equalHashFilePath, fileUtil.getFileSaveDateTime(), req.getLesson_id(), req.getTeacher_id(), req.getChapter_id());
         return MsgRespond.success("教材资源上传成功");
 
@@ -216,9 +246,13 @@ public class ResourceLessonImpl implements ResourceLessonService {
      */
     @SneakyThrows
     @Override
-    public ResponseEntity<?> getResourceLessonById(String rangeString, Integer rlId) {
+    public ResponseEntity<?> getResourceLessonById(String rangeString, Integer rlId, String random_str) {
         String filePath;
         String fileExtension;
+
+        if (random_str.isBlank()){
+            return fileResUtil.returnMsg("fail", "未提供随机字符串");
+        }
 
         // 先从缓存中获取结果
         String cacheResult = resourceLessonCache.getResourceLessonTypeAndPath(rlId);
@@ -325,6 +359,7 @@ public class ResourceLessonImpl implements ResourceLessonService {
      */
     @SneakyThrows
     private String uploadVideoLessonResource(String filePath, ResourceLessonReq req, String type){
+
         // 获取文件保存路径
         String savePath = PATH_CACHE.get(req.getFile_hash());
         if (Objects.isNull(savePath)){
@@ -392,5 +427,12 @@ public class ResourceLessonImpl implements ResourceLessonService {
         }
 
         return "";
+    }
+
+    private void removePathCache(Integer chapterId){
+        UPLOAD_CACHE.remove(chapterId);
+        OLD_PATH_CACHE.remove(chapterId);
+        VALID_SAME_PATH.remove(chapterId);
+        VALID_SAME_HASH_FILE.remove(chapterId);
     }
 }

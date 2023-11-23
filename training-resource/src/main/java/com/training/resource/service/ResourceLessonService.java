@@ -21,7 +21,7 @@ public interface ResourceLessonService {
     // 删除指定课程下所有教材文件
     MsgRespond deleteAllLessonResource(Integer lessonId);
     // 根据课程教材ID获取教材
-    ResponseEntity<?> getResourceLessonById(String rangeString, Integer rlId);
+    ResponseEntity<?> getResourceLessonById(String rangeString, Integer rlId, String random_str);
 
     // 获取指定教师的教材列表
     DataRespond getResourceLessonByLessonId(Integer lessonId);
