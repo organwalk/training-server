@@ -79,7 +79,7 @@ public class ResourceNormalImpl implements ResourceNormalService {
             if (Objects.isNull(savePath)){
                 Path_CACHE.put(req.getFile_hash(), filePath);
             }
-            String processResult = fileUtil.chunkSaveFile(req.getFile_hash(), filePath, req.getFile_chunks_sum(), req.getFile_now_chunk(), req.getFile_size(), req.getResource_file());
+            String processResult = fileUtil.chunkSaveFile(req.getFile_hash(), filePath, Path_CACHE.get(req.getFile_hash()), req.getFile_chunks_sum(), req.getFile_now_chunk(), req.getFile_size(), req.getResource_file());
             if (Objects.isNull(processResult)){
                 return MsgRespond.success("当前文件片段上传成功");
             }else if (Objects.equals(processResult, "true")){

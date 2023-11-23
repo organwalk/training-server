@@ -11,14 +11,11 @@ import com.training.resource.service.ResourceLessonService;
 import com.training.resource.service.ResourceNormalService;
 import com.training.resource.service.ResourceNoteService;
 import com.training.resource.service.TagService;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
-import org.checkerframework.checker.units.qual.C;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -89,7 +86,10 @@ public class ResourceController {
 
     // 编辑指定资源文件信息
     @PutMapping("/v1/normal/file/info/{rid}")
-    public MsgRespond editResourceNormalInfo(@PathVariable @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "rid必须为纯数字字段") Integer rid, @Validated @ModelAttribute ResourceNormalReq req, @RequestHeader("username") String username, @RequestHeader("auth") String auth) {
+    public MsgRespond editResourceNormalInfo(@PathVariable @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "rid必须为纯数字字段") Integer rid,
+                                             @Validated @ModelAttribute ResourceNormalReq req,
+                                             @RequestHeader("username") String username,
+                                             @RequestHeader("auth") String auth) {
         return resourceNormalService.editResourceNormalInfo(rid, req, username, auth);
     }
 
@@ -154,26 +154,29 @@ public class ResourceController {
     }
 
     // 删除指定课程章节教材文件
-    @DeleteMapping("/v2/lesson/{teacher_id}/{lesson_id}/{chapter_id}")
-    public MsgRespond deleteOneLessonResource(@PathVariable @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "teacher_id必须为纯数字字段") Integer teacher_id,
-                                              @PathVariable @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "lesson_id必须为纯数字字段") Integer lesson_id,
-                                              @PathVariable @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "chapter_id必须为纯数字字段") Integer chapter_id){
-        return resourceLessonService.deleteOneLessonResource(teacher_id, lesson_id, chapter_id);
+    @DeleteMapping("/v2/lesson/chapter/{chapter_id}")
+    public MsgRespond deleteOneLessonResource(@PathVariable Integer chapter_id){
+        return resourceLessonService.deleteOneLessonResource(chapter_id);
     }
 
     // 删除指定课程下所有教材文件
-    @PostMapping("/v2/lesson/{teacher_id}/{lesson_id}")
-    public MsgRespond deleteAllLessonResource(@PathVariable @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "teacher_id必须为纯数字字段") Integer teacher_id,
-                                              @PathVariable @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "lesson_id必须为纯数字字段") Integer lesson_id){
-        return resourceLessonService.deleteAllLessonResource(teacher_id, lesson_id);
+    @PostMapping("/v2/lesson/{lesson_id}")
+    public MsgRespond deleteAllLessonResource(@PathVariable @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "lesson_id必须为纯数字字段") Integer lesson_id){
+        return resourceLessonService.deleteAllLessonResource(lesson_id);
     }
 
     // 根据课程教材ID获取教材
-    @GetMapping("/v1/lesson/load/{resource_lesson_id}")
+    @GetMapping("/v1/lesson/load/{resource_lesson_id}/{random_str}")
     public ResponseEntity<?> getResourceLessonFile(@RequestHeader(name="Range", required = false) String rangeString,
-                                                   @PathVariable Integer resource_lesson_id,
-                                                   HttpServletRequest request){
-        return resourceLessonService.getResourceLessonById(rangeString, resource_lesson_id);
+                                                   @PathVariable Integer resource_lesson_id, @PathVariable String random_str){
+
+        return resourceLessonService.getResourceLessonById(rangeString, resource_lesson_id, random_str);
+    }
+
+    // 获取指定教材资源类型
+    @GetMapping("/v2/lesson/type/{resource_id}")
+    public DataRespond getResourceLessonType(@PathVariable Integer resource_id){
+        return resourceLessonService.getResourceLessonType(resource_id);
     }
 
     // 获取指定教材资源ID
