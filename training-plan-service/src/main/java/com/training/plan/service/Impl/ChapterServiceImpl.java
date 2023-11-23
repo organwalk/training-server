@@ -109,13 +109,13 @@ public class ChapterServiceImpl implements ChapterService {
     }
     /**
      *  根据id删除指定章节
-     * @param id 章节id
+     * @param chapterId 章节id
      * @return 根据处理结果返回对应消息
      */
     @Override
-    public MsgRespond deleteChapterById(int id) {
+    public MsgRespond deleteChapterById(int chapterId) {
         //判断是否存在该章节
-        Integer Mark = chapterMapper.JudgeChapterExit(id);
+        Integer Mark = chapterMapper.JudgeChapterExit(chapterId);
         if (Objects.equals(Mark,0)){
             return MsgRespond.fail("该课程下没有该章节");
         }
