@@ -24,4 +24,7 @@ public interface PlanCache {
     void DeleteStu(Object key);
 
     void DeleteTea(Object key);
+
+    void deleteStudentByPlanId(int planId);
+    void deleteTeacherByPlanId(int planId);
 }

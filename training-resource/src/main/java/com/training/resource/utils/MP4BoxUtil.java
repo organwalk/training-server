@@ -17,7 +17,7 @@ public class MP4BoxUtil {
 
     public boolean processMP4ToFMP4(String filePath){
 
-        //mp4Box -dash 4000 filePath.mp4 -out output_file_name.mpd
+        // mp4Box -dash 4000 filePath.mp4 -out output_file_name.mpd
         String outputName = UUID.randomUUID() + ".mp4";
         // 命令参数
         String[] mp4boxCommand = {
@@ -39,13 +39,11 @@ public class MP4BoxUtil {
             logger.info("等待命令完成");
             int exitCode = process.waitFor();
 
-            // 如果命令成功执行（exitCode = 0）
-            if (exitCode == 0) {
-                File originalFile = new File(filePath);
-                if (originalFile.exists() && originalFile.delete()) {
-                    logger.info("成功执行命令，删除原始文件");
-                }
+            File originalFile = new File(filePath);
+            // 删除原始文件
+            deleteFile(originalFile);
 
+            if (exitCode == 0) {
                 File processedFile = new File(outputName);
                 if (processedFile.exists()) {
                     File newFileName = new File(filePath);
@@ -62,6 +60,12 @@ public class MP4BoxUtil {
         } catch (IOException | InterruptedException e) {
             logger.error(e);
             return false;
+        }
+    }
+
+    private void deleteFile(File file){
+        if (file.exists() && file.delete()) {
+            logger.info("删除原始文件");
         }
     }
 }

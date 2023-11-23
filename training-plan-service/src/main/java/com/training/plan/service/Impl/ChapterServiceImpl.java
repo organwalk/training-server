@@ -6,6 +6,7 @@ import com.training.common.entity.DataFailRespond;
 import com.training.common.entity.DataRespond;
 import com.training.common.entity.DataSuccessRespond;
 import com.training.common.entity.MsgRespond;
+import com.training.plan.client.ResourceClient;
 import com.training.plan.entity.table.ChapterTable;
 import com.training.plan.entity.table.LessonTable;
 import com.training.plan.mapper.ChapterMapper;
@@ -26,6 +27,7 @@ public class ChapterServiceImpl implements ChapterService {
     private final ChapterMapper chapterMapper;
     private final LessonCache lessonCache;
     private final LessonMapper lessonMapper;
+    private final ResourceClient resourceClient;
     /**
      *  添加课程章节
      * @param name 章节名称
@@ -101,26 +103,37 @@ public class ChapterServiceImpl implements ChapterService {
     }
     /**
      *  根据id删除指定章节
-     * @param id 章节id
+     * @param chapterId 章节id
      * @return 根据处理结果返回对应消息
      */
     @Override
-    public MsgRespond deleteChapterById(int id) {
+    public MsgRespond deleteChapterById(int chapterId) {
         //判断是否存在该章节
-        Integer Mark = chapterMapper.JudgeChapterExit(id);
+        Integer Mark = chapterMapper.JudgeChapterExit(chapterId);
         if (Objects.equals(Mark,0)){
             return MsgRespond.fail("该课程下没有该章节");
         }
-        String key = String.valueOf(chapterMapper.getLessonIdByChapterId(id));
+
+        Integer lessonId = chapterMapper.getLessonIdByChapterId(chapterId);
+
+        // 删除章节教材资源
+        JSONObject res = resourceClient.deleteOneLessonResource(chapterId);
+        if (Objects.equals(res.getInteger("code"), 5005)){
+            return MsgRespond.fail("删除失败，原因：资源服务发生错误");
+        }
+
+        //删除缓存
+        lessonCache.deleteChapter(String.valueOf(lessonId));
+
         //删除章节
-        Integer i = chapterMapper.deleteChapterById(id);
+        Integer i = chapterMapper.deleteChapterById(chapterId);
         if (i == 0){
             return MsgRespond.fail("删除失败");
         }
-        //删除缓存
-        lessonCache.deleteChapter(key);
+
         return MsgRespond.success("已成功删除此章节");
     }
+
     /**
      *  删除指定课程下的所有章节
      * @param lesson_id 课程id
@@ -128,13 +141,19 @@ public class ChapterServiceImpl implements ChapterService {
      */
     @Override
     public MsgRespond deleteAllChapterByLessonId(int lesson_id) {
+
         //判断该课程是否拥有章节
         Integer mark = chapterMapper.getCountByLId(lesson_id);
         if (Objects.equals(mark,0)){
             return MsgRespond.fail("该课程不存在章节");
         }
+
+        // 删除所有该章节下的资源
+        resourceClient.deleteAllLessonResource(lesson_id);
+
         Integer i = chapterMapper.deleteAllChapterByLessonId(lesson_id);
         lessonCache.deleteChapter(String.valueOf(lesson_id));
+
         return i>0?MsgRespond.success("已成功删除该课程的所有章节"):MsgRespond.fail("删除失败！");
     }
 

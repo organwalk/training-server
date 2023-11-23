@@ -1,8 +1,10 @@
 package com.training.plan.service.Impl;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.training.common.entity.*;
 import com.training.plan.client.DeptClient;
+import com.training.plan.client.ProgressClient;
 import com.training.plan.entity.request.PlanUpdateReq;
 import com.training.plan.entity.request.TestReq;
 import com.training.plan.entity.request.TrainingPlanReq;
@@ -12,6 +14,7 @@ import com.training.plan.entity.table.TrainingPlanTable;
 import com.training.plan.mapper.*;
 import com.training.plan.reposoty.LessonCache;
 import com.training.plan.reposoty.PlanCache;
+import com.training.plan.service.ChapterService;
 import com.training.plan.service.TrainingPlanService;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -32,11 +35,11 @@ public class TrainingPlanServiceImpl implements TrainingPlanService {
     private final TrainingPlanMapper trainingPlanMapper;
     private final DeptClient deptClient;
     private final PlanCache planCache;
-    private final TrainPlanStudentMapper studentMapper;
-    private final TrainPlanTeacherMapper teacherMapper;
     private final LessonMapper lessonMapper;
     private final ChapterMapper chapterMapper;
     private final LessonCache lessonCache;
+    private final ProgressClient progressClient;
+    private final ChapterService chapterService;
 
 
 
@@ -211,40 +214,41 @@ public class TrainingPlanServiceImpl implements TrainingPlanService {
         if (trainingPlanTable == null){
             return MsgRespond.fail("未找到该计划！");
         }
+
+        //删除计划对应的教师和学生缓存
+        planCache.deleteTeacherByPlanId(id);
+        planCache.deleteStudentByPlanId(id);
+
+        //删除计划列表下的课程与其对应章节
+        JSONObject res = progressClient.getLessonIdByPlanId(id, 999999, 0);
+        if (Objects.equals(res.getInteger("code"), 5005)){
+            return MsgRespond.fail("删除失败，原因：进度跟踪服务错误");
+        }
+        List<Integer> lessonIdList = res.getJSONArray("data").toJavaList(Integer.class);
+        List<Integer> failList = new ArrayList<>();
+        lessonIdList.forEach(lessonId -> {
+            lessonCache.deleteChapter(String.valueOf(lessonId));
+            Integer code = chapterService.deleteAllChapterByLessonId(lessonId).getCode();
+            if (code == 5005){
+                failList.add(lessonId);
+            }
+            lessonMapper.deleteLessonById(lessonId);
+        });
+
+        if (Objects.equals(failList.size(), lessonIdList.size())){
+            return MsgRespond.fail("内部服务错误，删除失败");
+        }
+
         //删除计划
         int i = trainingPlanMapper.DeletePlan(id);
         if(i<=0){
             return MsgRespond.fail("删除失败！");
         }
-        //删除计划对应的教师表和学生表
-        studentMapper.DeleteStuByPlanId(id);
-        teacherMapper.deleteTeaByPlanId(id);
-        //删除缓存
-        Map<Object, Object> teaList = planCache.getTeaAll();
-        Map<Object, Object> stuList = planCache.getStuAll();
-        for(Object key:stuList.keySet()){
-            String StrKey = key.toString();
-            String[] parts = StrKey.split("-");
-            String value = parts[0];
-            if (value.equals(String.valueOf(id))){
-                planCache.DeleteStu(key);
-            }
-        }
-        for (Object key:teaList.keySet()){
-            String StrKey = key.toString();
-            String[] parts = StrKey.split("-");
-            String value = parts[0];
-            if (value.equals(String.valueOf(id))){
-                planCache.DeleteTea(key);
-            }
-        }
-        //删除计划列表下的课程与其对应章节
-        List<Integer> LessonIdList = lessonMapper.getLIDByPId(id);
-        for (Integer j : LessonIdList){
-            lessonMapper.deleteLessonById(j);
-            chapterMapper.deleteAllChapterByLessonId(j);
-            lessonCache.deleteChapter(String.valueOf(j));
-        }
+
+
+
+
+
         return MsgRespond.success("删除成功！");
     }
 

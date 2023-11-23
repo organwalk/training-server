@@ -45,7 +45,6 @@ public class LessonServiceImpl implements LessonService {
         if (!resultMark.isBlank()){
             return MsgRespond.fail(resultMark);
         }
-        System.out.println("test1");
         //获取教师信息并判断是否为教师
         User user = getUser(req.getTeacher_id());
         if (!Objects.equals(user.getAuth_id(),2)){

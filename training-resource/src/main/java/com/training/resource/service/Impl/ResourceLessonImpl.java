@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -44,6 +45,7 @@ public class ResourceLessonImpl implements ResourceLessonService {
     private final DataUtil dataUtil;
     private final FileResUtil fileResUtil;
     private static final ConcurrentMap<String, String> Path_CACHE = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<Integer, Boolean> UPLOAD_CACHE = new ConcurrentHashMap<>();
     /**
      * 上传教材资源文件具体实现
      * @param req 教材对象
@@ -53,37 +55,48 @@ public class ResourceLessonImpl implements ResourceLessonService {
     @SneakyThrows
     @Override
     public MsgRespond uploadResourceLesson(ResourceLessonReq req) {
-        if (resourceLessonMapper.selectLessonIdByChapterId(req.getChapter_id()) != null){
+        if (resourceLessonMapper.selectResourceLessonIdByChapterId(req.getChapter_id()) != null){
             return MsgRespond.fail("此课程章节已存在教材资源，无需重复上传");
         }
 
         Integer teacherId = req.getTeacher_id();
         Integer lessonId = req.getLesson_id();
+        Integer chapterId = req.getChapter_id();
 
-        // 检查教师存在性与教师、课程一致性
-        String teacherMark = validTeacher(teacherId, lessonId);
-        if (Objects.nonNull(teacherMark)){
-            return MsgRespond.fail(teacherMark);
+        Boolean checkResult = UPLOAD_CACHE.get(chapterId);
+        if (Objects.isNull(checkResult)){
+            // 检查教师存在性与教师、课程一致性
+            String teacherMark = validTeacher(teacherId, lessonId);
+            if (Objects.nonNull(teacherMark)){
+                return MsgRespond.fail(teacherMark);
+            }
+            // 检查章节存在性
+            String chapterMark = dataUtil.validChapter(lessonId, chapterId);
+            if (Objects.nonNull(chapterMark)){
+                return MsgRespond.fail(chapterMark);
+            }
+            // 缓存通过章节检查的结果
+            UPLOAD_CACHE.put(chapterId, false);
         }
-        // 检查章节存在性
-        String chapterMark = dataUtil.validChapter(lessonId, req.getChapter_id());
-        if (Objects.nonNull(chapterMark)){
-            return MsgRespond.fail(chapterMark);
-        }
-
 
         // 检查是否具有相同哈希值的文件
         String filePath = fileUtil.checkEqualHashFilePath("lesson", req.getFile_hash());
+
         if (Objects.isNull(filePath)){
-            filePath = fileUtil.getLessonFilePath(req.getTeacher_id(), req.getLesson_id(), req.getChapter_id(), req.getFile_origin_name());
+            filePath = fileUtil.getLessonFilePath(req.getTeacher_id(), req.getLesson_id(), chapterId, req.getFile_origin_name());
             String msg =  uploadVideoLessonResource(filePath, req, "upload");
+
+            if (Objects.equals(msg, "教材上传成功")) {
+                UPLOAD_CACHE.remove(chapterId);
+            }
             return Objects.equals(msg, "当前文件片段上传成功") || Objects.equals(msg, "教材上传成功")
                     ? MsgRespond.success(msg)
                     : MsgRespond.fail(msg);
         }
 
+        UPLOAD_CACHE.remove(chapterId);
         resourceLessonMapper.insertLessonResource(new ResourceLessonTable(null,
-                lessonId, teacherId, req.getChapter_id(), filePath,  fileUtil.getFileSaveDateTime(), req.getFile_hash()));
+                lessonId, teacherId, chapterId, filePath,  fileUtil.getFileSaveDateTime(), req.getFile_hash()));
 
         return MsgRespond.success("教材资源上传成功");
     }
@@ -96,15 +109,23 @@ public class ResourceLessonImpl implements ResourceLessonService {
      */
     @Override
     public MsgRespond reUploadResourceLesson(ResourceLessonReq req) {
-        // 检查课程、章节、教程存在性
-        Integer idMark = resourceLessonMapper.selectIdByReUpdateArgs(req.getLesson_id(), req.getTeacher_id(), req.getChapter_id());
-        if (Objects.isNull(idMark)){
-            return MsgRespond.fail("重新检查指定的讲师、课程和章节是否正确");
+
+        Integer chapterId = req.getChapter_id();
+        Boolean checkResult = UPLOAD_CACHE.get(chapterId);
+        Integer idMark = null;
+        if (Objects.isNull(checkResult)) {
+            // 检查课程、章节、教程存在性
+            idMark = resourceLessonMapper.selectIdByReUpdateArgs(req.getLesson_id(), req.getTeacher_id(), req.getChapter_id());
+            if (Objects.isNull(idMark)){
+                return MsgRespond.fail("重新检查指定的讲师、课程和章节是否正确");
+            }
+            UPLOAD_CACHE.put(chapterId, true);
         }
+
 
         String filePath = fileUtil.getLessonFilePath(req.getTeacher_id(), req.getLesson_id(), req.getChapter_id(), req.getFile_origin_name());
         // 获取原文件路径
-        String oldFilePath = resourceLessonMapper.selectOldFilePath(req.getLesson_id(), req.getTeacher_id(), req.getChapter_id());
+        String oldFilePath = resourceLessonMapper.selectOldFilePath(req.getChapter_id());
         // 检查是否具有两条相同路径的文件
         Integer pathMark = resourceLessonMapper.selectPathIsOverTwo(oldFilePath);
         if (pathMark != 2){
@@ -116,86 +137,77 @@ public class ResourceLessonImpl implements ResourceLessonService {
                 }
             }
         }
-        String msg =  uploadVideoLessonResource(filePath, req, "reUpload");
-        return Objects.equals(msg, "当前文件片段上传成功") || Objects.equals(msg, "教材上传成功")
-                ? MsgRespond.success(msg)
-                : MsgRespond.fail(msg);
+
+        // 删除Redis缓存
+        resourceLessonCache.deleteResourceLessonTypeAndPath(idMark);
+        // 检查是否具有相同哈希值的文件
+        String equalHashFilePath = fileUtil.checkEqualHashFilePath("lesson", req.getFile_hash());
+        if (Objects.isNull(equalHashFilePath)){
+            String msg =  uploadVideoLessonResource(filePath, req, "reUpload");
+            if (Objects.equals(msg, "教材上传成功")) {
+                UPLOAD_CACHE.remove(chapterId);
+            }
+            return Objects.equals(msg, "当前文件片段上传成功") || Objects.equals(msg, "教材上传成功")
+                    ? MsgRespond.success(msg)
+                    : MsgRespond.fail(msg);
+        }
+
+        UPLOAD_CACHE.remove(chapterId);
+        resourceLessonMapper.updateLessonResourcePath(equalHashFilePath, fileUtil.getFileSaveDateTime(), req.getLesson_id(), req.getTeacher_id(), req.getChapter_id());
+        return MsgRespond.success("教材资源上传成功");
+
     }
 
     /**
      * 删除指定课程章节教材文件具体实现
-     * @param teacherId 教师ID
-     * @param lessonId 课程ID
      * @param chapterId 章节ID
      * @return 根据处理结果返回消息提示
      * by organwalk 2023-11-04
      */
     @Override
-    public MsgRespond deleteOneLessonResource(Integer teacherId, Integer lessonId, Integer chapterId) {
-
-        // 检查课程、章节、教程存在性
-        Integer idMark = resourceLessonMapper.selectIdByReUpdateArgs(lessonId, teacherId, chapterId);
-        if (Objects.isNull(idMark)){
-            return MsgRespond.fail("重新检查指定的讲师、课程和章节是否正确");
+    public MsgRespond deleteOneLessonResource(Integer chapterId) {
+        String msg = deleteResourceLesson(chapterId);
+        if (!msg.isBlank()){
+            return MsgRespond.fail(msg);
         }
-
-        String oldFilePath = resourceLessonMapper.selectOldFilePath(lessonId, teacherId, chapterId);
-
-        // 删除数据库记录
-        resourceLessonMapper.deleteOneLessonResource(teacherId, lessonId, chapterId);
-
-//        resourceLessonCache.deleteResourceLessonTypeAndPath();
-
-        // 检查是否具有相同哈希值的文件
-        String fileHash = resourceLessonMapper.selectFileHashByInfo(teacherId, lessonId, chapterId);
-        String filePath = fileUtil.checkEqualHashFilePath("lesson", fileHash);
-        if (Objects.isNull(filePath)){
-            // 如果不存在相同哈希值的文件，可以直接删除服务器存储记录
-            File file = new File(oldFilePath);
-            if (file.exists()){
-                if (!file.delete()){
-                    return MsgRespond.fail("资源服务器处理错误，请稍后再试");
-                }
-            }
-        }
-
         return MsgRespond.success("已成功删除此课程文件");
     }
 
     /**
      * 删除指定课程下所有教材文件
-     * @param teacherId 教师ID
      * @param lessonId 课程ID
      * @return 根据处理结果返回消息提示
      * by organwalk 2023-11-04
      */
     @Override
-    public MsgRespond deleteAllLessonResource(Integer teacherId, Integer lessonId) {
-        // 检查教师、课程存在性
-        Integer idMark = resourceLessonMapper.selectIdByDeleteAllLessonArgs(lessonId, teacherId);
+    public MsgRespond deleteAllLessonResource(Integer lessonId) {
+        // 检查课程存在性
+        Integer idMark = resourceLessonMapper.selectIdByDeleteAllLessonArgs(lessonId);
         if (Objects.isNull(idMark)) {
             return MsgRespond.fail("重新检查指定的讲师、课程是否正确");
         }
 
-        // 获取需要删除的路径和不能删除的路径列表
-        String folderPath = fileUtil.getLessonFolderPath(teacherId, lessonId);
-        List<String> nonDeletePaths = resourceLessonMapper.findDuplicateFilePathsByTeacherId(teacherId, lessonId);
+        // 获取需要删除的课程列表，并初始化一个记录删除失败的章节列表
+        List<Integer> chapterIdList = resourceLessonMapper.getChapterIdListByLessonId(lessonId);
+        List<Integer> failedDeletions = new ArrayList<>();
 
-        // 删除数据库记录
-        resourceLessonMapper.deleteAllLessonResource(teacherId, lessonId);
-
-        // 删除文件
-        File file = new File(folderPath);
-        if (file.exists()) {
-            try {
-                Files.walk(Path.of(folderPath))
-                        .sorted(Comparator.reverseOrder())
-                        .filter(path -> nonDeletePaths.isEmpty() || !nonDeletePaths.contains(path.toString()))
-                        .map(Path::toFile)
-                        .forEach(File::delete);
-            } catch (IOException e) {
-                return MsgRespond.fail("内部服务错误，删除失败，请稍后重试");
+        // 遍历删除章节列表下的教材
+        chapterIdList.forEach(chapterId -> {
+            String msg = deleteResourceLesson(chapterId);
+            if (!msg.isBlank()){
+                failedDeletions.add(chapterId);
             }
+        });
+
+        // 如果失败删除不为空，则进行相应返回
+        if (!failedDeletions.isEmpty()){
+            Integer failSize = failedDeletions.size();
+            Integer chapterSize = chapterIdList.size();
+            // 如果失败删除次数与章节数相同，表明删除失败
+            if (Objects.equals(failSize, chapterSize)){
+                return MsgRespond.fail("删除此课程下的章节教材资源失败");
+            }
+            return MsgRespond.success("已成功删除此课程大部分资源文件，未删除" + failSize + "份文件");
         }
 
         return MsgRespond.success("已成功删除此课程教材文件");
@@ -347,5 +359,44 @@ public class ResourceLessonImpl implements ResourceLessonService {
         }else {
             return processResult;
         }
+    }
+
+
+    /**
+     * 定义删除单个课程教材资源的方法
+     * @param chapterId 章节ID
+     * @return 成功删除时返回空字符串，否则返回相关提示信息
+     * by organwalk 2023-11-23
+     */
+    private String deleteResourceLesson(Integer chapterId){
+        // 检查章节存在性
+        Integer idMark = resourceLessonMapper.selectResourceLessonIdByChapterId(chapterId);
+        if (Objects.isNull(idMark)){
+            return "重新检查指定的章节是否正确";
+        }
+
+        String oldFilePath = resourceLessonMapper.selectOldFilePath(chapterId);
+
+        // 删除Redis缓存
+        resourceLessonCache.deleteResourceLessonTypeAndPath(idMark);
+
+        // 删除数据库记录
+        resourceLessonMapper.deleteOneLessonResource(chapterId);
+
+        // 检查是否具有相同哈希值的文件
+        String fileHash = resourceLessonMapper.selectFileHashByInfo(chapterId);
+        String filePath = fileUtil.checkEqualHashFilePath("lesson", fileHash);
+
+        if (Objects.isNull(filePath)){
+            // 如果不存在相同哈希值的文件，可以直接删除服务器存储记录
+            File file = new File(oldFilePath);
+            if (file.exists()){
+                if (!file.delete()){
+                    return "资源服务器处理错误，请稍后再试";
+                }
+            }
+        }
+
+        return "";
     }
 }

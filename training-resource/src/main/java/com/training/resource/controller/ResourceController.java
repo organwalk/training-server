@@ -154,18 +154,15 @@ public class ResourceController {
     }
 
     // 删除指定课程章节教材文件
-    @DeleteMapping("/v2/lesson/{teacher_id}/{lesson_id}/{chapter_id}")
-    public MsgRespond deleteOneLessonResource(@PathVariable @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "teacher_id必须为纯数字字段") Integer teacher_id,
-                                              @PathVariable @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "lesson_id必须为纯数字字段") Integer lesson_id,
-                                              @PathVariable @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "chapter_id必须为纯数字字段") Integer chapter_id){
-        return resourceLessonService.deleteOneLessonResource(teacher_id, lesson_id, chapter_id);
+    @DeleteMapping("/v2/lesson/chapter/{chapter_id}")
+    public MsgRespond deleteOneLessonResource(@PathVariable Integer chapter_id){
+        return resourceLessonService.deleteOneLessonResource(chapter_id);
     }
 
     // 删除指定课程下所有教材文件
-    @PostMapping("/v2/lesson/{teacher_id}/{lesson_id}")
-    public MsgRespond deleteAllLessonResource(@PathVariable @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "teacher_id必须为纯数字字段") Integer teacher_id,
-                                              @PathVariable @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "lesson_id必须为纯数字字段") Integer lesson_id){
-        return resourceLessonService.deleteAllLessonResource(teacher_id, lesson_id);
+    @PostMapping("/v2/lesson/{lesson_id}")
+    public MsgRespond deleteAllLessonResource(@PathVariable @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "lesson_id必须为纯数字字段") Integer lesson_id){
+        return resourceLessonService.deleteAllLessonResource(lesson_id);
     }
 
     // 根据课程教材ID获取教材

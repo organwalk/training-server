@@ -12,7 +12,7 @@ import java.util.List;
 public interface ResourceLessonMapper {
     // 检查是否存在相同课程资源记录
     @Select("select id from t_resource_lesson where chapter_id = #{chapter_id}")
-    Integer selectLessonIdByChapterId(Integer chapter_id);
+    Integer selectResourceLessonIdByChapterId(Integer chapter_id);
 
     // 插入课程资源记录
     @Insert("insert into t_resource_lesson(lesson_id, teacher_id, chapter_id, resource_path, up_datetime, file_hash) " +
@@ -26,10 +26,8 @@ public interface ResourceLessonMapper {
                                    @Param("chapter_id") Integer chapter_id);
 
     // 获取旧文件路径
-    @Select("select resource_path from t_resource_lesson where lesson_id = #{lesson_id} and teacher_id = #{teacher_id} and chapter_id = #{chapter_id}")
-    String selectOldFilePath(@Param("lesson_id") Integer lesson_id,
-                             @Param("teacher_id") Integer teacher_id,
-                             @Param("chapter_id") Integer chapter_id);
+    @Select("select resource_path from t_resource_lesson where chapter_id = #{chapter_id}")
+    String selectOldFilePath(@Param("chapter_id") Integer chapter_id);
 
     // 修改教材资源路径
     @Update("update t_resource_lesson set resource_path = #{resource_path}, up_datetime = #{up_datetime} " +
@@ -41,15 +39,12 @@ public interface ResourceLessonMapper {
                                   @Param("chapter_id") Integer chapter_id);
 
     // 删除指定课程教材文件
-    @Delete("delete from t_resource_lesson where teacher_id = #{teacher_id} and lesson_id = #{lesson_id} and chapter_id = #{chapter_id}")
-    void deleteOneLessonResource(@Param("teacher_id") Integer teacherId,
-                                 @Param("lesson_id") Integer lessonId,
-                                 @Param("chapter_id") Integer chapter);
+    @Delete("delete from t_resource_lesson where chapter_id = #{chapter_id}")
+    void deleteOneLessonResource(@Param("chapter_id") Integer chapter);
 
     // 检查删除指定教师课程下的所有教材文件接口指定课程是否存在
-    @Select("select id from t_resource_lesson where lesson_id = #{lesson_id} and teacher_id = #{teacher_id}")
-    Integer selectIdByDeleteAllLessonArgs(@Param("lesson_id") Integer lesson_id,
-                                          @Param("teacher_id") Integer teacher_id);
+    @Select("select id from t_resource_lesson where lesson_id = #{lesson_id}")
+    Integer selectIdByDeleteAllLessonArgs(@Param("lesson_id") Integer lesson_id);
 
     // 删除指定教师课程下的所有教材文件
     @Delete("delete from t_resource_lesson where teacher_id = #{teacher_id} and lesson_id = #{lesson_id}")
@@ -66,19 +61,8 @@ public interface ResourceLessonMapper {
 
     // 根据相关信息获取文件哈希值
     @Select("select file_hash from t_resource_lesson " +
-            "where teacher_id = #{teacherId} and lesson_id = #{lessonId} and chapter_id = #{chapterId}")
-    String selectFileHashByInfo(@Param("teacherId") Integer teacherId,
-                                @Param("lessonId") Integer lessonId,
-                                @Param("chapterId") Integer chapterId);
-
-    // 查询相同文件路径列表
-    @Select("SELECT resource_path " +
-            "FROM t_resource_lesson " +
-            "WHERE teacher_id = #{teacherId} and lesson_id = #{lessonId} " +
-            "GROUP BY resource_path " +
-            "HAVING COUNT(resource_path) >= 2")
-    List<String> findDuplicateFilePathsByTeacherId(@Param("teacherId") Integer teacherId,
-                                                   @Param("lessonId") Integer lessonId);
+            "where chapter_id = #{chapterId}")
+    String selectFileHashByInfo(@Param("chapterId") Integer chapterId);
 
     // 根据课程教材ID获取文件路径
     @Select("select resource_path from t_resource_lesson where id = #{rlId}")
@@ -92,4 +76,8 @@ public interface ResourceLessonMapper {
     @Select("select id from t_resource_lesson where lesson_id = #{lesson_id} and chapter_id = #{chapter_id}")
     Integer getLessonResourceId(@Param("lesson_id")Integer lessonId,
                                 @Param("chapter_id")Integer chapterId);
+
+    // 获取章节ID列表
+    @Select("select chapter_id from t_resource_lesson where lesson_id = #{lessonId}")
+    List<Integer> getChapterIdListByLessonId(Integer lessonId);
 }
