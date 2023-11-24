@@ -63,6 +63,11 @@ public class FileUtil {
         if (finished) {
             logger.info("已完成分片上传，移除分片缓存");
             SHA_CACHE.remove(hashValue);
+            // 判断是否是视频，如果是视频，则进行dash处理
+            String fileExtension = Objects.requireNonNull(filePath).substring(filePath.lastIndexOf("."));
+            if (Objects.equals(fileExtension, ".md")){
+                return "true";
+            }
             logger.info("开始将MP4转换为FMP4");
             boolean process = mp4BoxUtil.processMP4ToFMP4(savePath);
             return process ? "true" : null;
@@ -108,11 +113,6 @@ public class FileUtil {
         LocalDateTime currentDateTime = LocalDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         return currentDateTime.format(formatter);
-    }
-
-    public String getLessonFolderPath(Integer teacherId, Integer lessonId){
-        String customPath = '/' + teacherId.toString() + '/' + lessonId;
-        return appConfig.getLessonPath() +  customPath.replace("/", File.separator);
     }
 
     public String getNoteChapterFolderPath(Integer lessonId, Integer chapterId){
