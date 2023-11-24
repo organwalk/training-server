@@ -175,13 +175,19 @@ public class TestServiceImpl implements TestService {
         //当身份为教师时，获取本人的测试
         if (Objects.equals(auth,"teacher")){
             Integer sum = testMapper.getCountOfListByLessonIdAndTeacherId(lesson_id,teacher_id);
+            if (sum == 0){
+                return new DataFailRespond("当前试卷列表为空");
+            }
             List<Test> list = testMapper.getListByLessonIdAndTeacherId(lesson_id,teacher_id,page_size,offset);
             return new DataPagingSuccessRespond("已成功获取试卷列表",sum,list);
         }
         //当身份为管理员时，获取所有测试
         if (Objects.equals(auth,"admin")){
-            List<Test> list = testMapper.getAllTestByLessonId(lesson_id,page_size,offset);
             Integer sum = testMapper.getCountByLessonId(lesson_id);
+            if (sum == 0){
+                return new DataFailRespond("当前试卷列表为空");
+            }
+            List<Test> list = testMapper.getAllTestByLessonId(lesson_id,page_size,offset);
             return new DataPagingSuccessRespond("已成功获取试卷列表",sum,list);
         }
         return new DataFailRespond("获取失败！");

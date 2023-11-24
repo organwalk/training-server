@@ -85,7 +85,7 @@ public class ResourceLessonImpl implements ResourceLessonService {
 
         if (Objects.isNull(filePath)){
             filePath = fileUtil.getLessonFilePath(req.getTeacher_id(), req.getLesson_id(), chapterId, req.getFile_origin_name());
-            String msg =  uploadVideoLessonResource(filePath, req, "upload");
+            String msg = uploadVideoLessonResource(filePath, req, "upload");
 
             if (Objects.equals(msg, "教材上传成功")) {
                 UPLOAD_CACHE.remove(chapterId);
