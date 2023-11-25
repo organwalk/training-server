@@ -42,4 +42,8 @@ public interface TestMapper {
 
     @Delete("delete from t_learn_test where id=#{id}")
     void deleteTestById(int id);
+
+    // 查询发布状态
+    @Select("select isRelease from t_learn_test where id = #{test_id}")
+    Integer getReleaseState(int test_id);
 }
