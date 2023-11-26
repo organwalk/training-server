@@ -69,11 +69,11 @@ public class TestServiceImpl implements TestService {
         }
         SimpleDateFormat si = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
         //判断结束时间是否早于起始时间
-        if (si.parse(req.getStart_datetime()).getTime() < si.parse(req.getEnd_datetime()).getTime()) {
+        if (si.parse(req.getStart_datetime()).getTime() > si.parse(req.getEnd_datetime()).getTime()) {
             return MsgRespond.fail("结束时间不得早于起始时间！");
         }
         //判断起始时间是否早于现在
-        if (si.parse(req.getStart_datetime()).getTime() > System.currentTimeMillis()) {
+        if (si.parse(req.getStart_datetime()).getTime() < System.currentTimeMillis()) {
             return MsgRespond.fail("起始时间不得早于现在！");
         }
 
@@ -118,6 +118,7 @@ public class TestServiceImpl implements TestService {
             optionMapper.insertOption(jsonString, question.getIs_more(), questionTable.getId());
         }
         questionCache.deleteQuestion(test_id);
+
         return MsgRespond.success("已成功编辑试卷");
     }
 
@@ -129,8 +130,14 @@ public class TestServiceImpl implements TestService {
      * @return 根据处理结果返回对应消息
      * 2023/11/14
      */
+    @SneakyThrows
     @Override
     public MsgRespond publishTest(int test_id) {
+
+        Integer idMark = questionMapper.getQuestionByTestId(test_id);
+        if (Objects.isNull(idMark)){
+            return MsgRespond.fail("当前试卷未完成编写，无法进行发布");
+        }
         //判断测试是否存在
         Test test = testMapper.getTestById(test_id);
         if (test == null) {
@@ -142,7 +149,13 @@ public class TestServiceImpl implements TestService {
         }
         //获取当前时间，并把当前时间当成发布时间
         String date = getNowTime();
-        testMapper.updateIsRelease(test_id, date);
+        SimpleDateFormat si = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+        //判断结束时间是否早于起始时间
+        if (si.parse(test.getStart_datetime()).getTime() < si.parse(date).getTime()
+                || si.parse(test.getEnd_datetime()).getTime() < si.parse(date).getTime()){
+            return MsgRespond.fail("发布时间不能晚于考试时间，请修改考试时间后重试");
+        }
+        testMapper.updateIsRelease(test_id, date, 1);
         return MsgRespond.success("已成功发布试卷");
     }
 
@@ -543,7 +556,7 @@ public class TestServiceImpl implements TestService {
         SimpleDateFormat si = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
         Date start_time = si.parse(updateTestReq.getStart_datetime());
         Date end_time = si.parse(updateTestReq.getEnd_datetime());
-        Date creat_time = si.parse(test.getCreat_datetime());
+
         long currentTimestamp = System.currentTimeMillis();
         //判断起始时间是否晚于结束时间
         if (start_time.getTime() > end_time.getTime()) {
@@ -557,10 +570,12 @@ public class TestServiceImpl implements TestService {
         }
         //如果已经发布，则考试发布时间不可晚于考试开始时间
         if (test.getIsRelease() == 1) {
+            Date creat_time = si.parse(test.getCreat_datetime());
             if (creat_time.getTime() > start_time.getTime()) {
                 return MsgRespond.fail("考试开始时间不可早于试卷的发布时间");
             }
         }
+
         testMapper.updateTest(updateTestReq.getTest_title(), updateTestReq.getStart_datetime(), updateTestReq.getEnd_datetime(), id);
         return MsgRespond.success("已成功编辑此试卷信息");
     }
@@ -582,8 +597,12 @@ public class TestServiceImpl implements TestService {
             return MsgRespond.fail("该试题不存在！");
         }
         //判断该测试下是否已经有试题
-        List<QuestionTable> questionTables = questionMapper.getQuestionByTestId(test_id);
-        if (!questionTables.isEmpty()) {
+        Integer idMark = questionMapper.getQuestionByTestId(test_id);
+        if (Objects.nonNull(idMark)){
+            return MsgRespond.fail("试题已正式提交，无法暂存");
+        }
+        Integer isRelease = testMapper.getReleaseState(test_id);
+        if (isRelease == 1) {
             return MsgRespond.fail("该测试已经发布！");
         }
         //判断是否修改
@@ -592,8 +611,8 @@ public class TestServiceImpl implements TestService {
         }
         //获取暂存缓存
         List<CacheReq.Question> list = questionCache.getCache(test_id);
-        //判断暂存缓存是否为空，非空则i删除
-        if (Objects.nonNull(list) && !list.isEmpty()) {
+        //判断暂存缓存是否为空，非空则删除
+        if (Objects.nonNull(list)) {
             questionCache.deleteQuestion(test_id);
         }
         //保存新的暂存试卷

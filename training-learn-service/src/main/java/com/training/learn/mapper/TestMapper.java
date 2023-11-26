@@ -18,8 +18,8 @@ public interface TestMapper {
     @Select("select * from t_learn_test where id=#{id}")
     Test getTestById(int id);
     //设置指定id的测试为发布状态
-    @Update("update t_learn_test set isRelease = 1 and create_datetime=#{create_datetime} where id=#{id}")
-    void updateIsRelease(@Param("id")int id,@Param("create_datetime")String create_datetime);
+    @Update("update t_learn_test set isRelease = #{isRelease} , create_datetime=#{create_datetime} where id=#{id}")
+    void updateIsRelease(@Param("id")int id,@Param("create_datetime")String create_datetime, @Param("isRelease") int isRelease);
     //获取指定课程和教师的测试
     @Select("select * from t_learn_test where lesson_id=#{lesson_id} and teacher_id=#{teacher_id} limit #{page_size} offset #{offset}")
     List<Test> getListByLessonIdAndTeacherId(@Param("lesson_id")int lesson_id,@Param("teacher_id")int teacher_id,@Param("page_size")int page_size,@Param("offset")int offset);
