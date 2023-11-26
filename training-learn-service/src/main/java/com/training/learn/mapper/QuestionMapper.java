@@ -15,9 +15,9 @@ public interface QuestionMapper {
     @Options(useGeneratedKeys = true, keyProperty = "req.id")
     void insertQuestion(@Param("req")QuestionTable req);
 
-    //获取指定测试的所有试题
-    @Select("select * from t_learn_test_questions where test_id=#{test_id}")
-    List<QuestionTable> getQuestionByTestId(int test_id);
+    //获取指定测试的一条试题ID
+    @Select("select id from t_learn_test_questions where test_id=#{test_id} limit 1")
+    Integer getQuestionByTestId(int test_id);
 
     //根据id获取试题详情
     @Select("select * from t_learn_test_questions where id=#{id}")
