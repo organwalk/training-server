@@ -1,5 +1,6 @@
 package com.training.resource.config;
 
+import com.mysql.cj.Session;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
