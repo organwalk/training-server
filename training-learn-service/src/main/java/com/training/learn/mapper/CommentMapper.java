@@ -55,7 +55,4 @@ public interface CommentMapper {
 
     @Select("select * from t_learn_comment where id=#{id}")
     Comment getCommentById(int id);
-
-    @Select("select lesson_id from t_resource_note where id=#{id}")
-    Integer getNoteExit(int id);
 }

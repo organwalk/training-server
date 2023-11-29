@@ -46,4 +46,9 @@ public interface TestMapper {
     // 查询发布状态
     @Select("select isRelease from t_learn_test where id = #{test_id}")
     Integer getReleaseState(int test_id);
+
+    // 获取试卷基本信息
+    @Select("select id, test_title, lesson_id, teacher_id, start_datetime, end_datetime, create_datetime, isRelease " +
+            "from t_learn_test where id = #{id}")
+    Test getTestInfo(Integer id);
 }

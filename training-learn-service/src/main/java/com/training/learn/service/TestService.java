@@ -32,4 +32,6 @@ public interface TestService {
     MsgRespond updateTest(UpdateTestReq updateTestReq, int id) throws ParseException;
     //暂时保存讲师编写的试卷
     MsgRespond saveCache(int test_id, CacheReq req);
+    // 获取试卷基本信息
+    DataRespond getTestInfo(Integer id);
 }

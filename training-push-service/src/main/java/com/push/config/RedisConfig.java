@@ -1,9 +1,10 @@
-package com.training.plan.config;
+package com.push.config;
 
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
@@ -13,6 +14,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
  * by organwalk 2023-10-18
  */
 @Configuration
+@AllArgsConstructor
 public class RedisConfig {
     /**
      * 主要进行了序列化配置，避免键、值、哈希键和哈希值的乱码问题

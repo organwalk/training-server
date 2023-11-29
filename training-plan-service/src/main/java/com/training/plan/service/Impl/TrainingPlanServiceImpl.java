@@ -1,6 +1,5 @@
 package com.training.plan.service.Impl;
 
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.training.common.entity.*;
 import com.training.plan.client.DeptClient;
@@ -36,7 +35,6 @@ public class TrainingPlanServiceImpl implements TrainingPlanService {
     private final DeptClient deptClient;
     private final PlanCache planCache;
     private final LessonMapper lessonMapper;
-    private final ChapterMapper chapterMapper;
     private final LessonCache lessonCache;
     private final ProgressClient progressClient;
     private final ChapterService chapterService;

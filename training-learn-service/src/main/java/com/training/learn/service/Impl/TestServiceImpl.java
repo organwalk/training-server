@@ -620,6 +620,11 @@ public class TestServiceImpl implements TestService {
         return MsgRespond.success("暂存成功。暂存时限为七日，七日后若试卷未作任何进一步编辑，则自动销毁");
     }
 
+    @Override
+    public DataRespond getTestInfo(Integer id) {
+        return new DataSuccessRespond("已成功获取试卷基本信息", testMapper.getTestInfo(id));
+    }
+
 
     /**
      * 判断用户是否为教师

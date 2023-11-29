@@ -32,6 +32,10 @@ public interface ReplyMapper {
     @Delete("delete from t_learn_reply where id=#{id}")
     Integer DeleteReplyById(int id);
 
+    @Select("select id, user_id, comment_id, content, create_datetime " +
+            "from t_learn_reply where id=#{id}")
+    Reply getReply(Integer id);
+
 
 
 }

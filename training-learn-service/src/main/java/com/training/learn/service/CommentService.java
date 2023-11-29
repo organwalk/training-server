@@ -1,5 +1,6 @@
 package com.training.learn.service;
 
+import com.training.common.entity.DataRespond;
 import com.training.common.entity.MsgRespond;
 import com.training.learn.entity.request.NoteReq;
 
@@ -12,4 +13,6 @@ public interface CommentService {
     MsgRespond DeleteComment(int comment_id);
     //添加笔记
     MsgRespond insertNote(Integer user_id,Integer lesson_id,Integer chapter_id,NoteReq req);
+    // 获取指定主评论内容
+    DataRespond getFatherComment(Integer id);
 }

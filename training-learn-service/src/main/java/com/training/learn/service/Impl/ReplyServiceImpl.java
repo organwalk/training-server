@@ -2,10 +2,7 @@ package com.training.learn.service.Impl;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.training.common.entity.DataFailRespond;
-import com.training.common.entity.DataPagingSuccessRespond;
-import com.training.common.entity.DataRespond;
-import com.training.common.entity.MsgRespond;
+import com.training.common.entity.*;
 import com.training.learn.client.DeptClient;
 import com.training.learn.client.PlanClient;
 import com.training.learn.client.UserClient;
@@ -337,6 +334,11 @@ public class ReplyServiceImpl implements ReplyService {
             }
         }
         return MsgRespond.success("已成功删除此回复");
+    }
+
+    @Override
+    public DataRespond getReplyContent(Integer id) {
+        return new DataSuccessRespond("已成功获取跟帖评论内容", replyMapper.getReply(id));
     }
 
 
