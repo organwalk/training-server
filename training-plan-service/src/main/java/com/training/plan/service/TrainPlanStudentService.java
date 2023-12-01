@@ -14,5 +14,8 @@ public interface TrainPlanStudentService {
     //删除指定id的信息
     MsgRespond deleteStu(int plan_id, int id);
 
+    // 获取指定学员所处的培训计划列表
+    DataRespond getPlanListByStudent(Integer studentId);
+
 
 }

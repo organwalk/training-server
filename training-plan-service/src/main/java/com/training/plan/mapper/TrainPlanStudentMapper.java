@@ -45,6 +45,8 @@ public interface TrainPlanStudentMapper {
     @Select("select plan_id from t_progress_plan where lesson_id=#{lesson_id}")
     Integer getPlanIdByLessonId(Integer lesson_id);
 
+    @Select("select training_plan_id from t_training_plan_student where training_student_id = #{studentId}")
+    List<Integer> selectPlanIdListByStudentId(Integer studentId);
 
 
     

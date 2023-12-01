@@ -357,5 +357,11 @@ public class TrainingPlanController {
         return teacherService.getPlanListByTeacher(teacher_id);
     }
 
+    // 获取指定学员所处的培训计划列表
+    @GetMapping("/v1/student/plan/{student_id}")
+    public DataRespond getPlanListByStudentId(@PathVariable Integer student_id){
+        return studentService.getPlanListByStudent(student_id);
+    }
+
 
 }

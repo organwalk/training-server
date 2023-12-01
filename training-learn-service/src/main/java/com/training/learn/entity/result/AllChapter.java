@@ -6,8 +6,7 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-@AllArgsConstructor
 public class AllChapter {
-    private List<OverChapter> overChapterList;
+    private OverChapter overChapterList;
     private List<ChapterResult> chapterResultList;
 }

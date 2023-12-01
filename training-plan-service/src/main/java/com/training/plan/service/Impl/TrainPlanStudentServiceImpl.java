@@ -13,6 +13,7 @@ import com.training.plan.entity.result.User;
 import com.training.plan.mapper.ChapterMapper;
 import com.training.plan.mapper.LessonMapper;
 import com.training.plan.mapper.TrainPlanStudentMapper;
+import com.training.plan.mapper.TrainingPlanMapper;
 import com.training.plan.reposoty.PlanCache;
 import com.training.plan.service.TrainPlanStudentService;
 import lombok.AllArgsConstructor;
@@ -37,6 +38,7 @@ public class TrainPlanStudentServiceImpl implements TrainPlanStudentService {
     private final ProgressClient progressClient;
     private final LessonMapper lessonMapper;
     private final ChapterMapper chapterMapper;
+    private final TrainingPlanMapper PlanMapper;
     /**
      * 添加学生进入计划的具体实现
      * @param studentIdList 学生id列表
@@ -118,6 +120,14 @@ public class TrainPlanStudentServiceImpl implements TrainPlanStudentService {
         //删除缓存
         clearCache(planId);
         return MsgRespond.success("已成功删除此学员!");
+    }
+
+    @Override
+    public DataRespond getPlanListByStudent(Integer studentId) {
+        List<Integer> planIdList = trainPlanStudentMapper.selectPlanIdListByStudentId(studentId);
+        if (planIdList.isEmpty()) return new DataFailRespond("当前学员暂未被分配执行培训计划");
+        // 批量查询
+        return new DataSuccessRespond("已成功获取培训计划列表", PlanMapper.selectPlanListByIdList(planIdList));
     }
 
     /**

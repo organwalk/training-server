@@ -27,7 +27,10 @@ public class ComputeUtil {
     }
 
     public static double getStuProgress(ProgressLesson progressLesson){
-        return (double) progressLesson.getOver_chapter_sum() /progressLesson.getLesson_chapter_sum();
+         if (Objects.isNull(progressLesson)){
+             return 0;
+         }
+        return (double) progressLesson.getOver_chapter_sum() / progressLesson.getLesson_chapter_sum();
     }
 
     //计算编辑的试卷总分
