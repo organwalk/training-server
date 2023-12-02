@@ -79,7 +79,7 @@ public class LearnController {
 
 
     //指定课程章节下发布评论
-    @PostMapping("/v1/lesson/chaper/comment")
+    @PostMapping("/v1/lesson/chapter/comment")
     public MsgRespond insertChapterContent(@RequestBody String request) {
         return commentService.insertCommentTwo(request);
     }

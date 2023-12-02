@@ -29,6 +29,9 @@ public interface LikeMapper {
     @Select("select  state from t_learn_like where comment_id=#{comment_id} and reply_id=#{reply_id} and user_id =#{user_id}")
     Integer getStateByCommentIdAndReplyId(@Param("comment_id")int comment_id,@Param("reply_id")int reply_id,@Param("user_id")int user_id);
 
+    @Select("select state from t_learn_like where reply_id=#{reply_id} and user_id =#{user_id}")
+    Integer getStateByReplyId(@Param("reply_id")int reply_id,@Param("user_id")int user_id);
+
     @Select("select state from t_learn_like where user_id=#{user_id} and reply_id=#{reply_id}")
     Integer judgeReplyLikeOrNot(@Param("user_id")int user_id,@Param("reply_id")int reply_id);
 

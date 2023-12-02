@@ -13,9 +13,6 @@ public interface CommentMapper {
     @Insert("insert into t_learn_comment(user_id, lesson_id, chapter_id, content,create_datetime)values (#{user_id},#{lesson_id},#{chapter_id},#{content},#{create_datetime})")
     Integer insertCommentTwo(@Param("user_id")int user_id,@Param("lesson_id")int lesson_id,@Param("chapter_id")int chapter_id,@Param("content")String content,@Param("create_datetime")String create_datetime);
 
-    @Select("select head_id from t_dept")
-    List<Integer>  getAllHeadId();
-
     @Select("select id from t_lesson_chapter where lesson_id=#{lesson_id}")
     List<Integer> judgeChapterExit(int lesson_id);
 

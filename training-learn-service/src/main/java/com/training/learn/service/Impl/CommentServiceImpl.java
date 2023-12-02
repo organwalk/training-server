@@ -1,12 +1,15 @@
 package com.training.learn.service.Impl;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.training.common.entity.DataRespond;
 import com.training.common.entity.DataSuccessRespond;
 import com.training.common.entity.MsgRespond;
+import com.training.common.entity.req.UserInfoListReq;
 import com.training.learn.client.PlanClient;
 import com.training.learn.client.ResourceClient;
+import com.training.learn.client.UserClient;
 import com.training.learn.entity.request.NoteReq;
 
 import com.training.learn.entity.table.Comment;
@@ -20,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
@@ -34,6 +38,7 @@ public class CommentServiceImpl implements CommentService {
     private final PlanClient planClient;
     private final ResourceClient resourceClient;
     private final LikeCache likeCache;
+    private final UserClient userClient;
 
 
     /**
@@ -120,7 +125,7 @@ public class CommentServiceImpl implements CommentService {
         }
         //插入回复
         Integer i = commentMapper.insertCommentTwo(user_id, lesson_id, chapter_id, contentString, time);
-        return i > 0 ? MsgRespond.success("当前用户已成功评论此课程") : MsgRespond.fail("评论失败！");
+        return i > 0 ? MsgRespond.success("评论成功") : MsgRespond.fail("评论失败！");
     }
 
 
@@ -228,15 +233,13 @@ public class CommentServiceImpl implements CommentService {
      * 2023/11/7
      */
     private String judgeUser(int student_id) {
-        List<Integer> headIdList = commentMapper.getAllHeadId();
-        String result = "";
-        for (Integer i : headIdList) {
-            if (Objects.equals(student_id, i)) {
-                result = "该用户不是员工！";
-                break;
-            }
+        List<Integer> uidList = new ArrayList<>();
+        uidList.add(student_id);
+        JSONArray uidJsonArray = userClient.getUserInfoByUidList(new UserInfoListReq(uidList));
+        if (uidJsonArray.isEmpty()) {
+            return "该用户不存在";
         }
-        return result;
+        return "";
     }
 
 
@@ -249,10 +252,13 @@ public class CommentServiceImpl implements CommentService {
      * 2023/11/7
      */
     private String judgeChapterExit(int lesson_id, int chapter_id) {
-        List<Integer> chapterList = commentMapper.judgeChapterExit(lesson_id);
-        String result = "该章节不存在";
-        for (Integer i : chapterList) {
-            if (Objects.equals(chapter_id, i)) {
+        JSONObject req = planClient.getChapterByLId(lesson_id);
+        JSONArray data = req.getJSONArray("data");
+        String result = "章节不存在";
+        for(int i = 0 ;i<data.size();i++){
+            JSONObject chapterJSONObject = data.getJSONObject(i);
+            int id = chapterJSONObject.getIntValue("id");
+            if (Objects.equals(id,chapter_id)){
                 result = "";
                 break;
             }

@@ -1,8 +1,10 @@
 package com.training.learn.service.Impl;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.training.common.entity.*;
+import com.training.common.entity.req.UserInfoListReq;
 import com.training.learn.client.DeptClient;
 import com.training.learn.client.PlanClient;
 import com.training.learn.client.UserClient;
@@ -92,7 +94,7 @@ public class ReplyServiceImpl implements ReplyService {
         //判断学生是否存在
         String StuMark =judgeUser(user_id);
         String Reply_StuMark = judgeUser(reply_user_id);
-        if (!StuMark.isBlank() || !Reply_StuMark.isBlank()){
+        if (!StuMark.isBlank() && !Reply_StuMark.isBlank()){
             return MsgRespond.fail(StuMark);
         }
         //判断回复是否存在
@@ -286,10 +288,12 @@ public class ReplyServiceImpl implements ReplyService {
                     reply_sum = likeMapper.getReplyLikeCountByComIDAndReplyId(reply.getId());
                     likeCache.saveReplyLike(Key,Reply_field,reply_sum);
                 }
-                Integer reply_state = likeMapper.getStateByCommentIdAndReplyId(comment.getId(),reply.getId(),user_id);
+
+                Integer reply_state = likeMapper.getStateByReplyId(reply.getId(),user_id);
                 if (reply_state==null){
                     reply_state=0;
                 }
+
                 String reply_real_name =getUserName(reply.getUser_id());
                 String reply_dept_name = getDeptName(reply.getUser_id());
                 ReplyList replyList = new ReplyList(reply.getId(),reply.getUser_id(),reply_real_name,reply_dept_name,reply.getContent(),reply.getCreate_datetime(),reply_sum,reply_state);
@@ -347,16 +351,14 @@ public class ReplyServiceImpl implements ReplyService {
      * @param  student_id 学生id
      * @return 根据处理结果返回对应消息
      */
-    private String judgeUser(int student_id){
-        List<Integer> headIdList = commentMapper.getAllHeadId();
-        String result = "";
-        for (Integer i:headIdList){
-            if (Objects.equals(student_id,i)){
-                result = "该用户不是员工！";
-                break;
-            }
+    private String judgeUser(int student_id) {
+        List<Integer> uidList = new ArrayList<>();
+        uidList.add(student_id);
+        JSONArray uidJsonArray = userClient.getUserInfoByUidList(new UserInfoListReq(uidList));
+        if (uidJsonArray.isEmpty()) {
+            return "该用户不存在";
         }
-        return result;
+        return "";
     }
 
 
@@ -474,11 +476,14 @@ public class ReplyServiceImpl implements ReplyService {
      * 2023/11/10
      */
     private String judgeChapterExit(int lesson_id,int chapter_id){
-        List<Integer> chapterList = commentMapper.judgeChapterExit(lesson_id);
-        String result="该章节不存在";
-        for (Integer i:chapterList){
-            if (Objects.equals(chapter_id,i)){
-                result="";
+        JSONObject req = planClient.getChapterByLId(lesson_id);
+        JSONArray data = req.getJSONArray("data");
+        String result = "章节不存在";
+        for(int i = 0 ;i<data.size();i++){
+            JSONObject chapterJSONObject = data.getJSONObject(i);
+            int id = chapterJSONObject.getIntValue("id");
+            if (Objects.equals(id,chapter_id)){
+                result = "";
                 break;
             }
         }

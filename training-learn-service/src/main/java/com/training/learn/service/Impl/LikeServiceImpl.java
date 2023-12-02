@@ -1,6 +1,9 @@
 package com.training.learn.service.Impl;
 
+import com.alibaba.fastjson.JSONArray;
 import com.training.common.entity.MsgRespond;
+import com.training.common.entity.req.UserInfoListReq;
+import com.training.learn.client.UserClient;
 import com.training.learn.mapper.CommentMapper;
 import com.training.learn.mapper.LikeMapper;
 import com.training.learn.mapper.ReplyMapper;
@@ -12,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -24,6 +28,7 @@ public class LikeServiceImpl implements LikeService {
     private final CommentMapper commentMapper;
     private final ReplyMapper replyMapper;
     private final LikeCache likeCache;
+    private final UserClient userClient;
 
 
 
@@ -186,16 +191,14 @@ public class LikeServiceImpl implements LikeService {
      * @param  student_id 学生id
      * @return 根据处理结果返回对应消息
      */
-    private String judgeUser(int student_id){
-        List<Integer> headIdList = commentMapper.getAllHeadId();
-        String result = "";
-        for (Integer i:headIdList){
-            if (Objects.equals(student_id,i)){
-                result = "该用户不是员工！";
-                break;
-            }
+    private String judgeUser(int student_id) {
+        List<Integer> uidList = new ArrayList<>();
+        uidList.add(student_id);
+        JSONArray uidJsonArray = userClient.getUserInfoByUidList(new UserInfoListReq(uidList));
+        if (uidJsonArray.isEmpty()) {
+            return "该用户不存在";
         }
-        return result;
+        return "";
     }
 
 

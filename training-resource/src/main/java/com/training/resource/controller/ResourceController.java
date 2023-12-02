@@ -16,6 +16,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
+import org.springframework.http.HttpRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -138,8 +139,9 @@ public class ResourceController {
     }
 
     // 获取课程下的各章节资源列表
-    @GetMapping("/v2/lesson/list/{lesson_id}")
+    @GetMapping("/v1/lesson/list/{lesson_id}")
     public DataRespond getResourceLessonList(@PathVariable Integer lesson_id){
+        System.out.println("111111111");
         return resourceLessonService.getResourceLessonByLessonId(lesson_id);
     }
 
@@ -174,7 +176,7 @@ public class ResourceController {
     }
 
     // 获取指定教材资源类型
-    @GetMapping("/v2/lesson/type/{resource_id}")
+    @GetMapping("/v1/lesson/type/{resource_id}")
     public DataRespond getResourceLessonType(@PathVariable Integer resource_id){
         return resourceLessonService.getResourceLessonType(resource_id);
     }
