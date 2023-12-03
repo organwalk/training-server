@@ -205,7 +205,7 @@ public class LearnController {
 
 
     //发布学习笔记
-    @PostMapping("/v1/lesson/chaper/comment/note/{user_id}/{lesson_id}/{chapter_id}")
+    @PostMapping("/v1/lesson/chapter/comment/note/{user_id}/{lesson_id}/{chapter_id}")
     public MsgRespond insertNote(@PathVariable
                                  @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "user_id必须为纯数字字段")
                                  Integer user_id,

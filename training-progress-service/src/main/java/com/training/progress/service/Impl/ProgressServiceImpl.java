@@ -63,7 +63,7 @@ public class ProgressServiceImpl implements ProgressService {
         //判断是否已经标记完成
         Integer ProChapterExit = chapterMapper.judgeExitInTable(chapter_id, lesson_id, student_id);
         if (!Objects.equals(ProChapterExit, 0)) {
-            return MsgRespond.fail("该学生本章课程已标记完成!");
+            return MsgRespond.success("该学生本章课程已标记完成!");
         }
         String nowTime = ToolConfig.getTime();
         ProgressChapterLessonReq progressChapterLessonReq = new ProgressChapterLessonReq(lesson_id, student_id, chapter_id, nowTime);
@@ -440,8 +440,8 @@ public class ProgressServiceImpl implements ProgressService {
      * @return 根据处理结果返回对应消息
      */
     private String judgeChapterExit(int id, int chapter_id) {
-        JSONObject req = planClient.getAllChapterByLessonId(id);
-        List<Chapter> chapters = JSONArray.parseArray(req.toJSONString(), Chapter.class);
+        JSONObject res = planClient.getAllChapterByLessonId(id);
+        List<Chapter> chapters = res.getJSONArray("data").toJavaList(Chapter.class);
         boolean found = false;
         for (Chapter chapter : chapters) {
             if (Objects.equals(chapter.getId(), chapter_id)) {

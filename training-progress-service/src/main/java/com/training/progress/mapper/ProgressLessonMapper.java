@@ -9,7 +9,7 @@ import java.util.List;
 public interface ProgressLessonMapper {
 
 
-    @Select("select over_chapter_sum = over_chapter_sum+1 from t_progress_lesson where lesson_id=#{lesson_id} and student_id=#{student_id}")
+    @Update("UPDATE t_progress_lesson SET over_chapter_sum = over_chapter_sum + 1 WHERE lesson_id = #{lesson_id} AND student_id = #{student_id}")
     Integer updateChapterSum(@Param("lesson_id")int lesson_id,@Param("student_id")int student_id);
 
     @Insert("insert into t_progress_lesson(lesson_id, student_id, over_chapter_sum, lesson_chapter_sum) VALUES (#{lesson_id},#{student_id},#{over_chapter_sum},#{lesson_chapter_sum})")
