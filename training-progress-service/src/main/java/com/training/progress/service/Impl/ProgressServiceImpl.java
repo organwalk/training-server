@@ -40,6 +40,7 @@ public class ProgressServiceImpl implements ProgressService {
 
     /**
      * 标记课程章节为已完成的具体实现
+     *
      * @param lesson_id  课程id
      * @param chapter_id 章节id
      * @param student_id 学生id
@@ -76,16 +77,13 @@ public class ProgressServiceImpl implements ProgressService {
     }
 
 
-
-
-
     /**
-     *  设置学员的课程总体进度
+     * 设置学员的课程总体进度
      *
-     * @param lesson_id  课程id
-     * @param over_chapter_sum 完成章节总数
+     * @param lesson_id          课程id
+     * @param over_chapter_sum   完成章节总数
      * @param lesson_chapter_sum 该课程总章节数
-     * @param student_id 学生id
+     * @param student_id         学生id
      * @return 根据处理结果返回对应消息
      */
     @Override
@@ -108,10 +106,9 @@ public class ProgressServiceImpl implements ProgressService {
     }
 
 
-
-
     /**
-     *获取学员在指定课程下学习到的章节列表
+     * 获取学员在指定课程下学习到的章节列表
+     *
      * @param lesson_id 课程id
      * @return 根据处理结果返回对应消息
      */
@@ -124,8 +121,8 @@ public class ProgressServiceImpl implements ProgressService {
         List<Integer> Stulist = chapterMapper.getAllStuIdByLessonId(lesson_id);
         List<StuChapterAll> alls = new ArrayList<>();
         for (Integer i : Stulist) {
-            List<ProgressChapter> progressChapters = chapterMapper.getProChapByStuId(i,lesson_id);
-            for(ProgressChapter progressChapter:progressChapters) {
+            List<ProgressChapter> progressChapters = chapterMapper.getProChapByStuId(i, lesson_id);
+            for (ProgressChapter progressChapter : progressChapters) {
                 Chapter chapter = getChapter(lesson_id, progressChapter.getOver_chapter_id());
                 StuChapterAll stuChapterAll = new StuChapterAll(lesson_id, progressChapter.getStudent_id(), progressChapter.getOver_chapter_id(), chapter, progressChapter.getCompletion_date());
                 alls.add(stuChapterAll);
@@ -139,6 +136,7 @@ public class ProgressServiceImpl implements ProgressService {
 
     /**
      * 获取培训计划进度列表
+     *
      * @param page_size
      * @param offset
      * @return
@@ -149,221 +147,207 @@ public class ProgressServiceImpl implements ProgressService {
     }
 
 
-
-
     /**
      * 获取所有学生在指定课程的进度
+     *
      * @param lesson_id 课程id
      * @return 根据处理结果返回对应消息
      */
     @Override
-    public DataRespond getAllStuLessonPresent(int lesson_id,int page_size,int offset) {
+    public DataRespond getAllStuLessonPresent(int lesson_id, int page_size, int offset) {
         String ExitMark = judgeLessonExit(lesson_id);
-        if (!ExitMark.isBlank()){
+        if (!ExitMark.isBlank()) {
             return new DataFailRespond("该课程不存在！");
         }
         List<ProgressLesson> progressLessonList = lessonMapper.getAllProLessByLessonId(lesson_id);
         List<StuPresent> presents = new ArrayList<>();
-        for(ProgressLesson progressLesson:progressLessonList){
+        for (ProgressLesson progressLesson : progressLessonList) {
             double present = ComputeUtil.getStuProgress(progressLesson);
-            StuPresent stuPresent = new StuPresent(lesson_id,progressLesson.getStudent_id(),present);
+            StuPresent stuPresent = new StuPresent(lesson_id, progressLesson.getStudent_id(), present);
             presents.add(stuPresent);
         }
-        int endIndx = Math.min(offset+page_size,presents.size());
-        List<StuPresent> result = presents.subList(offset,endIndx);
-        return new DataPagingSuccessRespond("已成功获取该课程下的百分比进度数据列表",presents.size(),result);
+        int endIndx = Math.min(offset + page_size, presents.size());
+        List<StuPresent> result = presents.subList(offset, endIndx);
+        return new DataPagingSuccessRespond("已成功获取该课程下的百分比进度数据列表", presents.size(), result);
     }
-
 
 
     /**
      * 建立课程进度跟踪
-     * @param plan_id 计划id
-     * @param lesson_id 课程id
+     *
+     * @param plan_id    计划id
+     * @param lesson_id  课程id
      * @param teacher_id 教师id
      * @return 根据处理结果返回对应消息
      */
     @Override
     public MsgRespond insertProgressPlan(int plan_id, Integer lesson_id, int teacher_id) {
         String Mark = judgePlanExit(plan_id);
-        if (!Mark.isBlank()){
+        if (!Mark.isBlank()) {
             return MsgRespond.fail("该计划不存在!");
         }
 
-        Integer i = planMapper.insertToProgressPlan(plan_id,teacher_id,lesson_id);
-        return i>0?MsgRespond.success("已成功建立课程跟踪机制"):MsgRespond.fail("创建失败！");
+        Integer i = planMapper.insertToProgressPlan(plan_id, teacher_id, lesson_id);
+        return i > 0 ? MsgRespond.success("已成功建立课程跟踪机制") : MsgRespond.fail("创建失败！");
     }
-
 
 
     /**
      * 获取指定教师的课程进度
+     *
      * @param teacher_id 教师id
      * @return 根据处理结果返回对应消息
      */
     @Override
-    public DataRespond getTeaAllPresent(int planId, int teacher_id,String auth,String username) {
+    public DataRespond getTeaAllPresent(int planId, int teacher_id, String auth, String username) {
         String name1 = getName(teacher_id);
-        if (Objects.equals(auth,"teacher")&&!Objects.equals(username,name1)){
+        if (Objects.equals(auth, "teacher") && !Objects.equals(username, name1)) {
             return new DataFailRespond("只能查看自己的课程进度信息");
         }
         String Mark = judgeStuExit(teacher_id);
-        if (!Mark.isBlank()){
+        if (!Mark.isBlank()) {
             return new DataFailRespond(Mark);
         }
 
         List<Integer> LessonIdList = planMapper.getLessonIdByTeaId(planId, teacher_id);
         List<Lesson_Present> lesson_presents = new ArrayList<>();
         double all_total_progresss = 0;
-        for (Integer i :LessonIdList){
+        for (Integer i : LessonIdList) {
             List<ProgressLesson> progressLessonList = lessonMapper.getAllProgressByLessonId(i);
             double lessonPresent = ComputeUtil.comProgress(progressLessonList);
-            all_total_progresss +=lessonPresent;
+            all_total_progresss += lessonPresent;
             String name = getLessonById(i);
-            if (Double.isNaN(lessonPresent)){
-                lessonPresent=0;
+            if (Double.isNaN(lessonPresent)) {
+                lessonPresent = 0;
             }
-            Lesson_Present lesson_present = new Lesson_Present(i,name,lessonPresent);
+            Lesson_Present lesson_present = new Lesson_Present(i, name, lessonPresent);
             lesson_presents.add(lesson_present);
         }
         List<Lesson_Present> result = reorder(lesson_presents);
-        double all_total_progress = all_total_progresss/LessonIdList.size();
-       if(Double.isNaN(all_total_progress)){
-           all_total_progress = 0;
-       }
-        TeaPresent teaPresent = new TeaPresent(all_total_progress,result);
-        return new DataSuccessRespond("已成功获取百分比进度列表",teaPresent);
+        double all_total_progress = all_total_progresss / LessonIdList.size();
+        if (Double.isNaN(all_total_progress)) {
+            all_total_progress = 0;
+        }
+        TeaPresent teaPresent = new TeaPresent(all_total_progress, result);
+        return new DataSuccessRespond("已成功获取百分比进度列表", teaPresent);
     }
-
-
-
-
 
 
     /**
      * 获取培训计划进度列表
+     *
      * @return 根据处理结果返回对应消息
      */
     @Override
     public DataRespond getAllPlanPresent(int page_size, int offset) {
         List<PlanPresent> planPresents = new ArrayList<>();
         List<Integer> PlanIdList = planMapper.getAllPlanId();
-        for(Integer i :PlanIdList){
+        for (Integer i : PlanIdList) {
             List<Integer> LessonIdList = planMapper.getLessonIdByPlanId(i);
             double allPresent = 0;
-            for (Integer j :LessonIdList){
+            for (Integer j : LessonIdList) {
                 List<ProgressLesson> progressLessonList = lessonMapper.getAllProgressByLessonId(j);
-                double present =  ComputeUtil.comProgress(progressLessonList);
-                allPresent+=present;
+                double present = ComputeUtil.comProgress(progressLessonList);
+                allPresent += present;
             }
-            if (Double.isNaN(allPresent)){
-                allPresent=0;
+            if (Double.isNaN(allPresent)) {
+                allPresent = 0;
             }
-            PlanPresent planPresent = new PlanPresent(i,allPresent);
+            PlanPresent planPresent = new PlanPresent(i, allPresent);
             planPresents.add(planPresent);
         }
         int endIndx = Math.min(offset + page_size, planPresents.size());
-        List<PlanPresent> result = planPresents.subList(offset,endIndx);
-        return new DataPagingSuccessRespond("已获取培训计划进度列表",planPresents.size(),result);
+        List<PlanPresent> result = planPresents.subList(offset, endIndx);
+        return new DataPagingSuccessRespond("已获取培训计划进度列表", planPresents.size(), result);
     }
 
 
-
-
-
-
     /**
-     *  获取指定培训计划下建立跟踪机制的课程ID列表
-     * @param  plan_id 计划id
+     * 获取指定培训计划下建立跟踪机制的课程ID列表
+     *
+     * @param plan_id 计划id
      * @return 根据处理结果返回对应消息
      */
     @Override
     public DataRespond gerLessonIdListByPlanId(int plan_id, int page_size, int offset) {
         Integer Mark = planMapper.judgePlanExit(plan_id);
-        if (Objects.equals(Mark,0)){
+        if (Objects.equals(Mark, 0)) {
             return new DataFailRespond("该计划不存在！");
         }
         Integer Count = planMapper.getCountByPlanId(plan_id);
-        List<Integer> LessonList = planMapper.getLesson(plan_id,page_size,offset);
-        return new DataPagingSuccessRespond("已成功获取该培训计划下的课程ID列表",Count,LessonList);
+        List<Integer> LessonList = planMapper.getLesson(plan_id, page_size, offset);
+        return new DataPagingSuccessRespond("已成功获取该培训计划下的课程ID列表", Count, LessonList);
     }
-
-
-
-
-
 
 
     /**
-     *  获取指定培训计划下建立跟踪机制的课程ID列表
-     * @param  student_id 学生id
+     * 获取指定培训计划下建立跟踪机制的课程ID列表
+     *
+     * @param student_id 学生id
      * @return 根据处理结果返回对应消息
      */
     @Override
-    public DataRespond getAllLessonPresentByStuId(int student_id,int plan_id, int page_size, int offset) {
-        List<Integer> LessonIdList = planMapper.getLessonIdByPlanId(plan_id);
+    public DataRespond getAllLessonPresentByStuId(int student_id, int plan_id, int page_size, int offset) {
+        List<Integer> LessonIdList = planMapper.getCommonLessonIdsByPlanId(plan_id);
         List<LessPresent> lessPresents = new ArrayList<>();
-        for(Integer i :LessonIdList){
-            ProgressLesson progressLesson = lessonMapper.getByLessIdAndStuID(i,student_id);
+        for (Integer i : LessonIdList) {
+            ProgressLesson progressLesson = lessonMapper.getByLessIdAndStuID(i, student_id);
             double x = ComputeUtil.getStuProgress(progressLesson);
-            if (Double.isNaN(x)){
+            if (Double.isNaN(x)) {
                 x = 0;
             }
-            LessPresent lessPresent = new LessPresent(i,x);
+            LessPresent lessPresent = new LessPresent(i, x);
             lessPresents.add(lessPresent);
         }
         int endIndx = Math.min(offset + page_size, lessPresents.size());
-        List<LessPresent> result = lessPresents.subList(offset,endIndx);
-        return new DataPagingSuccessRespond("已成功返回该学员的课程进度列表",lessPresents.size(),result);
+        List<LessPresent> result = lessPresents.subList(offset, endIndx);
+        return new DataPagingSuccessRespond("已成功返回该学员的课程进度列表", lessPresents.size(), result);
     }
-
-
-
-
-
 
 
     /**
      * 获取学员在指定课程下学习进度百分比数据
+     *
      * @param student_id 学生id
-     * @param lesson_id 课程id
+     * @param lesson_id  课程id
      * @return 根据处理结果返回对应消息
      */
     @Override
     public DataRespond getChapterListByStuIdAndLessonId(int student_id, int lesson_id) {
         String StuExitMark = judgeStuExit(student_id);
-        if (!StuExitMark.isBlank()){
+        if (!StuExitMark.isBlank()) {
             return new DataFailRespond("该学生不存在!");
         }
         String LessonExitMark = judgeLessonExit(lesson_id);
-        if (!LessonExitMark.isBlank()){
+        if (!LessonExitMark.isBlank()) {
             return new DataFailRespond("该课程不存在！");
         }
-        List<Integer> chapterList = chapterMapper.getChapterListByStuIdAndLessonId(student_id,lesson_id);
-        return new DataSuccessRespond("已成功返回该学员所学最新章节及其已学章节列表",new ChapterList(chapterList.size(),chapterList));
+        List<Integer> chapterList = chapterMapper.getChapterListByStuIdAndLessonId(student_id, lesson_id);
+        return new DataSuccessRespond("已成功返回该学员所学最新章节及其已学章节列表", new ChapterList(chapterList.size(), chapterList));
     }
-
 
 
     /**
      * 更新进度服务章节总数
-     * @param sum 章节总数
+     *
+     * @param sum       章节总数
      * @param lesson_id 课程id
      * @return 根据处理结果返回对应消息
      */
     @Override
     public MsgRespond updateChapterSum(Integer sum, Integer lesson_id) {
         String lessonMark = judgeLessonExit(lesson_id);
-        if (!lessonMark.isBlank()){
+        if (!lessonMark.isBlank()) {
             return MsgRespond.fail(lessonMark);
         }
-        lessonMapper.UpdateChapterSum(sum,lesson_id);
+        lessonMapper.UpdateChapterSum(sum, lesson_id);
         return MsgRespond.success("修改成功！");
     }
 
 
     /**
      * 根据id判断学生是否存在
+     *
      * @param id 学生id
      * @return 根据处理结果返回对应消息
      */
@@ -376,17 +360,16 @@ public class ProgressServiceImpl implements ProgressService {
     }
 
 
-
-
     /**
      * 使列表按照一定顺序排序
+     *
      * @return 根据处理结果返回对应消息
      */
-    private List<Lesson_Present> reorder(List<Lesson_Present> lesson_presents){
+    private List<Lesson_Present> reorder(List<Lesson_Present> lesson_presents) {
         Comparator<Lesson_Present> comparator = new Comparator<Lesson_Present>() {
             @Override
             public int compare(Lesson_Present o1, Lesson_Present o2) {
-                return Double.compare(o1.getTotal_progress(),o2.getTotal_progress());
+                return Double.compare(o1.getTotal_progress(), o2.getTotal_progress());
             }
         };
         lesson_presents.sort(comparator);
@@ -395,14 +378,13 @@ public class ProgressServiceImpl implements ProgressService {
     }
 
 
-
-
     /**
      * 根据id获取用户名
+     *
      * @param id 用户id
      * @return 根据处理结果返回对应消息
      */
-    private String getName(int id){
+    private String getName(int id) {
         JSONObject req = userClient.getUserAccountByUid(id);
         JSONObject data = req.getJSONObject("data");
         return data.getString("username");
@@ -424,8 +406,7 @@ public class ProgressServiceImpl implements ProgressService {
     }
 
 
-
-    private String getLessonById(int id){
+    private String getLessonById(int id) {
         JSONObject req = planClient.getLessonInfo(id);
         JSONObject data = req.getJSONObject("data");
         return data.getString("lesson_name");
@@ -455,6 +436,7 @@ public class ProgressServiceImpl implements ProgressService {
 
     /**
      * 根据id获取所有章节是否存在
+     *
      * @param id 章节id
      * @return 根据处理结果返回对应消息
      */
@@ -465,10 +447,9 @@ public class ProgressServiceImpl implements ProgressService {
     }
 
 
-
-
     /**
      * 根据id获取章节
+     *
      * @param id 章节id
      * @return 根据处理结果返回对应消息
      */
@@ -488,21 +469,19 @@ public class ProgressServiceImpl implements ProgressService {
     }
 
 
-
-
     /**
      * 根据id获取计划
+     *
      * @param id 计划id
      * @return 根据处理结果返回对应消息
      */
-    private String judgePlanExit(int id){
+    private String judgePlanExit(int id) {
         JSONObject req = planClient.getPlanByPlanId(id);
-        if (Objects.equals(req.get("code"),5005)){
+        if (Objects.equals(req.get("code"), 5005)) {
             return "该计划不存在";
         }
         return "";
     }
-
 
 
 }

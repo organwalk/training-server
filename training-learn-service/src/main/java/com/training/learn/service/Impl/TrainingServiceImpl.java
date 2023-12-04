@@ -7,6 +7,7 @@ import com.training.common.entity.DataPagingSuccessRespond;
 import com.training.common.entity.DataRespond;
 import com.training.common.entity.DataSuccessRespond;
 import com.training.learn.client.PlanClient;
+import com.training.learn.client.ProgressClient;
 import com.training.learn.client.UserClient;
 import com.training.learn.entity.respond.Chapter;
 import com.training.learn.entity.respond.Plan;
@@ -16,9 +17,12 @@ import com.training.learn.mapper.TrainingMapper;
 import com.training.learn.service.TrainingService;
 import com.training.learn.utils.ComputeUtil;
 import lombok.AllArgsConstructor;
+import lombok.Data;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.util.*;
 
 @Service
@@ -29,6 +33,7 @@ public class TrainingServiceImpl implements TrainingService {
     private final TrainingMapper trainingMapper;
     private final PlanClient planClient;
     private final UserClient userClient;
+    private final ProgressClient progressClient;
 
 
     /**
@@ -50,9 +55,17 @@ public class TrainingServiceImpl implements TrainingService {
         List<PlanResult> list = new ArrayList<>();
 
         for (Integer i : PlanIdList) {
-            double x = getPresent(i, student_id);
+            JSONObject res = progressClient.getLessonPersentList(i, student_id, 999999, 0).join();
+            List<LessonIdAndPersent> progressList =  res.getJSONArray("data").toJavaList(LessonIdAndPersent.class);
+            double persentSum = progressList.stream().mapToDouble(LessonIdAndPersent::getPresent).sum();
+            double x = persentSum / progressList.size();
+            DecimalFormat df = new DecimalFormat("#.##");
+            df.setRoundingMode(RoundingMode.HALF_UP); // 设置四舍五入模式为四舍五入
+            df.setMinimumFractionDigits(2); // 设置小数位数
+            String formattedAverage = df.format(x); // 格式化平均值
+            double roundedAverage = Double.parseDouble(formattedAverage);
             Plan p = getPlanById(i);
-            PlanResult result = new PlanResult(i, p.getTraining_title(), p.getTraining_purpose(), p.getTraining_start_time(), p.getTraining_end_time(), p.getDept_id(), p.getTraining_state(), x, p.getExtra());
+            PlanResult result = new PlanResult(i, p.getTraining_title(), p.getTraining_purpose(), p.getTraining_start_time(), p.getTraining_end_time(), p.getDept_id(), p.getTraining_state(), roundedAverage, p.getExtra());
             list.add(result);
         }
         int endIndx = Math.min(offset + page_size, list.size());
@@ -84,6 +97,9 @@ public class TrainingServiceImpl implements TrainingService {
         if (!Mark.isBlank()) {
             return new DataFailRespond(Mark);
         }
+        JSONObject res = progressClient.getLessonPersentList(plan_id, student_id, 999999, 0).join();
+        List<LessonIdAndPersent> progressList =  res.getJSONArray("data").toJavaList(LessonIdAndPersent.class);
+
         List<Integer> lessonIdList = trainingMapper.getLessonIdListByPId(plan_id);
         List<LessonResult> lessonResults = new ArrayList<>();
         for (Integer i : lessonIdList) {
@@ -97,7 +113,10 @@ public class TrainingServiceImpl implements TrainingService {
             ProgressLesson lessonProgress = trainingMapper.getLessonProgressByLIdAndStuId(i, student_id);
             double x = 0;
             if (lessonProgress != null) {
-                x = ComputeUtil.getStuProgress(lessonProgress);
+
+                x = progressList.stream().filter(obj -> Objects.equals(obj.getLesson_id(), i))
+                        .map(LessonIdAndPersent::getPresent)
+                        .findFirst().orElse(0.00);
             }
             LessonResult lessonResult = new LessonResult(i, lessonName, lessonDes, lessonState, x, teacherId, teacherInfo);
             lessonResults.add(lessonResult);
@@ -189,7 +208,9 @@ public class TrainingServiceImpl implements TrainingService {
             double x = ComputeUtil.getStuProgress(progressLesson);
             sum += x;
         }
-        return sum;
+        System.out.println(lessonIdList);
+        System.out.println(lessonIdList.size());
+        return sum/lessonIdList.size();
     }
 
 

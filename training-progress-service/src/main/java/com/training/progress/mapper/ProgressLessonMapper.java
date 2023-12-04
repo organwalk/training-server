@@ -33,6 +33,8 @@ public interface ProgressLessonMapper {
     @Update("update t_progress_lesson set lesson_chapter_sum = #{lesson_chapter_sum} where lesson_id=#{lesson_id}")
     void UpdateChapterSum(@Param("lesson_chapter_sum")Integer lesson_chapter_sum,@Param("lesson_id")Integer lesson_id);
 
+    @Select("select lesson_id from t_progress_lesson where student_id = #{studentId}")
+    List<Integer> getLessonIdByStudent(Integer studentId);
 
     //获取培训计划进度列表()开发中
     //@Select("")

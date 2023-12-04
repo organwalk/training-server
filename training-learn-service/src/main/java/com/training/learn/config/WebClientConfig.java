@@ -1,9 +1,6 @@
 package com.training.learn.config;
 
-import com.training.learn.client.DeptClient;
-import com.training.learn.client.PlanClient;
-import com.training.learn.client.ResourceClient;
-import com.training.learn.client.UserClient;
+import com.training.learn.client.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -42,5 +39,12 @@ public class WebClientConfig {
         WebClient client = WebClient.builder().build();
         HttpServiceProxyFactory factory = HttpServiceProxyFactory.builder(WebClientAdapter.forClient(client)).build();
         return factory.createClient(ResourceClient.class);
+    }
+
+    @Bean
+    public ProgressClient progressClient(){
+        WebClient client = WebClient.builder().build();
+        HttpServiceProxyFactory factory = HttpServiceProxyFactory.builder(WebClientAdapter.forClient(client)).build();
+        return factory.createClient(ProgressClient.class);
     }
 }

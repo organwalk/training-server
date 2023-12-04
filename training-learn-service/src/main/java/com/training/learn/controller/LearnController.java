@@ -188,7 +188,7 @@ public class LearnController {
 
     //删除指定主评论
     @DeleteMapping("/v1/comment/{comment_id}")
-    public MsgRespond DeleteComemt(@PathVariable
+    public MsgRespond DeleteComment(@PathVariable
                                    @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "comment_id必须为纯数字字段")
                                    int comment_id) {
         return commentService.DeleteComment(comment_id);

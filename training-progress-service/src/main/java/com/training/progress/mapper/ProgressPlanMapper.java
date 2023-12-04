@@ -23,6 +23,9 @@ public interface ProgressPlanMapper {
 
     @Select("select lesson_id from t_progress_plan where plan_id = #{plan_id}")
     List<Integer> getLessonIdByPlanId(int plan_id);
+    @Select("SELECT t.lesson_id FROM t_progress_plan t INNER JOIN t_progress_lesson o ON t.lesson_id = o.lesson_id " +
+            "WHERE t.plan_id = #{plan_id}  GROUP BY t.lesson_id")
+    List<Integer> getCommonLessonIdsByPlanId(int plan_id);
 
     @Select("select id from t_progress_plan where plan_id=#{plan_id}")
     Integer judgePlanExit(int plan_id);
