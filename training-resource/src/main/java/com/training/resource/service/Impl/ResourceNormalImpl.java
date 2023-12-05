@@ -21,6 +21,7 @@ import lombok.SneakyThrows;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -30,6 +31,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -49,7 +51,9 @@ public class ResourceNormalImpl implements ResourceNormalService {
     private final FileUtil fileUtil;
     private final DataUtil dataUtil;
     private final AppConfig appConfig;
-    private static final ConcurrentMap<String, String> Path_CACHE = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<String, String> PATH_CACHE = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<String, Boolean> UPLOAD_CACHE = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<String, String> VALID_SAME_HASH_FILE = new ConcurrentHashMap<>();
 
     /**
      * 上传资源文件的具体实现
@@ -60,40 +64,72 @@ public class ResourceNormalImpl implements ResourceNormalService {
     @SneakyThrows
     @Override
     public MsgRespond uploadResourceNormalFile(ResourceNormalReq req) {
-        // 对请求进行检查
-        String checkInfo = checkResourceInfo(req.getDept_id(), req.getTag_id());
-        if (!checkInfo.isBlank()){
-            return MsgRespond.fail(checkInfo);
-        }
-        // 检查指定用户是否存在
-        Integer codeMark = (Integer) userClient.getUserAccountByUid(req.getUp_id()).get("code");
-        if (Objects.equals(codeMark, 5005)){
-            return MsgRespond.fail("当前指定上传者不存在");
-        }
-        // 检查是否具有相同哈希值的文件
-        String filePath = fileUtil.checkEqualHashFilePath("normal", req.getFile_hash());
-        if (Objects.isNull(filePath)){
-            filePath = fileUtil.getNormalFilePath(req.getUp_id(), req.getFile_origin_name());
-            // 获取文件保存路径
-            String savePath = Path_CACHE.get(req.getFile_hash());
-            if (Objects.isNull(savePath)){
-                Path_CACHE.put(req.getFile_hash(), filePath);
+
+        Integer deptId = req.getDept_id();
+        Integer tagId = req.getTag_id();
+        Integer userId = req.getUp_id();
+        String fileHash = req.getFile_hash();
+
+        Boolean checkResult = UPLOAD_CACHE.get(fileHash);
+        if (Objects.isNull(checkResult)){
+            String validMsg = validUploadResource(deptId, tagId, userId);
+            if (!validMsg.isBlank()){
+                return MsgRespond.fail(validMsg);
             }
-            String processResult = fileUtil.chunkSaveFile(req.getFile_hash(), filePath, Path_CACHE.get(req.getFile_hash()), req.getFile_chunks_sum(), req.getFile_now_chunk(), req.getFile_size(), req.getResource_file());
+            // 缓存通过章节检查的结果
+            UPLOAD_CACHE.put(fileHash, false);
+        }
+
+        // 检查是否具有相同哈希值的文件
+        String filePath = VALID_SAME_HASH_FILE.get(fileHash);
+        if (Objects.isNull(filePath)){
+            filePath = fileUtil.checkEqualHashFilePath("normal", fileHash);
+            if (Objects.isNull(filePath)){
+                VALID_SAME_HASH_FILE.put(fileHash, "");
+            }else {
+                VALID_SAME_HASH_FILE.put(fileHash, filePath);
+            }
+        }
+        
+        if (VALID_SAME_HASH_FILE.get(fileHash).isBlank()){
+            filePath = fileUtil.getNormalFilePath(userId, req.getFile_origin_name());
+
+            // 获取文件保存路径
+            String savePath = PATH_CACHE.get(fileHash);
+            if (Objects.isNull(savePath)){
+                PATH_CACHE.put(fileHash, filePath);
+            }
+
+            String processResult = fileUtil.chunkSaveFile(fileHash,
+                    filePath,
+                    PATH_CACHE.get(fileHash),
+                    req.getFile_chunks_sum(),
+                    req.getFile_now_chunk(),
+                    req.getFile_size(),
+                    req.getResource_file());
+
             if (Objects.isNull(processResult)){
                 return MsgRespond.success("当前文件片段上传成功");
             }else if (Objects.equals(processResult, "true")){
                 resourceNormalMapper.insertResourceNormal(new ResourceNormalTable(null,
-                        req.getResource_name(), Path_CACHE.get(req.getFile_hash()), req.getDept_id(), req.getTag_id(), req.getUp_id(), fileUtil.getFileSaveDateTime(), req.getFile_hash()));
-                Path_CACHE.remove(req.getFile_hash());
+                        req.getResource_name(), PATH_CACHE.get(fileHash), deptId, tagId, userId, fileUtil.getFileSaveDateTime(), req.getFile_hash()));
+
+                PATH_CACHE.remove(fileHash);
+                UPLOAD_CACHE.remove(fileHash);
+                VALID_SAME_HASH_FILE.remove(fileHash);
+
                 return MsgRespond.success("资源文件上传成功");
             }else {
                 return MsgRespond.fail(processResult);
             }
         }
+
+        UPLOAD_CACHE.remove(fileHash);
+        VALID_SAME_HASH_FILE.remove(fileHash);
+
         resourceNormalMapper.insertResourceNormal(new ResourceNormalTable(null,
                 req.getResource_name(), filePath, req.getDept_id(), req.getTag_id(), req.getUp_id(), fileUtil.getFileSaveDateTime(), req.getFile_hash()));
-        return MsgRespond.success("资源上传成功");
+        return MsgRespond.success("资源文件上传成功");
     }
 
     /**
@@ -128,19 +164,53 @@ public class ResourceNormalImpl implements ResourceNormalService {
      */
     @SneakyThrows
     @Override
-    public ResponseEntity<?> downloadResourceNormalFile(Integer rid) {
+    public ResponseEntity<?> downloadResourceNormalFile(String range, Integer rid) {
         String downloadUrl = resourceNormalMapper.selectPathByRid(rid);
-        if (Objects.isNull(downloadUrl) || !new File(downloadUrl).exists()){
-            return ResponseEntity.status(HttpStatus.OK).body(MsgRespond.fail("未找到资源，请修改后重试"));
+        if (Objects.isNull(downloadUrl) || !new File(downloadUrl).exists()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
+
         String fileName = URLEncoder.encode(resourceNormalMapper.selectFileNameByRid(rid), StandardCharsets.UTF_8);
         String fileExtension = downloadUrl.substring(downloadUrl.lastIndexOf("."));
-        Resource file = new FileSystemResource(downloadUrl);
+
+        File file = new File(downloadUrl);
+        InputStreamResource resource = new InputStreamResource(new FileInputStream(file));
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + fileExtension + "\"");
+        headers.add(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.CONTENT_DISPOSITION);
+
+        headers.setContentLength(file.length());
+
+        if (range != null && range.startsWith("bytes=")) {
+            String[] ranges = range.substring(6).split("-");
+            long start = Long.parseLong(ranges[0]);
+            long end = file.length() - 1;
+            if (ranges.length > 1 && !ranges[1].isEmpty()) {
+                end = Long.parseLong(ranges[1]);
+            }
+
+            headers.add(HttpHeaders.CONTENT_RANGE, "bytes " + start + "-" + end + "/" + file.length());
+
+            HttpStatus status = HttpStatus.PARTIAL_CONTENT;
+            headers.setContentLength(end - start + 1);
+
+            return new ResponseEntity<>(resource, headers, status);
+        }
+
         return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(appConfig.tika().detect(new File(downloadUrl))))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + fileExtension + "\"")
-                .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.CONTENT_DISPOSITION) // 暴露Content-Disposition字段
-                .body(file);
+                .headers(headers)
+                .contentType(MediaType.parseMediaType(appConfig.tika().detect(file)))
+                .body(resource);
+    }
+
+    private void simulateSlowDownload() {
+        try {
+            // Add delay of 1 second (adjust as needed)
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     /**
@@ -328,5 +398,18 @@ public class ResourceNormalImpl implements ResourceNormalService {
         return "";
     }
 
+    private String validUploadResource(Integer deptId, Integer tagId, Integer userId){
+        // 对请求进行检查
+        String checkInfo = checkResourceInfo(deptId, tagId);
+        if (!checkInfo.isBlank()){
+            return checkInfo;
+        }
+        // 检查指定用户是否存在
+        Integer codeMark = (Integer) userClient.getUserAccountByUid(userId).get("code");
+        if (Objects.equals(codeMark, 5005)){
+            return "当前指定上传者不存在";
+        }
+        return "";
+    }
 
 }

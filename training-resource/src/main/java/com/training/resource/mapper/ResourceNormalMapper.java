@@ -107,7 +107,8 @@ public interface ResourceNormalMapper {
     Integer selectResourceListSumByUpId(Integer upId);
 
     // 根据up_id获取资源文件列表
-    @Select("select id, resource_name, up_id, up_datetime from t_resource_normal where up_id = #{upId} limit #{pageSize} offset #{offset}")
+    @Select("select id, resource_name, up_id, up_datetime from t_resource_normal " +
+            "where up_id = #{upId} ORDER BY id DESC limit #{pageSize} offset #{offset}")
     @ResultMap("resource_normal_list")
     List<ResourceNormalRespond> selectResourceListByUpId(@Param("upId") Integer upId,
                                                          @Param("pageSize") Integer pageSize,
@@ -121,8 +122,6 @@ public interface ResourceNormalMapper {
             "and dept_id = #{dept_id} and tag_id = #{tag_id}",
             "</if>",
             "and resource_name like concat('%', #{keyword}, '%')",
-            "ORDER BY id DESC ",
-            "limit #{pageSize} offset #{offset}",
             "</script>"})
     Integer selectResourceListByKeywordSum(@Param("dept_id") Integer deptId,
                                            @Param("tag_id") Integer tagId,

@@ -65,15 +65,18 @@ public class FileUtil {
             SHA_CACHE.remove(hashValue);
             // 判断是否是视频，如果是视频，则进行dash处理
             String fileExtension = Objects.requireNonNull(filePath).substring(filePath.lastIndexOf("."));
-            if (Objects.equals(fileExtension, ".md")){
+            if (Objects.equals(fileExtension, ".mp4")){
+                logger.info("开始将MP4转换为FMP4");
+                boolean process = mp4BoxUtil.processMP4ToFMP4(savePath);
+                return process ? "true" : null;
+            }else{
                 return "true";
             }
-            logger.info("开始将MP4转换为FMP4");
-            boolean process = mp4BoxUtil.processMP4ToFMP4(savePath);
-            return process ? "true" : null;
+
         }
         return null;
     }
+
     public String getNormalFilePath(Integer upId, String fileOriginName) {
         // 获取上传的文件扩展名
         String fileExtension = Objects.requireNonNull(fileOriginName).substring(fileOriginName.lastIndexOf("."));

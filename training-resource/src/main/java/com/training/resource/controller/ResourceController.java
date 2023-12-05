@@ -75,8 +75,9 @@ public class ResourceController {
 
     // 下载指定资源文件
     @GetMapping("/v1/normal/file/{rid}")
-    public ResponseEntity<?> downloadResourceNormalFile(@PathVariable @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "rid必须为纯数字字段") Integer rid) {
-        return resourceNormalService.downloadResourceNormalFile(rid);
+    public ResponseEntity<?> downloadResourceNormalFile(@RequestHeader(name="Range", required = false) String rangeString,
+                                                        @PathVariable @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "rid必须为纯数字字段") Integer rid) {
+        return resourceNormalService.downloadResourceNormalFile(rangeString, rid);
     }
 
     // 获取指定资源文件详情

@@ -15,7 +15,7 @@ public interface ResourceNormalService {
     // 获取上传资源列表
     DataRespond getResourceNormalList(Integer deptId, Integer tagId, Integer pageSize, Integer offset);
     // 下载指定资源文件
-    ResponseEntity<?> downloadResourceNormalFile(Integer rid);
+    ResponseEntity<?> downloadResourceNormalFile(String range, Integer rid);
     // 获取指定资源文件详情
     DataRespond getResourceNormalDetail(Integer rid);
     // 编辑指定资源文件信息
