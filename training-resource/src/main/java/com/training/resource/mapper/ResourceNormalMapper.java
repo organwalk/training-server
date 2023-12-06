@@ -83,16 +83,20 @@ public interface ResourceNormalMapper {
 
     // 根据rid编辑指定的资源文件
     @Update("<script>" +
-            "update t_resource_normal set dept_id = #{req.dept_id}, tag_id = #{req.tag_id}, resource_name = #{req.resource_name}, up_datetime = #{upDatetime} " +
+            "update t_resource_normal set dept_id = #{req.dept_id}, tag_id = #{req.tag_id}, resource_name = #{req.resource_name}, up_datetime = #{upDatetime} , file_hash = #{fileHash}" +
             "<if test='resourcePath != null'>" +
             ", resource_path = #{resourcePath} " +
             "</if>" +
             "where id = #{rid}" +
             "</script>")
     void updateResourceNormalInfoByRid(@Param("req") ResourceNormalReq req,
+                                       @Param("fileHash") String fileHash,
                                        @Param("resourcePath") String resourcePath,
                                        @Param("upDatetime") String upDatetime,
                                        @Param("rid") Integer rid);
+
+    @Select("select COUNT(id) from t_resource_normal where resource_path = #{resourcePath} limit 2")
+    Integer selectPathIsOverTwo(String resourcePath);
 
     // 根据rid删除指定的资源文件
     @Delete("delete from t_resource_normal where id = #{rid}")

@@ -10,7 +10,6 @@ import com.training.resource.entity.respond.ResourceNormalAllListRespond;
 import com.training.resource.entity.respond.ResourceNormalDetailRespond;
 import com.training.resource.entity.respond.ResourceNormalRespond;
 import com.training.resource.entity.table.ResourceNormalTable;
-import com.training.resource.exceptions.GlobalExceptionHandler;
 import com.training.resource.mapper.ResourceNormalMapper;
 import com.training.resource.mapper.TagMapper;
 import com.training.resource.service.ResourceNormalService;
@@ -18,11 +17,7 @@ import com.training.resource.utils.DataUtil;
 import com.training.resource.utils.FileUtil;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.InputStreamResource;
-import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -32,7 +27,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -204,15 +198,6 @@ public class ResourceNormalImpl implements ResourceNormalService {
                 .body(resource);
     }
 
-    private void simulateSlowDownload() {
-        try {
-            // Add delay of 1 second (adjust as needed)
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-    }
-
     /**
      * 获取指定资源文件详情具体实现
      * @param rid 资源ID
@@ -230,6 +215,11 @@ public class ResourceNormalImpl implements ResourceNormalService {
         return new DataSuccessRespond("已成功获取此资源文件详情", dataUtil.switchDeptIdAndUpIdToInfo(detailObj));
     }
 
+
+    private static final ConcurrentMap<Integer, ResourceNormalDetailRespond> VALID_RESOURCE_EXIST = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<Integer, Boolean> VALID_EDIT_RESOURCE = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<Integer, String> VALID_EDIT_RESOURCE_SAME_HASH = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<Integer, String> EDIT_RESOURCE_PATH_CACHE = new ConcurrentHashMap<>();
     /**
      * 编辑指定资源文件信息具体实现
      * @param rid 部门ID
@@ -237,45 +227,91 @@ public class ResourceNormalImpl implements ResourceNormalService {
      * @return 根据处理结果返回相应提示消息
      * by organwalk 2023-10-22
      */
+    @SneakyThrows
     @Override
     public MsgRespond editResourceNormalInfo(Integer rid, ResourceNormalReq req, String username, String auth) {
+
+        String fileHash = req.getFile_hash();
+
         // 检查指定文件是否存在
-        ResourceNormalDetailRespond detailObj = resourceNormalMapper.selectResourceNormalDetailByRidAnUpId(rid);
+        ResourceNormalDetailRespond detailObj = VALID_RESOURCE_EXIST.get(rid);
         if (Objects.isNull(detailObj)){
-            return MsgRespond.fail("此资源文件不存在，请重新指定");
+            detailObj = resourceNormalMapper.selectResourceNormalDetailByRidAnUpId(rid);
+            if (Objects.isNull(detailObj)){
+                return MsgRespond.fail("此资源文件不存在，请重新指定");
+            }
+            VALID_RESOURCE_EXIST.put(rid, detailObj);
         }
-        // 请求实体部门和分类标签存在性检查
-        String checkInfo = checkResourceInfo(req.getDept_id(), req.getTag_id());
-        if (!checkInfo.isBlank()){
-            return MsgRespond.fail(checkInfo);
+
+        // 校验
+        Boolean validResult = VALID_EDIT_RESOURCE.get(rid);
+        if (Objects.isNull(validResult)){
+            String msg = validEditResource(req, auth, username);
+            if (!msg.isBlank()){
+                return MsgRespond.fail(msg);
+            }
+            VALID_EDIT_RESOURCE.put(rid, true);
         }
-        // 检查是否有权限操作文件
-        String checkAuth = dataUtil.checkResourceAuth(req.getUp_id(), auth, username);
-        if (!checkAuth.isBlank()){
-            return MsgRespond.fail(checkAuth);
-        }
-        // 检查文件是否存在
-        String filePath = null;
-        if (Objects.nonNull(req.getResource_file()) && !req.getResource_file().isEmpty()){
-            // 获取原文件路径
-            String oldFilePath = resourceNormalMapper.selectResourcePathByRid(rid);
-            // 获取文件保存路径
-            filePath = fileUtil.getNormalFilePath(req.getUp_id(), req.getFile_origin_name());
-            try {
-                // 保存文件
-                req.getResource_file().transferTo(new File(filePath));
-                // 删除原文件
-                File oldFile = new File(oldFilePath);
-                if (oldFile.delete()){
-                    resourceNormalMapper.updateResourceNormalInfoByRid(req, filePath, fileUtil.getFileSaveDateTime(), rid);
-                    return MsgRespond.success("已成功编辑此文件");
-                }
-            } catch (IOException e) {
-                return MsgRespond.fail("内部服务错误，文件上传失败，请稍后再试");
+
+        // 检查是否具有相同哈希值的文件
+        String filePath = VALID_EDIT_RESOURCE_SAME_HASH.get(rid);
+        if (Objects.isNull(filePath)){
+            filePath = fileUtil.checkEqualHashFilePath("normal", fileHash);
+            if (Objects.isNull(filePath)){
+                VALID_EDIT_RESOURCE_SAME_HASH.put(rid, "");
+            }else {
+                VALID_EDIT_RESOURCE_SAME_HASH.put(rid, filePath);
             }
         }
-        resourceNormalMapper.updateResourceNormalInfoByRid(req, filePath, fileUtil.getFileSaveDateTime(), rid);
-        return MsgRespond.success("已成功编辑此文件");
+
+        if (VALID_EDIT_RESOURCE_SAME_HASH.get(rid).isBlank()){
+            filePath = fileUtil.getNormalFilePath(req.getUp_id(), req.getFile_origin_name());
+            // 获取文件保存路径
+            String savePath = EDIT_RESOURCE_PATH_CACHE.get(rid);
+            if (Objects.isNull(savePath)){
+                EDIT_RESOURCE_PATH_CACHE.put(rid, filePath);
+            }
+
+            String processResult = fileUtil.chunkSaveFile(fileHash,
+                    filePath,
+                    EDIT_RESOURCE_PATH_CACHE.get(rid),
+                    req.getFile_chunks_sum(),
+                    req.getFile_now_chunk(),
+                    req.getFile_size(),
+                    req.getResource_file());
+
+            if (Objects.isNull(processResult)){
+                return MsgRespond.success("当前文件片段上传成功");
+            }else if (Objects.equals(processResult, "true")){
+                String oldFilePath = resourceNormalMapper.selectResourcePathByRid(rid);
+
+                // 检查旧文件是否存在多重引用
+                Integer pathMark = resourceNormalMapper.selectPathIsOverTwo(oldFilePath);
+                if (pathMark != 2){
+                    // 如果不存在，则说明同一份文件不存在多重引用，可删除服务器文件
+                    File oldFile = new File(oldFilePath);
+                    if (oldFile.exists() && !oldFile.delete()){
+                        return MsgRespond.fail("文件系统错误，请稍后再试");
+                    }
+                }
+                resourceNormalMapper.updateResourceNormalInfoByRid(req, req.getFile_hash(), EDIT_RESOURCE_PATH_CACHE.get(rid), fileUtil.getFileSaveDateTime(), rid);
+
+                EDIT_RESOURCE_PATH_CACHE.remove(rid);
+                VALID_RESOURCE_EXIST.remove(rid);
+                VALID_EDIT_RESOURCE.remove(rid);
+                VALID_EDIT_RESOURCE_SAME_HASH.remove(rid);
+                return MsgRespond.success("资源文件上传成功");
+            }else {
+                return MsgRespond.fail(processResult);
+            }
+        }
+
+        VALID_RESOURCE_EXIST.remove(rid);
+        VALID_EDIT_RESOURCE.remove(rid);
+        VALID_EDIT_RESOURCE_SAME_HASH.remove(rid);
+
+        resourceNormalMapper.updateResourceNormalInfoByRid(req, req.getFile_hash(), filePath, fileUtil.getFileSaveDateTime(), rid);
+        return MsgRespond.success("资源文件上传成功");
     }
 
     /**
@@ -408,6 +444,20 @@ public class ResourceNormalImpl implements ResourceNormalService {
         Integer codeMark = (Integer) userClient.getUserAccountByUid(userId).get("code");
         if (Objects.equals(codeMark, 5005)){
             return "当前指定上传者不存在";
+        }
+        return "";
+    }
+
+    private String validEditResource(ResourceNormalReq req, String auth, String username){
+        // 请求实体部门和分类标签存在性检查
+        String checkInfo = checkResourceInfo(req.getDept_id(), req.getTag_id());
+        if (!checkInfo.isBlank()){
+            return checkInfo;
+        }
+        // 检查是否有权限操作文件
+        String checkAuth = dataUtil.checkResourceAuth(req.getUp_id(), auth, username);
+        if (!checkAuth.isBlank()){
+            return checkAuth;
         }
         return "";
     }
