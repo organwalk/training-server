@@ -322,27 +322,36 @@ public class ResourceNormalImpl implements ResourceNormalService {
      */
     @Override
     public MsgRespond deleteResourceNormal(Integer rid, Integer uid, String username, String auth) {
-        // 检查文件在数据库中的记录是否存在
-        String filePath = resourceNormalMapper.selectResourcePathByRid(rid);
-        if (Objects.isNull(filePath)){
-            return MsgRespond.fail("此资源文件不存在");
-        }
-        // 检查文件在服务器中的记录是否存在
-        File file = new File(filePath);
-        System.out.println(filePath);
-        if (!file.exists()){
-            resourceNormalMapper.deleteResourceNormalByRid(rid);
-            return MsgRespond.fail("此资源文件不存在");
-        }
         // 检查是否有权限操作文件
         String checkAuth = dataUtil.checkResourceAuth(uid, auth, username);
         if (!checkAuth.isBlank()){
             return MsgRespond.fail(checkAuth);
         }
-        // 删除文件
-        if (file.delete()){
-            resourceNormalMapper.deleteResourceNormalByRid(rid);
+
+        // 检查文件在数据库中的记录是否存在
+        String filePath = resourceNormalMapper.selectResourcePathByRid(rid);
+        if (Objects.isNull(filePath)){
+            return MsgRespond.fail("此资源文件不存在");
         }
+
+        // 检查文件在服务器中的记录是否存在
+        File file = new File(filePath);
+        if (!file.exists()){
+            resourceNormalMapper.deleteResourceNormalByRid(rid);
+            return MsgRespond.fail("此资源文件不存在");
+        }
+
+        // 检查旧文件是否存在多重引用
+        Integer pathMark = resourceNormalMapper.selectPathIsOverTwo(filePath);
+        if (pathMark != 2){
+            // 如果不存在，则说明同一份文件不存在多重引用，可删除服务器文件
+            File oldFile = new File(filePath);
+            if (oldFile.exists() && !oldFile.delete()){
+                return MsgRespond.fail("文件服务错误，请稍后再试");
+            }
+        }
+        resourceNormalMapper.deleteResourceNormalByRid(rid);
+
         return MsgRespond.success("已成功删除此资源文件");
     }
 

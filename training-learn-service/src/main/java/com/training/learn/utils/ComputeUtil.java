@@ -4,7 +4,9 @@ package com.training.learn.utils;
 import com.training.learn.entity.request.QuestionReq;
 import com.training.learn.entity.result.ProgressLesson;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 //计算工具类
@@ -34,20 +36,28 @@ public class ComputeUtil {
     }
 
     //计算编辑的试卷总分
-    public static Integer judgeScore(Integer must_score, Integer important_score, Integer general_score, QuestionReq list){
-         Integer sum = 0;
+    public static double judgeScore(Integer must_score, Integer important_score, Integer general_score, QuestionReq list){
+         double sum = 0;
+        Map<Integer, Double> scoreMap = new HashMap<>();
+        scoreMap.put(1, 1.0);
+        scoreMap.put(2, 0.8);
+        scoreMap.put(3, 0.5);
          List<QuestionReq.Question> list1 = list.getQuestions();
          for(QuestionReq.Question req:list1){
              if (Objects.equals(req.getQuestion().getImportance_id(),1)){
-                 sum += must_score;
+
+                 sum += must_score * scoreMap.get(1);
              }
              if (Objects.equals(req.getQuestion().getImportance_id(),2)){
-                 sum += important_score;
+
+                 sum += important_score * scoreMap.get(2);
              }
              if (Objects.equals(req.getQuestion().getImportance_id(),3)){
-                 sum += general_score;
+
+                 sum += general_score * scoreMap.get(3);
              }
          }
+
          return sum;
     }
 

@@ -26,6 +26,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 import java.util.*;
+import java.util.stream.IntStream;
 
 @Service
 @AllArgsConstructor
@@ -104,7 +105,7 @@ public class TestServiceImpl implements TestService {
             return MsgRespond.fail("无法二次分配试题。如需修改，请在删除本试卷后重新分配试题");
         }
         //判断试题分数是否等于100
-        Integer score = getAllScore(req);
+        double score = getAllScore(req);
         if (score > 100) {
             return MsgRespond.fail("无法分配试题。当前试题总分为" + score + "分，请减少若干题目，使总分为100分");
         }
@@ -135,7 +136,7 @@ public class TestServiceImpl implements TestService {
     public MsgRespond publishTest(int test_id) {
 
         Integer idMark = questionMapper.getQuestionByTestId(test_id);
-        if (Objects.isNull(idMark)){
+        if (Objects.isNull(idMark)) {
             return MsgRespond.fail("当前试卷未完成编写，无法进行发布");
         }
         //判断测试是否存在
@@ -152,7 +153,7 @@ public class TestServiceImpl implements TestService {
         SimpleDateFormat si = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
         //判断结束时间是否早于起始时间
         if (si.parse(test.getStart_datetime()).getTime() < si.parse(date).getTime()
-                || si.parse(test.getEnd_datetime()).getTime() < si.parse(date).getTime()){
+                || si.parse(test.getEnd_datetime()).getTime() < si.parse(date).getTime()) {
             return MsgRespond.fail("发布时间不能晚于考试时间，请修改考试时间后重试");
         }
         testMapper.updateIsRelease(test_id, date, 1);
@@ -204,13 +205,14 @@ public class TestServiceImpl implements TestService {
 
     /**
      * /获取试卷的所有试题
+     *
      * @param test_id 测试id
      * @param auth    权限
      * @return 根据处理结果返回对应消息
      * 2023/11/14
      */
     @Override
-    public DataRespond getQuestion(int test_id, String auth){
+    public DataRespond getQuestion(int test_id, String auth) {
         //判断测试的存在性
         Test test = testMapper.getTestById(test_id);
         if (test == null) {
@@ -219,23 +221,23 @@ public class TestServiceImpl implements TestService {
 
         //判断请求用户为普通员工时
         if (Objects.equals(auth, "none")) {
-
-            if (test.getIsRelease() == 0){
+            if (test.getIsRelease() == 0) {
                 return new DataFailRespond("考生无法查看尚未发布的试卷");
             }
-
             // 校验考试时间
             String msg = validDateTime(test.getStart_datetime(), test.getEnd_datetime());
             if (!msg.isBlank()) return new DataFailRespond(msg);
             // 获取缓存
             List<StuQuestionResult.Question> questionList = questionCache.getStuQuestion(test_id, auth);
-            if (Objects.isNull(questionList) || questionList.isEmpty()){
+            if (Objects.isNull(questionList) || questionList.isEmpty()) {
+                questionList = new ArrayList<>();
                 List<Integer> allQuestionIdList = questionMapper.getIdByTestId(test_id);
                 for (Integer i : allQuestionIdList) {
                     QuestionTable questionTable = questionMapper.getQuestionById(i);
                     OptionsTable optionsTable = optionMapper.getOptionByQuesId(i);
 
-                    Map<String, String> options = JSON.parseObject(optionsTable.getOption(), new TypeReference<>() {});
+                    Map<String, String> options = JSON.parseObject(optionsTable.getOption(), new TypeReference<>() {
+                    });
                     StuQuestionResult.Question question = new StuQuestionResult.Question(i, questionTable.getQuestion_content(), options, optionsTable.getIsMore());
 
                     questionList.add(question);
@@ -255,7 +257,7 @@ public class TestServiceImpl implements TestService {
             if (Objects.isNull(questionList) || questionList.isEmpty()) {
                 // 如果处于未发布状态，说明暂存试题不存在或已过期
                 questionList = new ArrayList<>();
-                if (test.getIsRelease() == 0){
+                if (test.getIsRelease() == 0) {
                     return new DataSuccessRespond("未能获取到暂存试题", new TeaQuestionResult(test.getTest_title(), test.getStart_datetime(), test.getEnd_datetime(), questionList));
                 }
 
@@ -265,7 +267,8 @@ public class TestServiceImpl implements TestService {
                     QuestionTable questionTable = questionMapper.getQuestionById(i);
                     OptionsTable optionsTable = optionMapper.getOptionByQuesId(i);
 
-                    Map<String, String> options = JSON.parseObject(optionsTable.getOption(), new TypeReference<>() {});
+                    Map<String, String> options = JSON.parseObject(optionsTable.getOption(), new TypeReference<>() {
+                    });
                     TeaQuestionResult.QuestionDetail questionDetail = new TeaQuestionResult.QuestionDetail(i, questionTable.getQuestion_content(), questionTable.getImportance_id(), questionTable.getTrue_answer());
                     TeaQuestionResult.Question question = new TeaQuestionResult.Question(questionDetail, options, optionsTable.getIsMore());
 
@@ -334,7 +337,7 @@ public class TestServiceImpl implements TestService {
         if (questionCache.judgeKeyExit(test_id)) {
             questionCache.deleteQuestion(test_id);
         }
-        if (questionCache.judgeStuKeyExit(test_id)){
+        if (questionCache.judgeStuKeyExit(test_id)) {
             questionCache.deleteStuQuestion(test_id);
         }
         return MsgRespond.success("已成功删除此试卷");
@@ -380,47 +383,45 @@ public class TestServiceImpl implements TestService {
             return MsgRespond.fail("考试已经结束，无法进行交卷");
         }
 
-        int must_score = 0;
+        double must_score = 0;
         //获取必须类别题详细
         TypeTable mustType = typeMapper.getTypeById(1);
         Integer must_type = mustType.getScore();
         //获取重要类别题详细
-        int importance_score = 0;
+        double importance_score = 0;
         TypeTable importanceType = typeMapper.getTypeById(2);
         Integer importance_type = importanceType.getScore();
         //获取一般综合类别题详细
-        int normal_score = 0;
+        double normal_score = 0;
         TypeTable normalType = typeMapper.getTypeById(3);
         Integer normal_type = normalType.getScore();
-
+        String Date = getNowTime();
+        String answer_result = JSON.toJSONString(answerRequest.getAnswers());
+        if (answerRequest.getAnswers().size() == 1 && Objects.isNull(answerRequest.getAnswers().get(0).getQ_id())){
+            answerMapper.insertAnswer(answer_result, student_id, test_id, Date);
+            scoreMapper.insertScore(0, 0, 0, 0, student_id, test_id);
+            return MsgRespond.success("您因多次切换考试页面，被系统于" + Date + "自动交卷，并被标记为零分卷");
+        }
         for (AnswerRequest.Answer answer : answerRequest.getAnswers()) {
             String true_answer = questionMapper.getAnswerById(answer.getQ_id());
             Integer importanceId = questionMapper.getImportanceIdById(answer.getQ_id());
             if (Objects.equals(true_answer, answer.getAnswer())) {
                 if (importanceId == 1) {
-                    must_score += must_type;
+                    must_score += must_type * mustType.getWeight();
                 } else if (importanceId == 2) {
-                    importance_score += importance_type;
+                    importance_score += importance_type * importanceType.getWeight();
                 } else if (importanceId == 3) {
-                    normal_score += normal_type;
+                    normal_score += normal_type * normalType.getWeight();
                 }
             }
         }
-        //获取必须类别题综合得分
-        double result_must_score = must_score * mustType.getWeight();
-        //获取重要类别题综合得分
-        double result_importance_score = importance_score * importanceType.getWeight();
-        //获取一般类别题综合得分
-        double result_normal_score = normal_score * normalType.getWeight();
+
         //获取综合得分
-        double result_all_score = result_importance_score + result_must_score + result_normal_score;
-        String Date = getNowTime();
-        //将答案转化为json字符串
-        String answer_result = JSON.toJSONString(answerRequest.getAnswers());
+        double result_all_score = must_score + importance_score + normal_score;
         //插入学生答案
         answerMapper.insertAnswer(answer_result, student_id, test_id, Date);
         //插入学生得分
-        scoreMapper.insertScore(result_all_score, result_must_score, result_importance_score, result_normal_score, student_id, test_id);
+        scoreMapper.insertScore(result_all_score, must_score, importance_score, normal_score, student_id, test_id);
         return MsgRespond.success("交卷成功！交卷时间为：" + Date + "。可在考试结束后5分钟查看考试结果");
     }
 
@@ -447,15 +448,16 @@ public class TestServiceImpl implements TestService {
         }
         //判断该学生是否有成绩
         ScoreTable scoreTable = scoreMapper.getByTestIdAndStuId(test_id, student_id);
-        if (scoreTable == null) {
-            return new DataFailRespond("该学员未拥有本试题成绩！");
+        if (scoreTable == null || scoreTable.getComposite_score() == 0) {
+            return new DataSuccessRespond("该学员为零分卷", new RankResult(0, "零分卷", 0));
         }
         //获取评估级别
         String level = judgeLevel(scoreTable.getComposite_score());
-        //获取在该课程下的排名
-        Integer rank = scoreMapper.getCompositeScoreRank(test_id, student_id);
-        RankResult result = new RankResult(scoreTable.getComposite_score(), level, rank);
-        return new DataSuccessRespond("成功获取该考试结果", result);
+        List<Integer> rankList = scoreMapper.getCompositeScoreRank(test_id);
+        Integer rank = IntStream.range(0, rankList.size())
+                .filter(i -> Objects.equals(rankList.get(i), scoreTable.getComposite_score()))
+                .findFirst().orElse(0) + 1;
+        return new DataSuccessRespond("成功获取该考试结果", new RankResult(scoreTable.getComposite_score(), level, rank));
     }
 
 
@@ -598,7 +600,7 @@ public class TestServiceImpl implements TestService {
         }
         //判断该测试下是否已经有试题
         Integer idMark = questionMapper.getQuestionByTestId(test_id);
-        if (Objects.nonNull(idMark)){
+        if (Objects.nonNull(idMark)) {
             return MsgRespond.fail("试题已正式提交，无法暂存");
         }
         Integer isRelease = testMapper.getReleaseState(test_id);
@@ -623,6 +625,44 @@ public class TestServiceImpl implements TestService {
     @Override
     public DataRespond getTestInfo(Integer id) {
         return new DataSuccessRespond("已成功获取试卷基本信息", testMapper.getTestInfo(id));
+    }
+
+    @Override
+    public DataRespond getTestPaperListByLessonIdAndTeaId(Integer lesson_id, Integer teacher_id, Integer type) {
+        switch (type) {
+            case 0 -> {
+                // 全部试卷
+                List<Test> testPaper = testMapper.selectAllReleaseTestPaper(lesson_id, teacher_id);
+                return testPaper.isEmpty()
+                        ? new DataFailRespond("该教师尚未在此课程发布考试")
+                        : new DataSuccessRespond("已成功获取试卷列表", testPaper);
+            }
+            case 1 -> {
+                // 待考试
+                List<Test> testPaper = testMapper.selectWaitingTestPaper(lesson_id, teacher_id);
+                return testPaper.isEmpty()
+                        ? new DataFailRespond("尚无考试待开始")
+                        : new DataSuccessRespond("已成功获取待考试的试卷列表", testPaper);
+            }
+            case 2 -> {
+                // 已结束
+                List<Test> testPaper = testMapper.selectOverTestPaper(lesson_id, teacher_id);
+                return testPaper.isEmpty()
+                        ? new DataFailRespond("尚无已结束的考试")
+                        : new DataSuccessRespond("成功获取已结束考试的试卷列表", testPaper);
+
+            }
+        }
+        return new DataFailRespond("type变量只能为枚举数字，范围为：0-全部考试，1-待考试，2-已结束");
+    }
+
+    @Override
+    public DataRespond getIsOverTestPaperIdList(Integer studentId, Integer testId) {
+        Integer countMark = answerMapper.countOverTest(studentId, testId);
+        if (Objects.isNull(countMark) || countMark == 0){
+            return new DataSuccessRespond("未完成作答", false);
+        }
+        return new DataSuccessRespond("已完成作答", true);
     }
 
 
@@ -698,7 +738,7 @@ public class TestServiceImpl implements TestService {
      * @return 根据处理结果返回对应消息
      * 2023/11/14
      */
-    private Integer getAllScore(QuestionReq req) {
+    private double getAllScore(QuestionReq req) {
         Integer must_score = typeMapper.getScoreById(1);
         Integer important_score = typeMapper.getScoreById(2);
         Integer general_score = typeMapper.getScoreById(3);

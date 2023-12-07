@@ -189,8 +189,8 @@ public class LearnController {
     //删除指定主评论
     @DeleteMapping("/v1/comment/{comment_id}")
     public MsgRespond DeleteComment(@PathVariable
-                                   @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "comment_id必须为纯数字字段")
-                                   int comment_id) {
+                                    @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "comment_id必须为纯数字字段")
+                                    int comment_id) {
         return commentService.DeleteComment(comment_id);
     }
 
@@ -227,7 +227,7 @@ public class LearnController {
 
     // 获取跟帖评论内容
     @GetMapping("/v1/reply/{reply_id}")
-    public DataRespond getReply(@PathVariable Integer reply_id){
+    public DataRespond getReply(@PathVariable Integer reply_id) {
         return replyService.getReplyContent(reply_id);
     }
 
@@ -297,7 +297,7 @@ public class LearnController {
 
 
     //学员针对指定试卷进行作答并交卷
-    @GetMapping("/v1/test/{test_id}/{student_id}")
+    @PostMapping("/v1/test/{test_id}/{student_id}")
     public MsgRespond StuSubmitQuestion(@PathVariable
                                         @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "test_id必须为纯数字字段")
                                         int test_id,
@@ -374,4 +374,23 @@ public class LearnController {
         return testService.getTestInfo(testId);
     }
 
+    //学生获取指定教师课程的试卷列表
+    @GetMapping("/v1/test/student/{teacher_id}/{lesson_id}/{type}")
+    public DataRespond getTestPaperListByLessonIdAndTeaId(@PathVariable
+                                                          @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "teacher_id必须为纯数字字段")
+                                                          Integer teacher_id,
+                                                          @PathVariable
+                                                          @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "lesson_id必须为纯数字字段")
+                                                          Integer lesson_id,
+                                                          @PathVariable
+                                                          Integer type) {
+        return testService.getTestPaperListByLessonIdAndTeaId(lesson_id, teacher_id, type);
+    }
+
+    // 学生获取正在进行的考试中已完成作答的试卷状态
+    @GetMapping("/v1/test/student/over_id/{student_id}/{test_id}")
+    public DataRespond getIsOverTestPaperIdList(@PathVariable Integer student_id,
+                                                @PathVariable Integer test_id){
+        return testService.getIsOverTestPaperIdList(student_id, test_id);
+    }
 }

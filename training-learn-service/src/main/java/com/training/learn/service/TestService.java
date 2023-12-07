@@ -34,4 +34,8 @@ public interface TestService {
     MsgRespond saveCache(int test_id, CacheReq req);
     // 获取试卷基本信息
     DataRespond getTestInfo(Integer id);
+
+    DataRespond getTestPaperListByLessonIdAndTeaId(Integer lesson_id,Integer teacher_id,Integer type);
+
+    DataRespond getIsOverTestPaperIdList(Integer studentId, Integer testId);
 }

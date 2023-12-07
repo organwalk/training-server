@@ -18,12 +18,13 @@ public interface ScoreMapper {
     void insertScore(@Param("composite_score")double composite_score,@Param("must_type_composite_score")double must_type_composite_score,@Param("important_type_composite_score")double important_type_composite_score,@Param("normal_type_composite_score")double normal_type_composite_score,@Param("student_id")int student_id,@Param("test_id")int test_id);
 
     //获取指定测试和指定学生的成绩
-   @Select("select * from t_learn_test_score where test_id=#{test_id} and student_id=#{student_id}")
+   @Select("select id, composite_score, must_type_composite_score, important_type_composite_score, normal_type_composite_score, student_id, test_id from t_learn_test_score where test_id=#{test_id} and student_id=#{student_id}")
    ScoreTable getByTestIdAndStuId(@Param("test_id")int test_id,@Param("student_id")int student_id);
 
     //获取指定学生在指定测试里的排名
-    @Select("SELECT COUNT(*) + 1 score_rank FROM t_learn_test_score WHERE composite_score > (SELECT composite_score FROM t_learn_test_score WHERE test_id = #{test_id} AND student_id = #{student_id})")
-    int getCompositeScoreRank(int test_id, int student_id);
+    @Select("select composite_score from t_learn_test_score where test_id = #{test_id} " +
+            "GROUP BY composite_score  ORDER BY composite_score desc")
+    List<Integer> getCompositeScoreRank(Integer test_id);
     //获取指定测试的成绩列表
     @Select("select * from t_learn_test_score where test_id=#{test_id}")
     List<ScoreTable> getAllScoreByTestId(int test_id);

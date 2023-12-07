@@ -51,4 +51,25 @@ public interface TestMapper {
     @Select("select id, test_title, lesson_id, teacher_id, start_datetime, end_datetime, create_datetime, isRelease " +
             "from t_learn_test where id = #{id}")
     Test getTestInfo(Integer id);
+
+    @Select("select id, test_title, lesson_id, teacher_id, start_datetime, end_datetime, create_datetime, isRelease " +
+            "from t_learn_test where isRelease = 1 and lesson_id = #{lessonId} and teacher_id = #{teacherId} order by id desc")
+    List<Test> selectAllReleaseTestPaper(@Param("lessonId") Integer lessonId,
+                                         @Param("teacherId") Integer teacherId);
+
+    @Select("select id, test_title, lesson_id, teacher_id, start_datetime, end_datetime, create_datetime, isRelease " +
+            "from t_learn_test where STR_TO_DATE(start_datetime, '%Y-%m-%d %H:%i:%s') > CONVERT_TZ(NOW(), '+00:00', '+08:00') " +
+            "or (STR_TO_DATE(start_datetime, '%Y-%m-%d %H:%i:%s') <= CONVERT_TZ(NOW(), '+00:00', '+08:00') " +
+            "and  CONVERT_TZ(NOW(), '+00:00', '+08:00') < STR_TO_DATE(end_datetime, '%Y-%m-%d %H:%i:%s')) " +
+            "and isRelease = 1 " +
+            "and lesson_id = #{lessonId} and teacher_id = #{teacherId} order by id desc")
+    List<Test> selectWaitingTestPaper(@Param("lessonId") Integer lessonId,
+                                         @Param("teacherId") Integer teacherId);
+
+    @Select("select id, test_title, lesson_id, teacher_id, start_datetime, end_datetime, create_datetime, isRelease " +
+            "from t_learn_test where STR_TO_DATE(end_datetime, '%Y-%m-%d %H:%i:%s') < CONVERT_TZ(NOW(), '+00:00', '+08:00') and isRelease = 1 " +
+            "and lesson_id = #{lessonId} and teacher_id = #{teacherId} order by id desc")
+    List<Test> selectOverTestPaper(@Param("lessonId") Integer lessonId,
+                                      @Param("teacherId") Integer teacherId);
+
 }
