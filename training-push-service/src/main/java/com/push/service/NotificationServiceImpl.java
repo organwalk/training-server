@@ -14,12 +14,8 @@ import com.push.entity.table.NotificationTable;
 import com.push.mapper.NotificationMapper;
 import com.push.mapper.NotificationReceptionMapper;
 import com.push.mapper.NotificationSourceMapper;
-import com.push.repository.NotificationCache;
 import com.push.utils.DateUtil;
-import com.training.common.entity.DataFailRespond;
-import com.training.common.entity.DataPagingSuccessRespond;
-import com.training.common.entity.DataRespond;
-import com.training.common.entity.MsgRespond;
+import com.training.common.entity.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.springframework.stereotype.Service;
@@ -44,7 +40,7 @@ public class NotificationServiceImpl implements NotificationService {
     private final PlanClient planClient;
     private final TestClient testClient;
     private final LearnClient learnClient;
-    private final NotificationCache notificationCache;
+
     private final static ConcurrentMap<String, Integer> sourceTypeMap = new ConcurrentHashMap<>();
 
     @Override
@@ -74,51 +70,42 @@ public class NotificationServiceImpl implements NotificationService {
         notificationReceptionMapper.batchInsertReception(
                 pushNotification.getNotification_receiver_list(),
                 notificationId);
-        pushNotification.getNotification_receiver_list().forEach(notificationCache::deleteNotification);
     }
 
     @Override
     public DataRespond getNotificationList(Integer uid, Integer pageSize, Integer offset) {
         Integer sumMark = notificationReceptionMapper.countReceptionList(uid);
         if (sumMark == 0) {
-            return new DataFailRespond("未能获取到任何通知");
+            return new DataPagingSuccessRespond("您还没有收到任何通知", 0, new ArrayList<>());
         }
+        List<NotificationDetail> processNotificationList = new ArrayList<>();
+        // 获取接收者列表
+        List<NotificationReception> notificationReceptions = notificationReceptionMapper.selectReceptionList(uid, pageSize, offset);
 
-        List<NotificationDetail> processNotificationList = notificationCache.getNotification(uid);
-        if (processNotificationList.isEmpty()){
-            // 获取接收者列表
-            List<NotificationReception> notificationReceptions = notificationReceptionMapper.selectReceptionList(uid, pageSize, offset);
+        // 获取接收者通知详情列表
+        List<NotificationTable> notifiactionList = getNotificationTableList(notificationReceptions);
 
-            // 获取接收者通知详情列表
-            List<NotificationTable> notifiactionList = getNotificationTableList(notificationReceptions);
+        // 反转通知源映射列表
+        ConcurrentMap<Integer, String> reversedMap = reversedSourceMap();
 
-            // 反转通知源映射列表
-            ConcurrentMap<Integer, String> reversedMap = reversedSourceMap();
+        // 处理原始列表的通知发出者
+        notifiactionList.forEach(item -> {
+            // 获取阅读状态
 
-            // 处理原始列表的通知发出者
-            notifiactionList.forEach(item -> {
-                // 获取阅读状态
-                Integer isRead = getReadState(notificationReceptions, item.getId());
-                // 获取发起人信息
-                String sender = getSender(item.getNotificationUid());
-                // 获取指定通知源的引用内容
-                Object context = getQuote(reversedMap.get(item.getNotificationSourceId()), item.getNotificationQuoteId());
-                // 添加处理后的通知细节
-                processNotificationList.add(getNotificationDetail(item, reversedMap.get(item.getNotificationSourceId()), context, sender, isRead));
-            });
-
-            sortProcessNotificationList(processNotificationList);
-
-            notificationCache.saveNotification(uid, processNotificationList);
-        }
+            Integer isRead = getReadState(notificationReceptions, item.getId());
+            // 获取发起人信息
+            String sender = getSender(item.getNotificationUid());
+            // 获取指定通知源的引用内容
+            Object context = getQuote(reversedMap.get(item.getNotificationSourceId()), item.getNotificationQuoteId());
+            // 添加处理后的通知细节
+            processNotificationList.add(getNotificationDetail(item, reversedMap.get(item.getNotificationSourceId()), context, sender, isRead));
+        });
 
         return new DataPagingSuccessRespond("已成功获取通知列表", sumMark, processNotificationList);
     }
 
     @Override
     public MsgRespond readNotification(Integer uid, Integer notificationId) {
-
-        notificationCache.deleteNotification(uid);
         notificationReceptionMapper.updateNotificationRead(uid, notificationId);
         return MsgRespond.success("已成功将此通知标记为已读");
     }
@@ -143,7 +130,7 @@ public class NotificationServiceImpl implements NotificationService {
             // 添加处理后的通知细节
             processNotificationList.add(getTypeNotificationDetail(item, reversedMap.get(item.getNotificationSourceId()), context, sender));
         });
-        sortProcessNotificationList(processNotificationList);
+
         return new DataPagingSuccessRespond("已成功获取通知列表", sumMark, processNotificationList);
     }
 
@@ -167,6 +154,7 @@ public class NotificationServiceImpl implements NotificationService {
                 .toList();
         return notificationMapper.getNotifiactionList(notificationIdList);
     }
+
 
     private Integer getReadState(List<NotificationReception> notificationReceptions, Integer id) {
         return notificationReceptions.stream()
@@ -249,6 +237,7 @@ public class NotificationServiceImpl implements NotificationService {
 
     private NotificationDetail getNotificationDetail(NotificationTable item, String sourceType, Object context, String sender, Integer isRead) {
         return NotificationDetail.builder()
+                .id(item.getId())
                 .notification_type(item.getNotificationType())
                 .notification_content(item.getNotificationContent())
                 .notification_source_type(sourceType)
@@ -269,15 +258,5 @@ public class NotificationServiceImpl implements NotificationService {
                 .create_datetime(item.getCreateDatetime())
                 .is_read(item.getIsRead())
                 .build();
-    }
-
-    private void sortProcessNotificationList (List<NotificationDetail> processNotificationList){
-        // 按照 is_read 升序排序,create_datetime降序
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        Comparator<NotificationDetail> comparator = Comparator
-                .comparing(NotificationDetail::getIs_read)
-                .thenComparing((n1, n2) -> LocalDateTime.parse(n2.getCreate_datetime(), formatter)
-                        .compareTo(LocalDateTime.parse(n1.getCreate_datetime(), formatter)));
-        processNotificationList.sort(comparator);
     }
 }

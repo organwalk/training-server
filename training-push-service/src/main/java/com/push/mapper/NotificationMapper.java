@@ -20,6 +20,10 @@ public interface NotificationMapper {
             "<foreach item='item' collection='idList' open='(' separator=',' close=')'>" +
             "#{item}" +
             "</foreach>" +
-            "</script>")
+            "order by FIELD(id, " +
+            "<foreach item='item' collection='idList' separator=','>" +
+            "#{item}" +
+            "</foreach>" +
+            ")</script>")
     List<NotificationTable> getNotifiactionList(@Param("idList") List<Integer> notificationList);
 }

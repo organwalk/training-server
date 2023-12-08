@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class NotificationDetail {
+    private Integer id;
     private String notification_type;
     private String notification_content;
     private String notification_source_type;

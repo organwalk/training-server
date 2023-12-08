@@ -21,9 +21,12 @@ public interface NotificationReceptionMapper {
 
     @Select("select COUNT(id) from t_push_notification_reception where notification_receiver_id = #{uid}")
     Integer countReceptionList(Integer uid);
-    @Select("select id, notification_id, notification_receiver_id, is_read " +
-            "from t_push_notification_reception " +
-            "where notification_receiver_id = #{uid} order by is_read limit #{pageSize} offset #{offset} ")
+    @Select("SELECT pnr.id, pnr.notification_id, pnr.notification_receiver_id, pnr.is_read " +
+            "FROM t_push_notification_reception pnr " +
+            "JOIN t_push_notification pn ON pnr.notification_id = pn.id " +
+            "WHERE pnr.notification_receiver_id = #{uid} " +
+            "ORDER BY pnr.is_read, STR_TO_DATE(pn.create_datetime, '%Y-%m-%d %H:%i:%s') DESC " +
+            "LIMIT #{pageSize} OFFSET #{offset}")
     List<NotificationReception> selectReceptionList(@Param("uid") Integer uid,
                                                     @Param("pageSize") Integer pageSize,
                                                     @Param("offset") Integer offset);
@@ -36,11 +39,14 @@ public interface NotificationReceptionMapper {
             "WHERE r.notification_receiver_id = #{uid} AND n.notification_source_id = #{sourceId}")
     Integer countNotificationTypeResult(@Param("uid")Integer uid,
                                         @Param("sourceId")Integer sourceId);
-    @Select("SELECT n.id,n.notification_type,n.notification_content,n.notification_source_id,n.notification_quote_id,n.notification_uid,n.create_datetime,r.is_read " +
+    @Select("SELECT n.id, n.notification_type, n.notification_content, n.notification_source_id, " +
+            "n.notification_quote_id, n.notification_uid, n.create_datetime, r.is_read " +
             "FROM t_push_notification AS n " +
             "JOIN t_push_notification_reception AS r ON n.id = r.notification_id " +
-            "WHERE r.notification_receiver_id = #{uid}" +
-            "  AND n.notification_source_id = #{sourceId} order by is_read limit #{pageSize} offset #{offset}")
+            "WHERE r.notification_receiver_id = #{uid} " +
+            "AND n.notification_source_id = #{sourceId} " +
+            "ORDER BY r.is_read, STR_TO_DATE(n.create_datetime, '%Y-%m-%d %H:%i:%s') DESC " +
+            "LIMIT #{pageSize} OFFSET #{offset}")
     List<NotificationTypeResult> selectNotificationTypeResult(@Param("uid")Integer uid,
                                                               @Param("sourceId")Integer sourceId,
                                                               @Param("pageSize")Integer pageSize,

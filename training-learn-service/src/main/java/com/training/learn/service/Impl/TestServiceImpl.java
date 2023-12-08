@@ -156,6 +156,11 @@ public class TestServiceImpl implements TestService {
                 || si.parse(test.getEnd_datetime()).getTime() < si.parse(date).getTime()) {
             return MsgRespond.fail("发布时间不能晚于考试时间，请修改考试时间后重试");
         }
+        // 判断是否存在时间冲突考试
+        Test timeConflictObj = testMapper.getTimeConflictTest(test.getStart_datetime(), test.getEnd_datetime());
+        if (Objects.nonNull(timeConflictObj)){
+            return MsgRespond.fail("发布失败！原因：与考试《" + timeConflictObj.getTest_title() + "》时间冲突，" + timeConflictObj.getStart_datetime() + "至" + timeConflictObj.getEnd_datetime());
+        }
         testMapper.updateIsRelease(test_id, date, 1);
         return MsgRespond.success("已成功发布试卷");
     }

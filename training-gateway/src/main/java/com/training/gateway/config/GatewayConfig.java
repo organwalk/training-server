@@ -46,6 +46,9 @@ public class GatewayConfig {
                 .route("training-progress-service",r -> r.path("/api/progress/**")
                         .filters(f -> f.filter(authenticationFilter))
                         .uri("lb://training-progress-service"))
+                .route("training-push-service",r -> r.path("/api/push/**")
+                        .filters(f -> f.filter(authenticationFilter))
+                        .uri("lb://training-push-service"))
                 .build();
     }
 }

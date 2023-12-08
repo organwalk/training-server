@@ -12,14 +12,22 @@ public interface TestMapper {
     @Insert("insert into t_learn_test(test_title, lesson_id, teacher_id, start_datetime, end_datetime, create_datetime, isRelease) values(#{req.test_title},#{req.lesson_id},#{req.teacher_id},#{req.start_datetime},#{req.end_datetime},#{req.create_datetime},#{req.isRelease}) ")
     Integer creatTest(@Param("req")TestReq req);
     //判断测试名是否重复
-    @Select("select * from t_learn_test where test_title=#{test_title}")
+    @Select("select id, test_title, lesson_id, teacher_id, start_datetime, end_datetime, create_datetime, isRelease from t_learn_test where test_title=#{test_title}")
     Test judgeTitleExit(String test_title);
     //根据id获取测试
-    @Select("select * from t_learn_test where id=#{id}")
+    @Select("select id, test_title, lesson_id, teacher_id, start_datetime, end_datetime, create_datetime, isRelease from t_learn_test where id=#{id}")
     Test getTestById(int id);
     //设置指定id的测试为发布状态
     @Update("update t_learn_test set isRelease = #{isRelease} , create_datetime=#{create_datetime} where id=#{id}")
     void updateIsRelease(@Param("id")int id,@Param("create_datetime")String create_datetime, @Param("isRelease") int isRelease);
+
+    // 判断和已发布的试卷是否存在时间冲突
+    @Select("SELECT id, test_title, lesson_id, teacher_id, start_datetime, end_datetime, create_datetime, isRelease " +
+            "FROM t_learn_test " +
+            "WHERE CAST(start_datetime AS DATETIME) <= #{endDatetime}" +
+            "  AND CAST(end_datetime AS DATETIME) >= #{startDatetime} AND isRelease = 1 limit 1")
+    Test getTimeConflictTest(@Param("startDatetime") String startDatetime, @Param("endDatetime") String endDatetime);
+
     //获取指定课程和教师的测试
     @Select("select * from t_learn_test where lesson_id=#{lesson_id} and teacher_id=#{teacher_id} limit #{page_size} offset #{offset}")
     List<Test> getListByLessonIdAndTeacherId(@Param("lesson_id")int lesson_id,@Param("teacher_id")int teacher_id,@Param("page_size")int page_size,@Param("offset")int offset);
