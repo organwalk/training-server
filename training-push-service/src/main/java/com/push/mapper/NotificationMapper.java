@@ -26,4 +26,7 @@ public interface NotificationMapper {
             "</foreach>" +
             ")</script>")
     List<NotificationTable> getNotifiactionList(@Param("idList") List<Integer> notificationList);
+
+    @Delete("delete from t_push_notification where id = #{id}")
+    void deleteNotification(Integer id);
 }

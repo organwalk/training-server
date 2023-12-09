@@ -56,10 +56,8 @@ public class AuthenticationFilter implements GatewayFilter {
 
         // 获取请求头上的授权信息
         HeadersAuthInfo headers = filterUtil.getHeadersAuthInfo(exchange);
-        System.out.println(headers);
         // 获取真实权限和通行令牌
         JSONObject authInfo =  userClient.getUserAuthInfo(headers.getUsername());
-        System.out.println(authInfo);
         String realAuthName = (String) authInfo.get("auth_name");
         String realAccessToken = (String) authInfo.get("access_token");
 

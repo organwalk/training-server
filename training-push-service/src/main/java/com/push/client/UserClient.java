@@ -21,4 +21,7 @@ public interface UserClient {
     //获取用户信息列表
     @GetExchange("/v1/info/list")
     JSONArray getUserInfoByUidList(@RequestBody UserInfoListReq req);
+
+    @GetExchange("/v1/auth/{username}")
+    JSONObject getUserAuthInfo(@PathVariable String username);
 }

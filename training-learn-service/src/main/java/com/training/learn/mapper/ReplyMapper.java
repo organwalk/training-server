@@ -7,14 +7,23 @@ import java.util.List;
 
 @Mapper
 public interface ReplyMapper {
-    @Insert("insert into t_learn_reply(user_id, comment_id, content, create_datetime) VALUES (#{user_id},#{comment_id},#{content},#{create_datetime})")
-    Integer replyComment(@Param("user_id")int user_id,@Param("comment_id")int comment_id,@Param("content")String content,@Param("create_datetime")String create_datetime);
+    @Insert("insert into t_learn_reply(user_id, comment_id, content, create_datetime) " +
+            "VALUES (#{obj.user_id},#{obj.comment_id},#{obj.content},#{obj.create_datetime})")
+    @Options(useGeneratedKeys = true, keyProperty = "id")
+    void replyComment(@Param("obj") Reply reply);
 
     @Select("select COUNT(id) from t_learn_reply where comment_id=#{comment_id} and user_id=#{user_id}")
     Integer judgeReplyExit(@Param("comment_id")int comment_id,@Param("user_id")int user_id);
 
-    @Select("select * from t_learn_reply where comment_id=#{comment_id}")
-    List<Reply> getReplyListByCommentId(int comment_id);
+    @Select("select id, user_id, comment_id, content, create_datetime " +
+            "from t_learn_reply where comment_id=#{comment_id} " +
+            "order by STR_TO_DATE(create_datetime, '%Y-%m-%d %H:%i:%s') desc limit #{pageSize} offset #{offset}")
+    List<Reply> getReplyListByCommentId(@Param("comment_id") int comment_id,
+                                        @Param("pageSize") int pageSize,
+                                        @Param("offset") int offset);
+    @Select("select count(id) " +
+            "from t_learn_reply where comment_id=#{comment_id} ")
+    Integer countReply(@Param("comment_id") int comment_id);
 
     @Select("select COUNT(user_id) from t_learn_reply where id=#{id}")
     Integer judgeReplyExitById(int id);

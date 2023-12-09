@@ -6,6 +6,7 @@ import java.util.List;
 
 @Data
 public class PushNotification {
+    private String access_token;
     private String notification_type;
     private String notification_content;
     private String notification_source_type;

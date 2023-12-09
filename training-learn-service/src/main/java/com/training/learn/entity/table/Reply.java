@@ -8,9 +8,9 @@ import lombok.Data;
 @AllArgsConstructor
 @TableName("t_learn_reply")
 public class Reply {
-    private int id;
-    private int user_id;
-    private int comment_id;
+    private Integer id;
+    private Integer user_id;
+    private Integer comment_id;
     private String content;
     private String create_datetime;
 }

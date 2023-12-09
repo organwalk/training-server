@@ -35,7 +35,8 @@ public interface CommentMapper {
     Integer getLessonIdByCommentId(int id);
 
 
-    @Select("select id, user_id, lesson_id, chapter_id, content, create_datetime from t_learn_comment where lesson_id=#{lesson_id} and chapter_id=#{chapter_id} ORDER BY id DESC")
+    @Select("select id, user_id, lesson_id, chapter_id, content, create_datetime from t_learn_comment " +
+            "where lesson_id=#{lesson_id} and chapter_id=#{chapter_id} ORDER BY id DESC limit #{pageSize} offset #{offset}")
     @Results(id="commentResultMap",value ={
             @Result(column = "id",property = "id"),
             @Result(column = "user_id",property = "userId"),
@@ -44,8 +45,13 @@ public interface CommentMapper {
             @Result(column = "content",property = "content"),
             @Result(column = "create_datetime",property = "createDatetime")
     })
-    List<Comment> getCommentByLessonIdAndChapterId(@Param("lesson_id")int lesson_id,@Param("chapter_id")int chapter_id);
-
+    List<Comment> getCommentByLessonIdAndChapterId(@Param("lesson_id")int lesson_id,
+                                                   @Param("chapter_id")int chapter_id,
+                                                   @Param("pageSize") int pageSize,
+                                                   @Param("offset") int offset);
+    @Select("select count(id) from t_learn_comment " +
+            "where lesson_id=#{lesson_id} and chapter_id=#{chapter_id}")
+    Integer countComment(@Param("lesson_id")int lesson_id, @Param("chapter_id")int chapter_id);
 
     @Delete("delete from t_learn_comment where id=#{id}")
     Integer deleteCommentById(int id);

@@ -49,31 +49,33 @@ public class ReplyServiceImpl implements ReplyService {
      * 11/8
      */
     @Override
-    public MsgRespond ReplyComment(String request) {
+    public DataRespond ReplyComment(String request) {
 
         JSONObject req = JSON.parseObject(request);
         Integer user_id = req.getInteger("user_id");
         Integer comment_id = req.getInteger("comment_id");
+        //判断评论是否超过150字
+        String content = req.getString("content");
+        if(content.length()>150){
+            return new DataFailRespond("评论不得超过150字");
+        }
         //判断学生是否存在
         String StuMark = judgeUser(user_id);
         if (!StuMark.isBlank()){
-            return MsgRespond.fail(StuMark);
+            return new DataFailRespond(StuMark);
         }
         //获取评论存在
         String CommentMark = judgeCommentExit(comment_id);
         if (!CommentMark.isBlank()){
-            return MsgRespond.fail(CommentMark);
+            return new DataFailRespond(CommentMark);
         }
-        //判断评论是否超过150字
-        String content = req.getString("content");
-        if(content.length()>150){
-            return MsgRespond.fail("评论不得超过150字");
-        }
+
         //获取当前时间
         String time = getNowTime();
         //插入回复
-        Integer i = replyMapper.replyComment(user_id,comment_id,content,time);
-        return i>0?MsgRespond.success("已成功为此评论发表回复"):MsgRespond.fail("评论失败！");
+        Reply reply =  new Reply(null, user_id, comment_id, content, time);
+        replyMapper.replyComment(reply);
+        return Objects.nonNull(reply.getId()) ? new DataSuccessRespond("已成功为此评论发表回复", reply.getId()) : new DataFailRespond("评论失败！");
     }
 
 
@@ -85,7 +87,7 @@ public class ReplyServiceImpl implements ReplyService {
      * 11/9
      */
     @Override
-    public MsgRespond ThreadReply(String request) {
+    public DataRespond ThreadReply(String request) {
         JSONObject req = JSON.parseObject(request);
         Integer user_id = req.getInteger("user_id");
         Integer commend_id = req.getInteger("comment_id");
@@ -95,20 +97,21 @@ public class ReplyServiceImpl implements ReplyService {
         String StuMark =judgeUser(user_id);
         String Reply_StuMark = judgeUser(reply_user_id);
         if (!StuMark.isBlank() && !Reply_StuMark.isBlank()){
-            return MsgRespond.fail(StuMark);
+            return new DataFailRespond(StuMark);
         }
         //判断回复是否存在
-        String ReplyMark = judgeReplyExit(commend_id,user_id);
+        String ReplyMark = judgeReplyExit(commend_id,reply_user_id);
         if (!ReplyMark.isBlank()){
-            return MsgRespond.fail(ReplyMark);
+            return new DataFailRespond(ReplyMark);
         }
         //获取当前时间
         String time = getNowTime();
         //获取评论内容并转化为json字符串形式
         Object content = req.get("content");
         String contentString = JSON.toJSONString(content);
-        Integer i = replyMapper.replyComment(user_id,commend_id,contentString,time);
-        return i>0?MsgRespond.success("已成功回复此跟帖"):MsgRespond.fail("回复失败！");
+        Reply reply = new Reply(null, user_id, commend_id, contentString, time);
+        replyMapper.replyComment(reply);
+        return Objects.nonNull(reply.getId()) ? new DataSuccessRespond("已成功回复此跟帖", reply.getId()) : new DataFailRespond("回复失败！");
     }
 
 
@@ -123,20 +126,22 @@ public class ReplyServiceImpl implements ReplyService {
      */
     @Override
     public DataRespond getCommentList(int lesson_id, int user_id, int page_size, int offset) {
-        //判断课程的存在性
-        String LessonMark = judgeLessonExit(lesson_id);
-        if (!LessonMark.isBlank()){
-            return new DataFailRespond("该课程不存在！");
-        }
+
         //判断学生的存在性
         String StuMark = judgeUserExit(user_id);
         if (!StuMark.isBlank()){
             return new DataFailRespond("该用户不存在！");
         }
+
         //获取评论列表
         List<Comment> commentList = commentMapper.getCommentList(lesson_id);
+        if (commentList.isEmpty()){
+            return new DataSuccessRespond("评论区为空", new ArrayList<>());
+        }
+
         List<CommentList> commentLists = new ArrayList<>();
         String Key = String.valueOf(lesson_id);
+
         for(Comment comment :commentList){
             String comment_real_name = getUserName(comment.getUserId());
             String comment_dept_name = getDeptName(comment.getUserId());
@@ -153,7 +158,7 @@ public class ReplyServiceImpl implements ReplyService {
                 comment_state=0;
             }
             //获取回复列表
-            List<Reply> replies = replyMapper.getReplyListByCommentId(comment.getId());
+            List<Reply> replies = replyMapper.getReplyListByCommentId(comment.getId(), 3, 0);
             List<ReplyList> replyLists = new ArrayList<>();
             for (Reply reply:replies){
                 String Reply_field = String.valueOf(reply.getId());
@@ -197,13 +202,14 @@ public class ReplyServiceImpl implements ReplyService {
         if(!StuMark.isBlank()){
             return new DataFailRespond(StuMark);
         }
-        //判断评论的存在性
-        String CommentMark = judgeCommentExit(comment_id);
-        if(!CommentMark.isBlank()){
-            return new DataFailRespond(CommentMark);
+
+        Integer countMark = replyMapper.countReply(comment_id);
+        if (Objects.isNull(countMark) || countMark == 0){
+            return new DataSuccessRespond("尚未有人发表回复", new ArrayList<>());
         }
         //获取回复列表
-        List<Reply> replies = replyMapper.getReplyListByCommentId(comment_id);
+        List<Reply> replies = replyMapper.getReplyListByCommentId(comment_id, page_size, offset);
+
         Integer lesson_id = commentMapper.getLessonIdByCommentId(comment_id);
         String ReplyKey = String.valueOf(lesson_id);
         List<ReplyList> replyLists = new ArrayList<>();
@@ -223,9 +229,8 @@ public class ReplyServiceImpl implements ReplyService {
             ReplyList replyList = new ReplyList(reply.getId(),reply.getUser_id(),reply_real_name,reply_dept_name,reply.getContent(),reply.getCreate_datetime(),reply_sum,reply_state);
             replyLists.add(replyList);
         }
-        int endIndx = Math.min(offset + page_size,replyLists.size());
-        List<ReplyList> result = replyLists.subList(offset,endIndx);
-        return new DataPagingSuccessRespond("已成功获取该评论的跟帖回复列表",replyLists.size(),result);
+
+        return new DataPagingSuccessRespond("已成功获取该评论的跟帖回复列表",countMark,replyLists);
     }
 
 
@@ -246,18 +251,14 @@ public class ReplyServiceImpl implements ReplyService {
         if (!StuMark.isBlank()){
             return new DataFailRespond(StuMark);
         }
-        //判断课程存在性
-        String LessonMark = judgeLessonExit(lesson_id);
-        if (!LessonMark.isBlank()){
-            return new DataFailRespond(LessonMark);
+
+        Integer countMark = commentMapper.countComment(lesson_id, chapter_id);
+        if (Objects.isNull(countMark) || countMark == 0){
+            return new DataSuccessRespond("尚未有人发表评论", new ArrayList<>());
         }
-        //判断章节存在性
-        String ChapterMark = judgeChapterExit(lesson_id,chapter_id);
-        if (!ChapterMark.isBlank()){
-            return new DataFailRespond(ChapterMark);
-        }
-        //获取评论列表
-        List<Comment> commentList = commentMapper.getCommentByLessonIdAndChapterId(lesson_id,chapter_id);
+
+        List<Comment> commentList = commentMapper.getCommentByLessonIdAndChapterId(lesson_id,chapter_id, page_size, offset);
+
         List<CommentList> commentLists = new ArrayList<>();
         String Key = String.valueOf(lesson_id);
         for(Comment comment:commentList){
@@ -266,24 +267,29 @@ public class ReplyServiceImpl implements ReplyService {
             //获取用户所在的部门名称
             String comment_dept_name = getDeptName(comment.getUserId());
             String Comment_field = String.valueOf(comment.getId());
+
             //获取缓存中的评论点赞数
             Integer comment_like_sum = (Integer) likeCache.getCommentLike(Key,Comment_field);
             if (comment_like_sum ==null){
                 comment_like_sum = likeMapper.getCommentLikeCount(comment.getId());
                 likeCache.saveCommentLike(Key,Comment_field,comment_like_sum);
             }
+
             //获取点赞状态，如果不存在，则默认不点赞
             Integer comment_state = likeMapper.getStateByCommentId(comment.getId());
             if (comment_state==null){
                 comment_state=0;
             }
+
             //获取对应评论的回复列表
-            List<Reply> replies = replyMapper.getReplyListByCommentId(comment.getId());
+            Integer replyCount = replyMapper.countReply(comment.getId());
+            List<Reply> replies = replyMapper.getReplyListByCommentId(comment.getId(), 3, 0);
             List<ReplyList> replyLists = new ArrayList<>();
             for (Reply reply:replies){
                 //获取缓存中回复的点赞数
                 String Reply_field = String.valueOf(reply.getId());
                 Integer reply_sum = (Integer) likeCache.getReplyLike(Key, Reply_field);
+
                 if (reply_sum==null){
                     reply_sum = likeMapper.getReplyLikeCountByComIDAndReplyId(reply.getId());
                     likeCache.saveReplyLike(Key,Reply_field,reply_sum);
@@ -297,14 +303,14 @@ public class ReplyServiceImpl implements ReplyService {
                 String reply_real_name =getUserName(reply.getUser_id());
                 String reply_dept_name = getDeptName(reply.getUser_id());
                 ReplyList replyList = new ReplyList(reply.getId(),reply.getUser_id(),reply_real_name,reply_dept_name,reply.getContent(),reply.getCreate_datetime(),reply_sum,reply_state);
+
                 replyLists.add(replyList);
             }
-            CommentList commentList1 = new CommentList(comment.getId(),comment.getUserId(),comment_real_name,comment_dept_name,comment.getContent(),comment.getCreateDatetime(),comment_like_sum,comment_state,new CommentList.Reply_Obj(replies.size(),replyLists));
+            CommentList commentList1 = new CommentList(comment.getId(),comment.getUserId(),comment_real_name,comment_dept_name,comment.getContent(),comment.getCreateDatetime(),comment_like_sum,comment_state,
+                    new CommentList.Reply_Obj(replyCount,replyLists));
             commentLists.add(commentList1);
         }
-        int endIndx = Math.min(offset + page_size,commentLists.size());
-        List<CommentList> result = commentLists.subList(offset,endIndx);
-        return new DataPagingSuccessRespond("已成功获取该课程评论列表",commentLists.size(),result);
+        return new DataPagingSuccessRespond("已成功获取该章节的评论列表",countMark,commentLists);
     }
 
 
@@ -312,7 +318,7 @@ public class ReplyServiceImpl implements ReplyService {
 
 
     /**
-     * 获取课程章节的评论列表
+     * 删除课程章节的评论列表
      * @param  id 回复id
      * @return 根据处理结果返回对应消息
      * 11/10

@@ -87,19 +87,19 @@ public class LearnController {
 
     //指定评论发表回复
     @PostMapping("/v1/lesson/reply")
-    public MsgRespond replyComment(@RequestBody String request) {
+    public DataRespond replyComment(@RequestBody String request) {
         return replyService.ReplyComment(request);
     }
 
 
     //指定跟帖回复进行再跟帖
     @PostMapping("/v1/lesson/reply/thread")
-    public MsgRespond ThreadReply(@RequestBody String request) {
+    public DataRespond ThreadReply(@RequestBody String request) {
         return replyService.ThreadReply(request);
     }
 
 
-    //指定跟帖回复进行点赞/取消点赞
+    //指定跟帖评论进行点赞/取消点赞
     @PostMapping("/v1/comment/like/{user_id}/{comment_id}/{state}")
     public MsgRespond CommentLikeOrDisLike(@PathVariable
                                            @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "用户id必须为纯数字字段")

@@ -5,10 +5,10 @@ import com.training.common.entity.MsgRespond;
 
 public interface ReplyService {
     //回复评论
-    MsgRespond ReplyComment(String request);
+    DataRespond ReplyComment(String request);
 
     //回复跟帖
-    MsgRespond ThreadReply(String request);
+    DataRespond ThreadReply(String request);
 
     //获取指定课程评论列表
     DataRespond getCommentList(int lesson_id, int user_id, int page_size, int offset);

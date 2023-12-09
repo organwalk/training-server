@@ -1,5 +1,7 @@
 package com.push.service;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONException;
 import com.alibaba.fastjson.JSONObject;
 import com.push.client.LearnClient;
 import com.push.client.PlanClient;
@@ -88,18 +90,23 @@ public class NotificationServiceImpl implements NotificationService {
         // 反转通知源映射列表
         ConcurrentMap<Integer, String> reversedMap = reversedSourceMap();
 
-        // 处理原始列表的通知发出者
-        notifiactionList.forEach(item -> {
+        ListIterator<NotificationTable> iterator = notifiactionList.listIterator();
+        while (iterator.hasNext()) {
+            NotificationTable item = iterator.next();
             // 获取阅读状态
-
             Integer isRead = getReadState(notificationReceptions, item.getId());
             // 获取发起人信息
             String sender = getSender(item.getNotificationUid());
             // 获取指定通知源的引用内容
-            Object context = getQuote(reversedMap.get(item.getNotificationSourceId()), item.getNotificationQuoteId());
-            // 添加处理后的通知细节
-            processNotificationList.add(getNotificationDetail(item, reversedMap.get(item.getNotificationSourceId()), context, sender, isRead));
-        });
+            Object context = getQuote(item.getId(), reversedMap.get(item.getNotificationSourceId()), item.getNotificationQuoteId());
+            if (Objects.isNull(context) && item.getNotificationSourceId() != 6) {
+                // 如果 context 为空，删除当前 item
+                iterator.remove();
+            }else {
+                // 添加处理后的通知细节
+                processNotificationList.add(getNotificationDetail(item, reversedMap.get(item.getNotificationSourceId()), context, sender, isRead));
+            }
+        }
 
         return new DataPagingSuccessRespond("已成功获取通知列表", sumMark, processNotificationList);
     }
@@ -123,13 +130,21 @@ public class NotificationServiceImpl implements NotificationService {
         List<NotificationTypeResult> typeNotificationList = notificationReceptionMapper.selectNotificationTypeResult(uid, sourceId, pageSize, offset);
         List<NotificationDetail> processNotificationList = new ArrayList<>();
         // 处理原始列表的通知发出者
-        typeNotificationList.forEach(item -> {
+        Iterator<NotificationTypeResult> iterator = typeNotificationList.iterator();
+        while (iterator.hasNext()) {
+            NotificationTypeResult item = iterator.next();
+
             String sender = getSender(item.getNotificationUid());
-            // 获取指定通知源的引用内容
-            Object context = getQuote(reversedMap.get(item.getNotificationSourceId()), item.getNotificationQuoteId());
-            // 添加处理后的通知细节
-            processNotificationList.add(getTypeNotificationDetail(item, reversedMap.get(item.getNotificationSourceId()), context, sender));
-        });
+            Object context = getQuote(item.getId(), reversedMap.get(item.getNotificationSourceId()), item.getNotificationQuoteId());
+
+            if (Objects.isNull(context) && sourceId != 6) {
+                // 如果 context 为空，删除当前 item
+                iterator.remove();
+            } else {
+                // 如果 context 不为空，处理通知细节并添加到新列表中
+                processNotificationList.add(getTypeNotificationDetail(item, reversedMap.get(item.getNotificationSourceId()), context, sender));
+            }
+        }
 
         return new DataPagingSuccessRespond("已成功获取通知列表", sumMark, processNotificationList);
     }
@@ -169,19 +184,19 @@ public class NotificationServiceImpl implements NotificationService {
         return userInfo.getJSONObject("data").getString("realName");
     }
 
-    private Object getQuote(String sourceType, Integer quoteId) {
+    private Object getQuote(Integer id, String sourceType, Integer quoteId) {
         switch (sourceType) {
             case "plan" -> {
                 return getPlanQuote(quoteId);
             }
             case "test" -> {
-                return getTestQuote(quoteId);
+                return getTestQuote(id, quoteId);
             }
             case "father_like" -> {
-                return getFatherLikeQuote(quoteId);
+                return getFatherLikeQuote(id, quoteId);
             }
             case "children_like", "reply" -> {
-                return getReplyQuote(quoteId);
+                return getReplyQuote(id, quoteId);
             }
             default -> {
                 return null;
@@ -199,8 +214,12 @@ public class NotificationServiceImpl implements NotificationService {
         return new planQuote(planInfo.getJSONObject("data").getJSONObject("table").getString("training_title"));
     }
 
-    private Object getTestQuote(Integer quoteId) {
+    private Object getTestQuote(Integer id, Integer quoteId) {
         JSONObject testInfo = testClient.getTestInfo(quoteId).join();
+        if (Objects.isNull(testInfo.getJSONObject("data"))){
+            notificationMapper.deleteNotification(id);
+            return null;
+        }
         @Data
         @AllArgsConstructor
         class testQuote {
@@ -215,8 +234,12 @@ public class NotificationServiceImpl implements NotificationService {
         );
     }
 
-    private Object getFatherLikeQuote(Integer quoteId) {
+    private Object getFatherLikeQuote(Integer id, Integer quoteId) {
         JSONObject fatherComment = learnClient.getFatherComment(quoteId).join();
+        if (Objects.isNull(fatherComment.getJSONObject("data"))){
+            notificationMapper.deleteNotification(id);
+            return null;
+        }
         @Data
         @AllArgsConstructor
         class fatherLikeQuote {
@@ -225,14 +248,26 @@ public class NotificationServiceImpl implements NotificationService {
         return new fatherLikeQuote(fatherComment.getJSONObject("data").getString("content"));
     }
 
-    private Object getReplyQuote(Integer quoteId) {
+    private Object getReplyQuote(Integer id, Integer quoteId) {
         JSONObject childrenComment = learnClient.getChildrenComment(quoteId).join();
+        if (Objects.isNull(childrenComment.getJSONObject("data"))){
+            notificationMapper.deleteNotification(id);
+            return null;
+        }
         @Data
         @AllArgsConstructor
         class childrenLikeQuote {
             private String content;
         }
-        return new childrenLikeQuote(childrenComment.getJSONObject("data").getString("content"));
+        String contentString = childrenComment.getJSONObject("data").getString("content");
+        try {
+            JSON.parse(contentString);
+            return new childrenLikeQuote(childrenComment.getJSONObject("data").getJSONObject("content").getString("reply_content"));
+        } catch (JSONException e) {
+            // 解析失败，说明不是 JSON 字符串，而是普通字符串
+            return new childrenLikeQuote(contentString);
+
+        }
     }
 
     private NotificationDetail getNotificationDetail(NotificationTable item, String sourceType, Object context, String sender, Integer isRead) {
@@ -250,6 +285,7 @@ public class NotificationServiceImpl implements NotificationService {
 
     private NotificationDetail getTypeNotificationDetail(NotificationTypeResult item, String sourceType, Object context, String sender){
         return NotificationDetail.builder()
+                .id(item.getId())
                 .notification_type(item.getNotificationType())
                 .notification_content(item.getNotificationContent())
                 .notification_source_type(sourceType)
