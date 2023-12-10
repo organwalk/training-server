@@ -14,23 +14,27 @@ public interface ProgressChapterMapper {
     Integer insertChapterCompletion(@Param("req") ProgressChapterLessonReq req);
 
     @Update("update t_progress_chapter set over_chapter_id=#{over_chapter_id},completion_date=#{completion_date} where lesson_id=#{lesson_id} and student_id=#{student_id}")
-    Integer CompletionChapter(@Param("over_chapter_id")int over_chapter_id,@Param("completion_date")String completion_date,@Param("lesson_id")int lesson_id,@Param("student_id")int student_id);
+    Integer CompletionChapter(@Param("over_chapter_id") int over_chapter_id, @Param("completion_date") String completion_date, @Param("lesson_id") int lesson_id, @Param("student_id") int student_id);
 
     @Select("select COUNT(id) from t_progress_chapter where student_id=#{student_id} and lesson_id=#{lesson_id}")
-    Integer getStuComChapSum(@Param("student_id")int student_id,@Param("lesson_id")int lesson_id);
+    Integer getStuComChapSum(@Param("student_id") int student_id, @Param("lesson_id") int lesson_id);
 
     @Select("select COUNT(id) from t_progress_chapter where over_chapter_id=#{over_chapter_id} and lesson_id=#{lesson_id} and student_id=#{student_id}")
-    Integer judgeExitInTable(@Param("over_chapter_id")int over_chapter_id,@Param("lesson_id")int lesson_id,@Param("student_id")int student_id);
+    Integer judgeExitInTable(@Param("over_chapter_id") int over_chapter_id, @Param("lesson_id") int lesson_id, @Param("student_id") int student_id);
 
-    @Select("select * from t_progress_chapter where lesson_id=#{lesson_id} limit #{page_size} offset #{offset}")
-    List<ProgressChapter> getStuProChatByLessId(@Param("lesson_id")int lesson_id, @Param("page_size")int page_size, @Param("offset")int offset);
+    @Select("select id, lesson_id, student_id, over_chapter_id, completion_date from t_progress_chapter where lesson_id=#{lesson_id} limit #{page_size} offset #{offset}")
+    List<ProgressChapter> getStuProChatByLessId(@Param("lesson_id") int lesson_id, @Param("page_size") int page_size, @Param("offset") int offset);
 
-    @Select("select * from t_progress_chapter where student_id=#{student_id} and lesson_id=#{lesson_id} ORDER BY id DESC ")
-    List<ProgressChapter> getProChapByStuId(@Param("student_id") int student_id,@Param("lesson_id")int lesson_id);
+    @Select("select id, lesson_id, student_id, over_chapter_id, completion_date " +
+            "from t_progress_chapter " +
+            "where lesson_id=#{lesson_id} ORDER BY id DESC limit #{pageSize} offset #{offset}")
+    List<ProgressChapter> getProChapByStuId(@Param("lesson_id") int lesson_id,
+                                            @Param("pageSize") int pageSize,
+                                            @Param("offset") int offset);
 
-   @Select("select student_id from t_progress_chapter where lesson_id=#{lesson_id}")
-    List<Integer> getAllStuIdByLessonId(@Param("lesson_id")int lesson_id);
+    @Select("select count(id) from t_progress_chapter where lesson_id=#{lesson_id}")
+    Integer countId(@Param("lesson_id") int lesson_id);
 
-   @Select("select over_chapter_id from t_progress_chapter where student_id=#{student_id} and lesson_id=#{lesson_id}")
-    List<Integer> getChapterListByStuIdAndLessonId(@Param("student_id")int student_id,@Param("lesson_id")int lesson_id);
+    @Select("select over_chapter_id from t_progress_chapter where student_id=#{student_id} and lesson_id=#{lesson_id}")
+    List<Integer> getChapterListByStuIdAndLessonId(@Param("student_id") int student_id, @Param("lesson_id") int lesson_id);
 }

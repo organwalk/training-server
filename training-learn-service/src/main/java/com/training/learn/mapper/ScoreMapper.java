@@ -30,14 +30,14 @@ public interface ScoreMapper {
     List<ScoreTable> getAllScoreByTestId(int test_id);
     //获取指定测试的总分的平均数
     @Select("SELECT AVG(composite_score) FROM t_learn_test_score WHERE test_id = #{test_id}")
-    double getComposite_scoreAVGByTestId(int test_id);
+    Double getComposite_scoreAVGByTestId(int test_id);
     //获取指定测试的必须类别题综合得分的平均数
     @Select("select  AVG(must_type_composite_score) from t_learn_test_score where test_id=#{test_id}")
-    double getMustCompositeScoreAVGByTestId(int test_id);
+    Double getMustCompositeScoreAVGByTestId(int test_id);
     //获取指定测试的重要类别题综合得分的平均数
     @Select("select  AVG(important_type_composite_score) from t_learn_test_score where test_id=#{test_id}")
-    double getImportanceCompositeScoreAVGByTestId(int test_id);
+    Double getImportanceCompositeScoreAVGByTestId(int test_id);
     //获取指定测试的一般类别题综合得分的平均数
     @Select("select  AVG(normal_type_composite_score) from t_learn_test_score where test_id=#{test_id}")
-    double getNormalCompositeScoreAVGByTestId(int test_id);
+    Double getNormalCompositeScoreAVGByTestId(int test_id);
 }

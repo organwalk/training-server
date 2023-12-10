@@ -21,10 +21,13 @@ public interface ProgressLessonMapper {
     @Select("select student_id from t_progress_lesson where lesson_id=#{lesson_id}")
     Integer getStuIdByLessonId(int lesson_id);
 
-    @Select("select * from t_progress_lesson where lesson_id=#{lesson_id}")
-    List<ProgressLesson> getAllProLessByLessonId(int lesson_id);
+    @Select("select id, lesson_id, student_id, over_chapter_sum, lesson_chapter_sum " +
+            "from t_progress_lesson where lesson_id=#{lesson_id} order by over_chapter_sum desc limit #{pageSize} offset #{offset}")
+    List<ProgressLesson> getAllProLessByLessonId(@Param("lesson_id") int lesson_id,
+                                                 @Param("pageSize") int page_size,
+                                                 @Param("offset") int offset);
 
-    @Select("select * from t_progress_lesson where lesson_id=#{lesson_id}")
+    @Select("select id, lesson_id, student_id, over_chapter_sum, lesson_chapter_sum from t_progress_lesson where lesson_id=#{lesson_id}")
     List<ProgressLesson> getAllProgressByLessonId(int lesson_id);
 
     @Select("select * from t_progress_lesson where lesson_id=#{lesson_id} and student_id=#{student_id}")
@@ -35,7 +38,4 @@ public interface ProgressLessonMapper {
 
     @Select("select lesson_id from t_progress_lesson where student_id = #{studentId}")
     List<Integer> getLessonIdByStudent(Integer studentId);
-
-    //获取培训计划进度列表()开发中
-    //@Select("")
 }

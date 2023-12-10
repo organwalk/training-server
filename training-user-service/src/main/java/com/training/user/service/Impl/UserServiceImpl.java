@@ -247,13 +247,19 @@ public class UserServiceImpl implements UserService {
         if (!Objects.equals(oldInfo.getId(), uid)){
             return MsgRespond.fail("修改失败，该操作非用户本人修改");
         }
+
+
         String newPassword = req.getPassword();
         String oldPassword = oldInfo.getPassword();
-        req.setPassword(encoder.encode(newPassword));
+        if (Objects.nonNull(req.getPassword())){
+            req.setPassword(encoder.encode(newPassword));
+        }
         userMapper.updateUserAccountInfoByUser(uid, req);
         // 检查密码是否更改，判断是否需要销毁令牌
-        if (!encoder.matches(newPassword, oldPassword)){
-            userCache.deleteAccessToken(oldInfo.getUsername());
+        if (Objects.nonNull(req.getPassword())){
+            if (!encoder.matches(newPassword, oldPassword)){
+                userCache.deleteAccessToken(oldInfo.getUsername());
+            }
         }
         return MsgRespond.success("已成功更新此账号信息");
     }

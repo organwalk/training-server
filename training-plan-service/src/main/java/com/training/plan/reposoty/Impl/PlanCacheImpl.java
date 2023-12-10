@@ -1,23 +1,17 @@
 package com.training.plan.reposoty.Impl;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.training.plan.entity.respond.StudentInfo;
 import com.training.plan.entity.respond.TeacherInfo;
-import com.training.plan.entity.result.TrainPlanInfo;
-import com.training.plan.entity.table.TrainingPlanTable;
 import com.training.plan.reposoty.PlanCache;
 import lombok.AllArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
-
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
+
 
 @Component
 @AllArgsConstructor

@@ -2,6 +2,7 @@ package com.training.progress.entity.respond;
 
 import com.training.progress.entity.result.Chapter;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 
 @Data

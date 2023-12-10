@@ -529,13 +529,17 @@ public class TestServiceImpl implements TestService {
         List<LessonScoreResult> list = new ArrayList<>();
         for (Integer i : allTestIdList) {
             //综合分数平均分
-            double composite_score = scoreMapper.getComposite_scoreAVGByTestId(i);
+            Double mapper_com_sco = scoreMapper.getComposite_scoreAVGByTestId(i);
+            double composite_score = mapper_com_sco == null ? 0 : mapper_com_sco;
             //必须类别题型综合分数平均分
-            double must_composite_score = scoreMapper.getMustCompositeScoreAVGByTestId(i);
+            Double mapper_must_com_sco = scoreMapper.getMustCompositeScoreAVGByTestId(i);
+            double must_composite_score = mapper_must_com_sco == null ? 0 : mapper_must_com_sco;
             //重要类别题型综合分数平均分
-            double importance_composite_score = scoreMapper.getImportanceCompositeScoreAVGByTestId(i);
+            Double mapper_imp_com_sco = scoreMapper.getImportanceCompositeScoreAVGByTestId(i);
+            double importance_composite_score = mapper_imp_com_sco == null ? 0 : mapper_imp_com_sco;
             //普通类别题型综合分数平均分
-            double normal_composite_score = scoreMapper.getNormalCompositeScoreAVGByTestId(i);
+            Double mapper_nor_com_sco = scoreMapper.getNormalCompositeScoreAVGByTestId(i);
+            double normal_composite_score = mapper_nor_com_sco == null ? 0 : mapper_nor_com_sco;
             LessonScoreResult lessonScoreResult = new LessonScoreResult(i, composite_score, must_composite_score, importance_composite_score, normal_composite_score);
             list.add(lessonScoreResult);
         }

@@ -100,8 +100,14 @@ public interface UserMapper {
     void deleteUserAccountByUid(Integer uid);
 
     // 根据用户ID用户自行编辑账号信息
-    @Transactional
-    @Update("update t_user set password = #{req.password}, mobile = #{req.mobile} where id = #{uid}")
+    @Update("<script>" +
+            "update t_user" +
+            "<set>" +
+            "<if test='req.password != null'> password = #{req.password},</if>" +
+            "<if test='req.mobile != null'> mobile = #{req.mobile},</if>" +
+            "</set>" +
+            "where id = #{uid}" +
+            "</script>")
     void updateUserAccountInfoByUser(@Param("uid") Integer uid, @Param("req") UserAccountInfoReq req);
 
     // 根据类别获取教师/员工信息列表

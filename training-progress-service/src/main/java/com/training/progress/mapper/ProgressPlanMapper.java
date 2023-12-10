@@ -14,11 +14,11 @@ public interface ProgressPlanMapper {
     @Insert("insert into t_progress_plan(plan_id, teacher_id, lesson_id) VALUES (#{plan_id},#{teacher_id},#{lesson_id})")
     Integer insertToProgressPlan(@Param("plan_id") int plan_id, @Param("teacher_id") int teacher_id, @Param("lesson_id") Integer lesson_id);
 
-    @Select("select lesson_id from t_progress_plan where teacher_id=#{teacher_id} and plan_id = #{plan_id}")
+    @Select("select lesson_id from t_progress_plan where teacher_id=#{teacher_id} and plan_id = #{plan_id} order by id")
     List<Integer> getLessonIdByTeaId(@Param("plan_id")int plan_id,
                                      @Param("teacher_id")int teacher_id);
 
-    @Select("select plan_id from t_progress_plan")
+    @Select("select plan_id from t_progress_plan GROUP BY plan_id")
     List<Integer> getAllPlanId();
 
     @Select("select lesson_id from t_progress_plan where plan_id = #{plan_id}")

@@ -22,7 +22,7 @@ public class ComputeUtil {
             sum += progress;
         }
          //计算平均进度（进度累加除以学生数量）
-         double averageProgress = sum/list.size();
+         double averageProgress = sum / list.size();
 
          // 使用 DecimalFormat 类进行格式化
          DecimalFormat df = new DecimalFormat("#.##");

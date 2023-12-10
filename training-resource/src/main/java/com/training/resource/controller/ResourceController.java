@@ -35,7 +35,7 @@ public class ResourceController {
     private final ResourceNoteService resourceNoteService;
 
     // 创建资源分类标签
-    @GetMapping("/v3/tag")
+    @PostMapping("/v3/tag")
     public MsgRespond createTag(@Validated @RequestBody TagReq req) {
         return tagService.createTag(req);
     }

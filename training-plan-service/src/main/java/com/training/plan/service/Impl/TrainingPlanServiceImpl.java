@@ -107,7 +107,7 @@ public class TrainingPlanServiceImpl implements TrainingPlanService {
         return new DataPagingSuccessRespond("已获取到指定部门的列表！", count,list);
     }
     /**
-     * 通过id获取指定计划具体实现
+     * 添加视频测试题
      * @param lesson_id 课程id
      * @param req 请求试题
      * @return 根据处理结果返回对应消息
