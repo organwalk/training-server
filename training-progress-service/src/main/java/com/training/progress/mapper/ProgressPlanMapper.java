@@ -23,6 +23,10 @@ public interface ProgressPlanMapper {
 
     @Select("select lesson_id from t_progress_plan where plan_id = #{plan_id}")
     List<Integer> getLessonIdByPlanId(int plan_id);
+
+    // 获取指定培训计划下教师总数
+    @Select("select count(teacher_id) from t_progress_plan where plan_id = #{plan_id}")
+    Integer countTeacher(Integer plan_id);
     @Select("SELECT t.lesson_id FROM t_progress_plan t INNER JOIN t_progress_lesson o ON t.lesson_id = o.lesson_id " +
             "WHERE t.plan_id = #{plan_id}  GROUP BY t.lesson_id")
     List<Integer> getCommonLessonIdsByPlanId(int plan_id);

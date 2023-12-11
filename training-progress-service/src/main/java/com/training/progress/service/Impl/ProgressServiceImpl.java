@@ -248,11 +248,12 @@ public class ProgressServiceImpl implements ProgressService {
         List<PlanPresent> planPresents = new ArrayList<>();
         List<Integer> PlanIdList = planMapper.getAllPlanId();
         for (Integer i : PlanIdList) {
+            Integer teacherSum = planMapper.countTeacher(i);
             // 获取课程ID列表
-            List<Integer> LessonIdList = planMapper.getLessonIdByPlanId(i);
+            List<Integer> lessonIdList = planMapper.getLessonIdByPlanId(i);
             double allPresent = 0;
             // 获取每个课程的进度求值所需信息
-            for (Integer j : LessonIdList) {
+            for (Integer j : lessonIdList) {
                 List<ProgressLesson> progressLessonList = lessonMapper.getAllProgressByLessonId(j);
                 // 进行计算
                 double present = ComputeUtil.comProgress(progressLessonList);
@@ -262,7 +263,7 @@ public class ProgressServiceImpl implements ProgressService {
             if (Double.isNaN(allPresent)) {
                 allPresent = 0;
             }
-            PlanPresent planPresent = new PlanPresent(i, allPresent);
+            PlanPresent planPresent = new PlanPresent(i, (allPresent / lessonIdList.size()) / teacherSum);
             planPresents.add(planPresent);
         }
         int endIndx = Math.min(offset + page_size, planPresents.size());

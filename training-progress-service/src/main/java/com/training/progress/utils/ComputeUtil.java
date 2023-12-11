@@ -12,6 +12,7 @@ public class ComputeUtil {
     //计算一个课程的学习进度 传入t_progress_lesson表的list 计算平均的学习进度为百分比
      public static double comProgress(List<ProgressLesson> list){
 
+         System.out.println(list);
         //课程完成进度总累加
         double sum = 0;
         //遍历list

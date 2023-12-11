@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.training.common.entity.*;
 import com.training.common.entity.req.UserInfoListReq;
+import com.training.plan.client.DeptClient;
 import com.training.plan.client.ProgressClient;
 import com.training.plan.client.UserClient;
 import com.training.plan.entity.respond.StudentInfo;
@@ -34,6 +35,7 @@ import java.util.Objects;
 public class TrainPlanStudentServiceImpl implements TrainPlanStudentService {
     private final TrainPlanStudentMapper trainPlanStudentMapper;
     private final UserClient userClient;
+    private final DeptClient deptClient;
     private final PlanCache planCache;
     private final ProgressClient progressClient;
     private final LessonMapper lessonMapper;
@@ -52,17 +54,32 @@ public class TrainPlanStudentServiceImpl implements TrainPlanStudentService {
         if (studentIdList.stream().anyMatch(item -> !judgeExit(item, plan_id).isBlank())) {
             return MsgRespond.fail("提供的学生列表中，部分学生已经在计划内");
         }
+        List<Integer> nonNullStudentList = new ArrayList<>();
+        studentIdList.forEach(item -> {
+             Integer uid = deptClient.getDeptId(item);
+             if (Objects.nonNull(uid)){
+                 nonNullStudentList.add(item);
+             }
+        });
         //添加学生
-        trainPlanStudentMapper.insertTrainPlanStudent(studentIdList,plan_id);
-        clearCache(plan_id);
-        List<Integer> lessonIdList = lessonMapper.getLIDByPId(plan_id);
-        for(Integer i:lessonIdList){
-            Integer sum = chapterMapper.getCountByLId(i);
-            for (Integer j:studentIdList){
-                progressClient.insertProgress(i,j,0,sum);
+        if (!nonNullStudentList.isEmpty()){
+            trainPlanStudentMapper.insertTrainPlanStudent(nonNullStudentList,plan_id);
+            clearCache(plan_id);
+            List<Integer> lessonIdList = lessonMapper.getLIDByPId(plan_id);
+            for(Integer i:lessonIdList){
+                Integer sum = chapterMapper.getCountByLId(i);
+                for (Integer j:studentIdList){
+                    progressClient.insertProgress(i,j,0,sum);
+                }
             }
         }
-        return MsgRespond.success("添加成功！");
+        if (studentIdList.size() == nonNullStudentList.size()){
+            return MsgRespond.success("添加成功");
+        }else if (nonNullStudentList.isEmpty()){
+            return MsgRespond.fail("添加员工未被分配部门，无法被纳入培训计划");
+        }else {
+            return MsgRespond.success("添加成功，但部分员工未被分配部门，无法被纳入培训计划:" + nonNullStudentList);
+        }
     }
     /**
      * 根据计划id获取所有学员信息的具体实现
@@ -110,16 +127,16 @@ public class TrainPlanStudentServiceImpl implements TrainPlanStudentService {
         //判断学生是否在该计划
         Integer ExitMark = trainPlanStudentMapper.ExitJudge(planId);
         if(Objects.equals(ExitMark,0)){
-            return MsgRespond.fail("该学生未在该计划内！");
+            return MsgRespond.fail("该学生未在该计划内");
         }
         //删除学生
         Integer i = trainPlanStudentMapper.DeleteStu(id, planId);
         if (i<=0){
-            return MsgRespond.fail("删除失败！");
+            return MsgRespond.fail("移除失败");
         }
         //删除缓存
         clearCache(planId);
-        return MsgRespond.success("已成功删除此学员!");
+        return MsgRespond.success("已成功移除此学员");
     }
 
     @Override

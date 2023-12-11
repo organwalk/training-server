@@ -12,4 +12,6 @@ public interface DeptClient {
     //获取指定部门的信息
     @GetExchange("/v1/department/info/{dept_id}")
     JSONObject getDeptInfoByDeptId(@PathVariable Integer dept_id);
+    @GetExchange("/v1/department/{uid}")
+    Integer getDeptId(@PathVariable Integer uid);
 }
