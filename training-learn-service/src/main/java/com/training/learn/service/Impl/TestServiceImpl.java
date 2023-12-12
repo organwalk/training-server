@@ -68,7 +68,7 @@ public class TestServiceImpl implements TestService {
         if (test != null) {
             return MsgRespond.fail("该试题已经存在！");
         }
-        SimpleDateFormat si = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+        SimpleDateFormat si = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         //判断结束时间是否早于起始时间
         if (si.parse(req.getStart_datetime()).getTime() > si.parse(req.getEnd_datetime()).getTime()) {
             return MsgRespond.fail("结束时间不得早于起始时间！");
@@ -150,7 +150,7 @@ public class TestServiceImpl implements TestService {
         }
         //获取当前时间，并把当前时间当成发布时间
         String date = getNowTime();
-        SimpleDateFormat si = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+        SimpleDateFormat si = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         //判断结束时间是否早于起始时间
         if (si.parse(test.getStart_datetime()).getTime() < si.parse(date).getTime()
                 || si.parse(test.getEnd_datetime()).getTime() < si.parse(date).getTime()) {
@@ -305,7 +305,7 @@ public class TestServiceImpl implements TestService {
         if (test == null) {
             return MsgRespond.fail("测试不存在！");
         }
-        SimpleDateFormat si = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+        SimpleDateFormat si = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         Date start_datetime = si.parse(test.getStart_datetime());
         Date end_datetime = si.parse(test.getEnd_datetime());
         //获取当前时间戳
@@ -375,7 +375,7 @@ public class TestServiceImpl implements TestService {
             return MsgRespond.fail("试题已经提交");
         }
 
-        SimpleDateFormat si = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+        SimpleDateFormat si = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         long currentTimestamp = System.currentTimeMillis();
         Date start_datetime = si.parse(test.getStart_datetime());
         Date end_datetime = si.parse(test.getEnd_datetime());
@@ -564,9 +564,11 @@ public class TestServiceImpl implements TestService {
         if (test == null) {
             return MsgRespond.fail("该测试不存在！");
         }
-        SimpleDateFormat si = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+        SimpleDateFormat si = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         Date start_time = si.parse(updateTestReq.getStart_datetime());
         Date end_time = si.parse(updateTestReq.getEnd_datetime());
+        System.out.println(start_time);
+        System.out.println(end_time);
 
         long currentTimestamp = System.currentTimeMillis();
         //判断起始时间是否晚于结束时间
@@ -808,7 +810,7 @@ public class TestServiceImpl implements TestService {
 
     @SneakyThrows
     private String validDateTime(String startDateTime, String endDateTime) {
-        SimpleDateFormat si = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+        SimpleDateFormat si = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         //判断当前时间是否早于起始时间时
         if (si.parse(startDateTime).getTime() > System.currentTimeMillis()) {
             return "考试尚未开始，无法查看试卷题目";

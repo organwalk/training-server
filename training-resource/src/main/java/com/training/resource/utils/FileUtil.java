@@ -97,7 +97,7 @@ public class FileUtil {
         // 获取上传的文件扩展名
         String fileExtension = Objects.requireNonNull(fileOriginName).substring(fileOriginName.lastIndexOf("."));
         // 生成"上传者ID + UUID.后缀"的文件名
-        String customFileName = lessonId.toString() + '/' + chapterId  + '/' + lessonId + chapterId + upId + UUID.randomUUID() + fileExtension;
+        String customFileName = lessonId.toString() + File.separator + chapterId  + File.separator + lessonId + chapterId + upId + UUID.randomUUID() + fileExtension;
         // 构建文件保存路径
         return appConfig.getNotePath() + File.separator + customFileName;
     }
