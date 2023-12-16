@@ -6,6 +6,10 @@ import lombok.AllArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+/**
+ * 培训计划状态定时更新
+ * by organwalk 2023-12-10
+ */
 @Component
 @AllArgsConstructor
 public class PlanScheduledTasks {

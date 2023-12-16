@@ -17,6 +17,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+
+/**
+ * 用户服务接口
+ * by organwalk 2023-10-18
+ */
 @RestController
 @RequestMapping("/api/user")
 @AllArgsConstructor

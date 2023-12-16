@@ -7,6 +7,9 @@ import org.springframework.web.service.annotation.HttpExchange;
 
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * by zhaozhifeng 2023-11-10
+ */
 @HttpExchange("http://localhost:8186/api/progress")
 public interface ProgressClient {
     @GetExchange("/v1/plan/lesson/persent/{plan_id}/{student_id}/{page_size}/{offset}")

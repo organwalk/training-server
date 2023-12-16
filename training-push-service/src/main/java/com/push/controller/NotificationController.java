@@ -6,6 +6,10 @@ import com.training.common.entity.MsgRespond;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * http端点控制器
+ * by organwalk 2023-11-29
+ */
 @RestController
 @AllArgsConstructor
 @RequestMapping("/api/push")

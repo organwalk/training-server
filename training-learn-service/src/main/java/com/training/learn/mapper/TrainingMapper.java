@@ -9,6 +9,9 @@ import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
 
+/**
+ * by linguowei 2023-11-10
+ */
 @Mapper
 public interface TrainingMapper {
     @Select("select training_plan_id from t_training_plan_student where training_student_id=#{training_student_id}")

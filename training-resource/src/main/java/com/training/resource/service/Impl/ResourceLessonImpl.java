@@ -30,6 +30,10 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+/**
+ * 定义课程教材相关业务接口的具体实现
+ * by organwalk 2023-11-02
+ */
 @Service
 @Transactional
 @AllArgsConstructor

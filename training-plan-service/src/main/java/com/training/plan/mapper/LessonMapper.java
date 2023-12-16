@@ -7,6 +7,10 @@ import org.apache.ibatis.annotations.*;
 
 import java.util.List;
 
+/**
+ * by zhaozhifeng 2023-10-31
+ * by organwalk 2023-11-15
+ */
 @Mapper
 public interface LessonMapper {
     //添加课程

@@ -3,6 +3,9 @@ package com.training.learn.mapper;
 import com.training.learn.entity.table.OptionsTable;
 import org.apache.ibatis.annotations.*;
 
+/**
+ * by zhaozhifeng 2023-11-20
+ */
 @Mapper
 public interface OptionMapper {
     //插入指定问题的选项信息

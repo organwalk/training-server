@@ -19,6 +19,10 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+/**
+ * 定义处理文件使用的工具类
+ * by organwalk 2023-11-02
+ */
 @Component
 @AllArgsConstructor
 public class FileUtil {

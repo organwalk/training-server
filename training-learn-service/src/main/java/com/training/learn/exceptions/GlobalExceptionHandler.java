@@ -19,6 +19,7 @@ import java.util.Set;
 
 /**
  * 全局异常拦截
+ * by organwalk
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {

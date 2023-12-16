@@ -6,6 +6,10 @@ import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
 import org.springframework.web.service.annotation.PostExchange;
 
+/**
+ * by zhaozhifeng 2023-11-06
+ * by organwalk 2023-11-23
+ */
 @HttpExchange("http://localhost:8186/api/progress")
 public interface ProgressClient {
     @PostExchange("/v2/lesson/student/{lesson_id}/{student_id}/{over_chapter_sum}/{lesson_chapter_sum}")

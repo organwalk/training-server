@@ -5,6 +5,10 @@ import com.training.common.entity.MsgRespond;
 import com.training.resource.entity.request.ResourceNoteReq;
 import org.springframework.http.ResponseEntity;
 
+/**
+ * 与学习笔记有关的业务
+ * by organwalk 2023-10-21
+ */
 public interface ResourceNoteService {
     // 保存上传笔记
     DataRespond uploadNote(ResourceNoteReq req);

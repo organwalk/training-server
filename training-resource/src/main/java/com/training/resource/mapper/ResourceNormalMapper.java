@@ -10,6 +10,10 @@ import org.apache.ibatis.annotations.*;
 
 import java.util.List;
 
+/**
+ * t_resource_normal表mapper接口
+ * by organwalk 2023-11-02
+ */
 @Mapper
 public interface ResourceNormalMapper {
 

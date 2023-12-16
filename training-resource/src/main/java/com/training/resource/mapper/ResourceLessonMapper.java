@@ -7,6 +7,10 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 
 import java.util.List;
 
+/**
+ * t_resource_lesson表mapper接口
+ * by organwalk 2023-11-02
+ */
 @Mapper
 @CrossOrigin
 public interface ResourceLessonMapper {

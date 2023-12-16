@@ -3,6 +3,10 @@ package com.training.learn.mapper;
 
 import org.apache.ibatis.annotations.*;
 
+/**
+ * by zhaozhifeng 2023-11-10
+ * by linguowei 2023-11-20
+ */
 @Mapper
 public interface LikeMapper {
     @Insert("insert into t_learn_like(user_id, comment_id, state, create_datetime) VALUES(#{user_id},#{comment_id},#{state},#{create_datetime}) ")

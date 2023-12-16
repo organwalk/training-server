@@ -12,6 +12,7 @@ import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 
 /**
  * 注册WebClient接口服务
+ * by organwalk 2023-11-29
  */
 @Configuration
 public class WebClientConfig {

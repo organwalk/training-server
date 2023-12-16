@@ -5,6 +5,10 @@ import org.apache.ibatis.annotations.*;
 
 import java.util.List;
 
+/**
+ * by zhaozhifeng 2023-11-10
+ * by organwlak 2023-12-09
+ */
 @Mapper
 public interface CommentMapper {
     @Insert("insert into t_learn_comment(user_id, lesson_id,content,create_datetime)values (#{user_id},#{lesson_id},#{content},#{create_datetime})")

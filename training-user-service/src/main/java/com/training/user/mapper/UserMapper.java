@@ -12,6 +12,7 @@ import java.util.List;
 
 /**
  * 定义t_user表的Mapper接口
+ * by organwalk 2023-10-18
  */
 @Mapper
 public interface UserMapper {

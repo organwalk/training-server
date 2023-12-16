@@ -10,6 +10,9 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * by zhaozhifeng 2023-10-28
+ */
 @Repository
 public interface PlanCache {
     void saveTea(String key, List<TeacherInfo> infoList);

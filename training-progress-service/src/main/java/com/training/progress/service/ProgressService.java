@@ -3,7 +3,9 @@ package com.training.progress.service;
 import com.training.common.entity.DataRespond;
 import com.training.common.entity.MsgRespond;
 
-
+/**
+ * by zhaozhifeng 2023-11-06
+ */
 public interface ProgressService {
     MsgRespond MarkChapterComplete(int lesson_id, int chapter_id, int student_id);
 

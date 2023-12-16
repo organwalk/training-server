@@ -13,6 +13,10 @@ import org.springframework.web.bind.annotation.*;
 import java.text.ParseException;
 import java.util.List;
 
+/**
+ * by zhaozhifeng 2023-10-25
+ * by organwalk 2023-11-08
+ */
 @RestController
 @RequestMapping("/api/training")
 @AllArgsConstructor

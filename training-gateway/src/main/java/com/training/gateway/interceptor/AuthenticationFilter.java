@@ -31,7 +31,7 @@ public class AuthenticationFilter implements GatewayFilter {
      * @param chain 过滤链，将请求传递给下一个过滤链
      * @return
      *
-     * by organwalk 2023.04.02
+     * by organwalk 2023.10.19
      */
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {

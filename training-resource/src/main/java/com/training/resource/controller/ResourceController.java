@@ -23,6 +23,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Objects;
 
+/**
+ * 资源服务接口
+ * by organwalk 2023-11-02
+ */
 @RestController
 @RequestMapping("/api/resource")
 @AllArgsConstructor

@@ -12,6 +12,7 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * 获取用户服务内部接口
+ * by organwalk 2023-11-29
  */
 @HttpExchange("http://localhost:8181/api/user")
 public interface UserClient {

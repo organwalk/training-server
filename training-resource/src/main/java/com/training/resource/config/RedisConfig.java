@@ -21,7 +21,7 @@ public class RedisConfig {
      *
      * @return redisTemplate对象
      * <p>
-     * by organwalk 2023-04-02
+     * by organwalk 2023-10-18
      */
     @Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory) {

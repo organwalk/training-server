@@ -34,6 +34,10 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+/**
+ * 定义普通资源相关业务接口的具体实现
+ * by organwalk 2023-10-21
+ */
 @Service
 @AllArgsConstructor
 @Transactional

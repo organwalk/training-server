@@ -3,6 +3,7 @@ package com.training.user.reposity;
 import org.springframework.stereotype.Repository;
 /**
  * 计划服务的缓存接口实现
+ * by organwalk 2023-10-18
  */
 @Repository
 public interface UserCache {

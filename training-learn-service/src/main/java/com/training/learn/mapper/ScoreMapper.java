@@ -5,6 +5,10 @@ import org.apache.ibatis.annotations.*;
 
 import java.util.List;
 
+/**
+ * by zhaozhifeng 2023-11-20
+ * by organwalk 2023-12-07
+ */
 @Mapper
 public interface ScoreMapper {
     //判断该学生指定课程的成绩是否已经存在

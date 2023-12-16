@@ -7,6 +7,10 @@ import org.springframework.web.service.annotation.HttpExchange;
 
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * 远程调用考核评估服务
+ * by organwalk 2023-11-29
+ */
 @HttpExchange("http://localhost:8185/api/learn")
 public interface TestClient {
     @GetExchange("/v1/test/info/{test_id}")

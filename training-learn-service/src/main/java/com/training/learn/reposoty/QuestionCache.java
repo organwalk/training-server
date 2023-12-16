@@ -8,6 +8,10 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+/**
+ * by zhaozhifeng 2023-11-20
+ * by organwalk 2023-11-25
+ */
 @Repository
 public interface QuestionCache {
     //保存试题

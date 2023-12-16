@@ -5,6 +5,9 @@ import com.training.common.entity.MsgRespond;
 import com.training.plan.entity.request.LessonReq;
 import com.training.plan.entity.request.LessonUpdate;
 
+/**
+ * by zhaozhifeng 2023-10-31
+ */
 public interface LessonService {
     //加入课程
     MsgRespond insertLesson(LessonReq req,int plan_id);

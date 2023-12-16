@@ -7,6 +7,9 @@ import org.springframework.stereotype.Component;
 
 import java.util.concurrent.TimeUnit;
 
+/**
+ * by zhaozhifeng 2023-11-10
+ */
 @Component
 @AllArgsConstructor
 public class LikeCacheImpl implements LikeCache {

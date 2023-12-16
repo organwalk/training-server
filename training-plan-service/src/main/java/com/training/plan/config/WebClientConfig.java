@@ -11,6 +11,7 @@ import org.springframework.web.reactive.function.client.support.WebClientAdapter
 import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 /**
  * 注册WebClient接口服务
+ * by zhaozhifeng 2023-10-25
  */
 @Configuration
 public class WebClientConfig {

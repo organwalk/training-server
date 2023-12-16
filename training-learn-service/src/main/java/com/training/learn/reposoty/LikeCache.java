@@ -2,6 +2,9 @@ package com.training.learn.reposoty;
 
 import org.springframework.stereotype.Repository;
 
+/**
+ * by zhaozhifeng 2023-11-10
+ */
 @Repository
 public interface LikeCache {
     void saveCommentLike(String key,String field,Integer value);

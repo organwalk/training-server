@@ -5,7 +5,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
 /**
- * 获取部门服务内部接口
+ * 获取部门服务内部接口 2023-10-25
+ * by zhaozhifeng
  */
 @HttpExchange("http://localhost:8182/api/dept")
 public interface DeptClient {

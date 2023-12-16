@@ -5,6 +5,10 @@ import org.apache.ibatis.annotations.*;
 
 import java.util.List;
 
+/**
+ * by zhaozhifeng 2023-10-25
+ * by organwalk 11-08
+ */
 @Mapper
 public interface TrainPlanTeacherMapper {
     //插入一条新的记录

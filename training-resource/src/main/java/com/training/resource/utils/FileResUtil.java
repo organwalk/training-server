@@ -24,6 +24,10 @@ import java.nio.file.Paths;
 import java.util.Objects;
 import java.util.Optional;
 
+/**
+ * 定义文件响应的通用工具
+ * by organwalk 2023-11-02
+ */
 @Component
 public class FileResUtil {
     public ResponseEntity<?> returnMarkdown(String lessonFilePath) {

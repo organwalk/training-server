@@ -30,6 +30,10 @@ import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.Objects;
 
+/**
+ * 定义学习笔记相关业务接口的具体实现
+ * by organwalk 2023-10-21
+ */
 @Service
 @AllArgsConstructor
 @Transactional

@@ -10,7 +10,10 @@ import com.training.user.entity.respond.AuthInfoRespond;
 import com.training.user.entity.result.UserInfo;
 
 import java.util.List;
-
+/**
+ * 用户服务业务接口
+ * by organwalk 2023-10-18
+ */
 public interface UserService {
     // 获取权限列表
     DataRespond getAuthList();

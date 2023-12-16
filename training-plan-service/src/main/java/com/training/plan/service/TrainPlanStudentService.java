@@ -5,7 +5,9 @@ import com.training.common.entity.MsgRespond;
 
 import java.util.List;
 
-
+/**
+ * by linguowei 2023-10-25
+ */
 public interface TrainPlanStudentService {
     //加入学生
     MsgRespond insertTrainPlanStudent(List<Integer> studentIdList, int plan_id);

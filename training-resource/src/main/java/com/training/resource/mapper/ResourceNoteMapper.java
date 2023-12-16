@@ -3,6 +3,10 @@ package com.training.resource.mapper;
 import com.training.resource.entity.table.ResourceNoteTable;
 import org.apache.ibatis.annotations.*;
 
+/**
+ * t_resource_note表mapper接口
+ * by organwalk 2023-11-02
+ */
 @Mapper
 public interface ResourceNoteMapper {
 

@@ -5,6 +5,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
 
+/**
+ * by zhaozhifeng 2023-11-10
+ */
 @HttpExchange("http://localhost:8184/api/training")
 public interface PlanClient {
 

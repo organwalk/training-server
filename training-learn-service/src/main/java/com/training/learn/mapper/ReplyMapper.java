@@ -5,6 +5,10 @@ import org.apache.ibatis.annotations.*;
 
 import java.util.List;
 
+/**
+ * by zhaozhifeng 2023-11-10
+ * by organwalk 2023-12-09
+ */
 @Mapper
 public interface ReplyMapper {
     @Insert("insert into t_learn_reply(user_id, comment_id, content, create_datetime) " +

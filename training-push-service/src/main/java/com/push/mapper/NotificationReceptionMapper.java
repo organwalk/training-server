@@ -6,6 +6,10 @@ import org.apache.ibatis.annotations.*;
 
 import java.util.List;
 
+/**
+ * t_push_notification_reception表mapper接口
+ * by organwalk 2023-11-29
+ */
 @Mapper
 public interface NotificationReceptionMapper {
     @Insert({

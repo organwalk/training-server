@@ -2,6 +2,10 @@ package com.training.learn.mapper;
 
 import org.apache.ibatis.annotations.*;
 
+/**
+ * by linguowei 2023-11-20
+ * by organwlak 2023-12-07
+ */
 @Mapper
 public interface AnswerMapper {
     //删除指定测试的学生答案记录

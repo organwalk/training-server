@@ -10,6 +10,10 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.UUID;
 
+/**
+ * 定义mp4box的工具类
+ * by organwalk 2023-11-02
+ */
 @Component
 @AllArgsConstructor
 public class MP4BoxUtil {

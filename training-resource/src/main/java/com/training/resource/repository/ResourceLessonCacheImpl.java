@@ -6,6 +6,10 @@ import org.springframework.stereotype.Repository;
 
 import java.util.concurrent.TimeUnit;
 
+/**
+ * ResourceLesson缓存实现类
+ * by organwalk 2023-11-02
+ */
 @Repository
 @AllArgsConstructor
 public class ResourceLessonCacheImpl implements ResourceLessonCache{

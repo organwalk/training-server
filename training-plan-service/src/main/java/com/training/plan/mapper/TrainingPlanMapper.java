@@ -8,6 +8,10 @@ import org.apache.ibatis.annotations.*;
 
 import java.util.List;
 
+/**
+ * by zhaozhifeng 2023-10-25
+ * by organwalk 2023-12-10
+ */
 @Mapper
 public interface TrainingPlanMapper {
     //插入一个计划数据

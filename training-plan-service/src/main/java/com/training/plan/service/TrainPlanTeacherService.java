@@ -5,6 +5,9 @@ import com.training.common.entity.MsgRespond;
 
 import java.util.List;
 
+/**
+ * by linguowei 2023-10-28
+ */
 
 public interface TrainPlanTeacherService {
     //加入教师

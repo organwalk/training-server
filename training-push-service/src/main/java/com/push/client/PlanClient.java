@@ -7,6 +7,10 @@ import org.springframework.web.service.annotation.HttpExchange;
 
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * 远程调用培训计划服务
+ * by organwalk 2023-11-29
+ */
 @HttpExchange("http://localhost:8184/api/training")
 public interface PlanClient {
 

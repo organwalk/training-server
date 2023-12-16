@@ -7,6 +7,9 @@ import org.apache.ibatis.annotations.*;
 
 import java.util.List;
 
+/**
+ * by zhaozhifeng 2023-11-01
+ */
 @Mapper
 public interface ProgressChapterMapper {
     //插入数据

@@ -8,6 +8,9 @@ import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
 import org.springframework.web.service.annotation.PostExchange;
 
+/**
+ * by zhaozhifeng 2023-11-10
+ */
 @HttpExchange("http://localhost:8183/api/resource")
 public interface ResourceClient {
 

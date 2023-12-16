@@ -9,6 +9,7 @@ import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
 /**
  * 获取用户服务内部接口
+ * by zhaozhifeng 2023-10-25
  */
 @HttpExchange("http://localhost:8181/api/user")
 public interface UserClient {

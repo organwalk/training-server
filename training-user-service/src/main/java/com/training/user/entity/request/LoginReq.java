@@ -6,6 +6,7 @@ import org.hibernate.validator.constraints.Length;
 
 /**
  * 用户登录获取认证请求实体
+ * by organwalk 2023-10-18
  */
 @Data
 public class LoginReq {

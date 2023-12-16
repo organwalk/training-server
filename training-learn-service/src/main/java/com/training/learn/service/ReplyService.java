@@ -3,6 +3,10 @@ package com.training.learn.service;
 import com.training.common.entity.DataRespond;
 import com.training.common.entity.MsgRespond;
 
+/**
+ * by zhaozhifeng 2023-11-10
+ * by organwalk 2023-12-09
+ */
 public interface ReplyService {
     //回复评论
     DataRespond ReplyComment(String request);

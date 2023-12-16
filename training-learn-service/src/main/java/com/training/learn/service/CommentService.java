@@ -4,6 +4,10 @@ import com.training.common.entity.DataRespond;
 import com.training.common.entity.MsgRespond;
 import com.training.learn.entity.request.NoteReq;
 
+/**
+ * by zhaozhifeng 2023-11-10
+ * by organwalk 2023-11-29
+ */
 public interface CommentService {
     //在指定课程下发布评论
     MsgRespond insertCommentOne(String request);

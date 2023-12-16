@@ -6,6 +6,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * 配置文件路径
+ * by organwalk 2023-11-02
+ */
 @Configuration
 @Getter
 public class AppConfig {

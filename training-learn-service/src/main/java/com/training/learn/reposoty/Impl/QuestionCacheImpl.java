@@ -14,6 +14,10 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * by zhaozhifeng 2023-11-20
+ * by organwalk 2023-11-25
+ */
 @Component
 @AllArgsConstructor
 public class QuestionCacheImpl implements QuestionCache {

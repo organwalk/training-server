@@ -30,6 +30,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
+/**
+ * 定义推送服务持久化业务具体实现
+ * by organwalk 2023-11-29
+ */
 @Service
 @AllArgsConstructor
 @Transactional

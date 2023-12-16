@@ -5,6 +5,11 @@ import com.training.progress.entity.table.ProgressLesson;
 import java.text.DecimalFormat;
 import java.util.List;
 
+/**
+ * by linguowei 2023-11-01
+ * by zhaozhifeng 2023-11-06
+ * by organwalk 2023-12-11
+ */
 //计算工具类
 public class ComputeUtil {
 

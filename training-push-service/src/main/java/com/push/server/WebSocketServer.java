@@ -22,6 +22,10 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+/**
+ * websocket端点服务
+ * by organwalk 2023-11-29
+ */
 @ServerEndpoint(value = "/push/{uid}/{username}")
 @Component
 public class WebSocketServer {

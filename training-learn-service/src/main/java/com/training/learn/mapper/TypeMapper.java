@@ -4,6 +4,9 @@ import com.training.learn.entity.table.TypeTable;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 
+/**
+ * by zhaozhifeng 11-20
+ */
 @Mapper
 public interface TypeMapper {
     //获取指定重要程度的分数
