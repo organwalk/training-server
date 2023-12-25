@@ -17,4 +17,6 @@ public interface ProgressClient {
                                                        @PathVariable Integer student_id,
                                                        @PathVariable Integer page_size,
                                                        @PathVariable Integer offset);
+    @GetExchange("/v1/lesson/student/list/{lessonId}")
+    CompletableFuture<JSONObject> getStudentIdList(@PathVariable Integer lessonId);
 }

@@ -1,5 +1,6 @@
 package com.training.learn.mapper;
 
+import com.training.learn.entity.result.AvgScore;
 import com.training.learn.entity.table.ScoreTable;
 import org.apache.ibatis.annotations.*;
 
@@ -30,18 +31,16 @@ public interface ScoreMapper {
             "GROUP BY composite_score  ORDER BY composite_score desc")
     List<Integer> getCompositeScoreRank(Integer test_id);
     //获取指定测试的成绩列表
-    @Select("select * from t_learn_test_score where test_id=#{test_id}")
-    List<ScoreTable> getAllScoreByTestId(int test_id);
-    //获取指定测试的总分的平均数
-    @Select("SELECT AVG(composite_score) FROM t_learn_test_score WHERE test_id = #{test_id}")
-    Double getComposite_scoreAVGByTestId(int test_id);
-    //获取指定测试的必须类别题综合得分的平均数
-    @Select("select  AVG(must_type_composite_score) from t_learn_test_score where test_id=#{test_id}")
-    Double getMustCompositeScoreAVGByTestId(int test_id);
-    //获取指定测试的重要类别题综合得分的平均数
-    @Select("select  AVG(important_type_composite_score) from t_learn_test_score where test_id=#{test_id}")
-    Double getImportanceCompositeScoreAVGByTestId(int test_id);
-    //获取指定测试的一般类别题综合得分的平均数
-    @Select("select  AVG(normal_type_composite_score) from t_learn_test_score where test_id=#{test_id}")
-    Double getNormalCompositeScoreAVGByTestId(int test_id);
+    @Select("select count(id) from t_learn_test_score where test_id = #{testId}")
+    Integer countAllScoreByTestId(Integer testId);
+    @Select("select * from t_learn_test_score where test_id=#{test_id} limit #{pageSize} offset #{offset}")
+    List<ScoreTable> getAllScoreByTestId(@Param("test_id") int test_id,
+                                         @Param("pageSize") Integer pageSize,
+                                         @Param("offset") Integer offset);
+
+    @Select("select AVG(composite_score) as avg_com_score, " +
+            "AVG(must_type_composite_score) as avg_must_com_score, " +
+            "AVG(important_type_composite_score) as avg_imp_com_score, AVG(normal_type_composite_score) as avg_nor_com_score " +
+            "from t_learn_test_score where test_id = #{testId}")
+    AvgScore getAvgCompositeScoreByTestId(Integer testId);
 }

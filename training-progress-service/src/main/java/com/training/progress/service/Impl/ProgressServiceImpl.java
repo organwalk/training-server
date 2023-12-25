@@ -358,6 +358,14 @@ public class ProgressServiceImpl implements ProgressService {
         return MsgRespond.success("修改成功！");
     }
 
+    @Override
+    public DataRespond getStudentIdList(Integer lessonId) {
+        List<Integer> studentIdList = lessonMapper.getStudentIdList(lessonId);
+        return studentIdList.isEmpty()
+                ? new DataFailRespond("fail")
+                : new DataSuccessRespond("success", studentIdList);
+    }
+
 
     /**
      * 根据id判断学生是否存在

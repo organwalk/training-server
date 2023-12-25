@@ -31,7 +31,7 @@ import java.util.concurrent.Executors;
 public class WebSocketServer {
     private static final Logger logger = LogManager.getLogger(WebSocketServer.class);
 
-    private static final ConcurrentMap<Integer, Session> sessionMap = new ConcurrentHashMap<>();
+    public static final ConcurrentMap<Integer, Session> sessionMap = new ConcurrentHashMap<>();
     private static NotificationService notificationService;
 
     @Autowired
@@ -47,13 +47,9 @@ public class WebSocketServer {
 
     @OnOpen
     public void onOpen(@PathParam("uid") Integer uid,
-
                        @PathParam("access_token") String access_token,  Session session) {
-
         sessionMap.put(uid, session);
         logger.info("用户uid={}上线, 当前服务在线人数为：{}", uid, sessionMap.size());
-
-
     }
 
     @OnClose
@@ -71,18 +67,7 @@ public class WebSocketServer {
         JSONObject authInfo =  userClient.getUserAuthInfo(username);
         String realAccessToken = (String) authInfo.get("access_token");
         if (Objects.equals(pushNotification.getAccess_token(), realAccessToken)){
-            // 将通知插入数据库中
-            notificationService.notificationUser(pushNotification, uid);
-            // 为在线用户实时推送消息
-            try (ExecutorService executorService = Executors.newFixedThreadPool(10)) {
-                pushNotification.getNotification_receiver_list().forEach(receiverId -> {
-                    Session session = sessionMap.get(receiverId);
-                    if (Objects.nonNull(session)) {
-                        executorService.submit(() -> sendMessageToUidList(sessionMap.get(receiverId), pushNotification));
-                    }
-                });
-                executorService.shutdown();
-            }
+            pushNotification(pushNotification, uid);
         }else {
             try {
                 Session session = sessionMap.get(uid);
@@ -98,6 +83,20 @@ public class WebSocketServer {
         logger.error(error);
     }
 
+    public void pushNotification(PushNotification pushNotification, Integer uid) {
+        // 将通知插入数据库中
+        notificationService.notificationUser(pushNotification, uid);
+        // 为在线用户实时推送消息
+        try (ExecutorService executorService = Executors.newFixedThreadPool(10)) {
+            pushNotification.getNotification_receiver_list().forEach(receiverId -> {
+                Session session = sessionMap.get(receiverId);
+                if (Objects.nonNull(session)) {
+                    executorService.submit(() -> sendMessageToUidList(sessionMap.get(receiverId), pushNotification));
+                }
+            });
+            executorService.shutdown();
+        }
+    }
 
     private void sendMessageToUidList(Session session, PushNotification pushNotification) {
         String message = pushNotification.getNotification_content();

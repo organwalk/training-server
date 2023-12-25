@@ -35,4 +35,8 @@ public interface ResourceNoteMapper {
     // 根据笔记ID获取笔记名
     @Select("select note_title from t_resource_note where id = #{noteId}")
     String selectNoteTitleById(Integer noteId);
+
+    @Select("select id, lesson_id, chapter_id, up_id, note_title, note_des, note_path, up_datetime " +
+            "from t_resource_note where id = #{noteId}")
+    ResourceNoteTable selectNoteDetail(Integer noteId);
 }

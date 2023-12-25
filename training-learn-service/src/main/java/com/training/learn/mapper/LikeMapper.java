@@ -10,16 +10,13 @@ import org.apache.ibatis.annotations.*;
 @Mapper
 public interface LikeMapper {
     @Insert("insert into t_learn_like(user_id, comment_id, state, create_datetime) VALUES(#{user_id},#{comment_id},#{state},#{create_datetime}) ")
-    Integer likeComment(@Param("user_id")int user_id,@Param("comment_id")int comment_id,@Param("state")int state,@Param("create_datetime")String create_datetime);
+    void likeComment(@Param("user_id")int user_id,@Param("comment_id")int comment_id,@Param("state")int state,@Param("create_datetime")String create_datetime);
 
     @Select("select state from t_learn_like where comment_id=#{comment_id} and user_id=#{user_id}")
     Integer judgeLikeOrNot(@Param("comment_id")int comment_id,@Param("user_id")int user_id);
 
-    @Update("update t_learn_like set state=0 where comment_id=#{comment_id} and user_id=#{user_id}")
-    Integer updateStateToZero(@Param("comment_id")int comment_id,@Param("user_id")int user_id);
-
     @Update(("update t_learn_like set state=1 where comment_id=#{comment_id} and user_id=#{user_id}"))
-    Integer updateStateToOne(@Param("comment_id")int comment_id,@Param("user_id")int user_id);
+    void updateStateToOne(@Param("comment_id")int comment_id,@Param("user_id")int user_id);
 
     @Select("select COUNT(id) from t_learn_like where comment_id=#{comment_id} and reply_id IS NULL and state=1")
     Integer getCommentLikeCount(int comment_id);

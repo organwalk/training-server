@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -35,13 +36,13 @@ public class LikeCacheImpl implements LikeCache {
     @Override
     public Object getCommentLike(String key, String field) {
         String NewKey = "Learn-"+key+"-Comment-Like-List";
-        return (Integer) redisTemplate.opsForHash().get(NewKey,field);
+        return redisTemplate.opsForHash().get(NewKey,field);
     }
 
     @Override
     public Object getReplyLike(String key, String field) {
         String NewKey = "Learn-"+key+"-Reply-Like-List";
-        return (Integer) redisTemplate.opsForHash().get(NewKey,field);
+        return redisTemplate.opsForHash().get(NewKey,field);
     }
 
     @Override
@@ -54,5 +55,20 @@ public class LikeCacheImpl implements LikeCache {
     public void deleteReplyLike(String key, String field) {
         String NewKey = "Learn-"+key+"-Reply-Like-List";
         redisTemplate.opsForHash().delete(NewKey,field);
+    }
+
+    private static final String COMMENT_LESSON_KEY = "Comment-Lesson-ID-";
+    @Override
+    public void cacheCommentLessonId(Integer commentId, Integer LessonId, Integer userId) {
+        String key = COMMENT_LESSON_KEY + commentId;
+        redisTemplate.opsForValue().set(key, LessonId + "-" + userId);
+        redisTemplate.expire(key, 1800, TimeUnit.SECONDS);
+    }
+
+    @Override
+    public String getCommentLessonIdCache(Integer commentId) {
+        String key = COMMENT_LESSON_KEY + commentId;
+        Object value = redisTemplate.opsForValue().get(key);
+        return Objects.isNull(value) ? "" : (String) value;
     }
 }

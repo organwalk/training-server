@@ -6,12 +6,15 @@ import com.alibaba.fastjson.TypeReference;
 import com.training.common.entity.*;
 import com.training.learn.client.PlanClient;
 import com.training.learn.client.UserClient;
+import com.training.learn.entity.msg.TestMsg;
 import com.training.learn.entity.request.*;
 
 import com.training.learn.entity.result.*;
 import com.training.learn.entity.table.*;
 import com.training.learn.mapper.*;
+import com.training.learn.producer.EventProcessMsgProducer;
 import com.training.learn.reposoty.QuestionCache;
+import com.training.learn.reposoty.TestCache;
 import com.training.learn.service.TestService;
 import com.training.learn.utils.ComputeUtil;
 import lombok.AllArgsConstructor;
@@ -46,6 +49,8 @@ public class TestServiceImpl implements TestService {
     private final UserClient userClient;
     private final PlanClient planClient;
     private final QuestionCache questionCache;
+    private final TestCache testCache;
+    private final EventProcessMsgProducer eventProcessMsgProducer;
 
 
     /**
@@ -56,36 +61,44 @@ public class TestServiceImpl implements TestService {
      * 2023/11/14
      */
     @Override
-    public MsgRespond creatTest(TestReq req) throws ParseException {
-        //判断用户的教师身份
-        String TeaMark = judgeTea(req.getTeacher_id());
-        if (!TeaMark.isBlank()) {
-            return MsgRespond.fail(TeaMark);
-        }
+    public MsgRespond creatTest(TestReq req) {
+
         //判断教师是否是该课程的授课教师
         String TeaInLessonMark = judgeTeaInInLesson(req.getTeacher_id(), req.getLesson_id());
         if (!TeaInLessonMark.isBlank()) {
             return MsgRespond.fail(TeaInLessonMark);
         }
+
         //判断测试名称是否已经存在
         Test test = testMapper.judgeTitleExit(req.getTest_title());
         if (test != null) {
             return MsgRespond.fail("该试题已经存在！");
         }
-        SimpleDateFormat si = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        //判断结束时间是否早于起始时间
-        if (si.parse(req.getStart_datetime()).getTime() > si.parse(req.getEnd_datetime()).getTime()) {
-            return MsgRespond.fail("结束时间不得早于起始时间！");
-        }
-        //判断起始时间是否早于现在
-        if (si.parse(req.getStart_datetime()).getTime() < System.currentTimeMillis()) {
-            return MsgRespond.fail("起始时间不得早于现在！");
+
+        //判断起始和截止时间的合法性
+        String validDateTimeMsg = validDateTime(req.getStart_datetime(), req.getEnd_datetime());
+        if (!validDateTimeMsg.isBlank()) {
+            return MsgRespond.fail(validDateTimeMsg);
         }
 
         req.setIsRelease(0);
 
         Integer i = testMapper.creatTest(req);
         return i > 0 ? MsgRespond.success("已成功创建此试卷") : MsgRespond.fail("创建试卷失败！");
+    }
+
+    @SneakyThrows
+    private String validDateTime(String startDatetime, String endDatetime) {
+        SimpleDateFormat si = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        //判断结束时间是否早于起始时间
+        if (si.parse(startDatetime).getTime() > si.parse(endDatetime).getTime()) {
+            return "结束时间不得早于起始时间！";
+        }
+        //判断起始时间是否早于现在
+        if (si.parse(startDatetime).getTime() < System.currentTimeMillis()) {
+            return "起始时间不得早于现在！";
+        }
+        return "";
     }
 
 
@@ -123,7 +136,6 @@ public class TestServiceImpl implements TestService {
             optionMapper.insertOption(jsonString, question.getIs_more(), questionTable.getId());
         }
         questionCache.deleteQuestion(test_id);
-
         return MsgRespond.success("已成功编辑试卷");
     }
 
@@ -162,7 +174,7 @@ public class TestServiceImpl implements TestService {
         }
         // 判断是否存在时间冲突考试
         Test timeConflictObj = testMapper.getTimeConflictTest(test.getStart_datetime(), test.getEnd_datetime());
-        if (Objects.nonNull(timeConflictObj)){
+        if (Objects.nonNull(timeConflictObj)) {
             return MsgRespond.fail("发布失败！原因：与考试《" + timeConflictObj.getTest_title() + "》时间冲突，" + timeConflictObj.getStart_datetime() + "至" + timeConflictObj.getEnd_datetime());
         }
         testMapper.updateIsRelease(test_id, date, 1);
@@ -234,7 +246,7 @@ public class TestServiceImpl implements TestService {
                 return new DataFailRespond("考生无法查看尚未发布的试卷");
             }
             // 校验考试时间
-            String msg = validDateTime(test.getStart_datetime(), test.getEnd_datetime());
+            String msg = validTestTime(test.getStart_datetime(), test.getEnd_datetime());
             if (!msg.isBlank()) return new DataFailRespond(msg);
             // 获取缓存
             List<StuQuestionResult.Question> questionList = questionCache.getStuQuestion(test_id, auth);
@@ -266,9 +278,6 @@ public class TestServiceImpl implements TestService {
             if (Objects.isNull(questionList) || questionList.isEmpty()) {
                 // 如果处于未发布状态，说明暂存试题不存在或已过期
                 questionList = new ArrayList<>();
-                if (test.getIsRelease() == 0) {
-                    return new DataSuccessRespond("未能获取到暂存试题", new TeaQuestionResult(test.getTest_title(), test.getStart_datetime(), test.getEnd_datetime(), questionList));
-                }
 
                 List<Integer> allQuestionIdList = questionMapper.getIdByTestId(test_id);
                 //获取测试详细信息
@@ -328,18 +337,7 @@ public class TestServiceImpl implements TestService {
         if ((end_datetime.getTime() <= currentTimestamp) && (new_end_datetime >= currentTimestamp)) {
             return MsgRespond.fail("考试结果正在处理中，无法删除此试卷");
         }
-        //获取指定测试的所有试题id
-        List<Integer> AllQuestionId = questionMapper.getIdByTestId(test_id);
-        //删除指定测试的所有选项
-        for (Integer i : AllQuestionId) {
-            optionMapper.deleteByQuesId(i);
-        }
-        //删除所有学生答案信息
-        answerMapper.deleteQuestionByTestId(test_id);
-        //删除所有测试试题
-        questionMapper.deleteQuestionByTestId(test_id);
-        //删除该测试下的分数
-        scoreMapper.deleteByTestId(test_id);
+
         //删除该测试信息
         testMapper.deleteTestById(test_id);
         //删除测试缓存
@@ -359,30 +357,27 @@ public class TestServiceImpl implements TestService {
      * @param test_id    测试id
      * @param student_id 学生id
      * @return 根据处理结果返回对应消息
-     * 2023/11/14
+     * by organwalk 2023-12-25
      */
     @Override
     public MsgRespond StuSubmitQuestion(int test_id, int student_id, AnswerRequest answerRequest) throws ParseException {
-        //判断学生身份
-        String StuMark = judgeStu(student_id);
-        if (!StuMark.isBlank()) {
-            return MsgRespond.fail(StuMark);
-        }
-        //判断测试是否存在
-        Test test = testMapper.getTestById(test_id);
-        if (test == null) {
-            return MsgRespond.fail("该试题不存在！");
-        }
-        //判断该学生是否有该测试的成绩
-        Integer ScoreMark = scoreMapper.judgeExitByTestIdAndStuId(test_id, student_id);
-        if (ScoreMark != null) {
-            return MsgRespond.fail("试题已经提交");
-        }
-
         SimpleDateFormat si = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         long currentTimestamp = System.currentTimeMillis();
-        Date start_datetime = si.parse(test.getStart_datetime());
-        Date end_datetime = si.parse(test.getEnd_datetime());
+
+        //判断测试是否存在
+        String testTime = testCache.getTestTimeCache(test_id);
+        if (testTime.isBlank()) {
+            Test test = testMapper.getTestById(test_id);
+            if (test == null) {
+                return MsgRespond.fail("该试题不存在！");
+            }
+            testCache.cacheTestDateTime(test_id, test.getStart_datetime(), test.getEnd_datetime(), test.getLesson_id());
+            testTime = test.getStart_datetime() + "_" + test.getEnd_datetime() + "__" + test.getLesson_id();
+        }
+
+        Date start_datetime = si.parse(testTime.split("_")[0]);
+        Date end_datetime = si.parse(testTime.split("_")[1]);
+
         //判断当前时间是否早于测试开始时间
         if (start_datetime.getTime() > currentTimestamp) {
             return MsgRespond.fail("考试尚未开始，无法进行交卷");
@@ -392,46 +387,16 @@ public class TestServiceImpl implements TestService {
             return MsgRespond.fail("考试已经结束，无法进行交卷");
         }
 
-        double must_score = 0;
-        //获取必须类别题详细
-        TypeTable mustType = typeMapper.getTypeById(1);
-        Integer must_type = mustType.getScore();
-        //获取重要类别题详细
-        double importance_score = 0;
-        TypeTable importanceType = typeMapper.getTypeById(2);
-        Integer importance_type = importanceType.getScore();
-        //获取一般综合类别题详细
-        double normal_score = 0;
-        TypeTable normalType = typeMapper.getTypeById(3);
-        Integer normal_type = normalType.getScore();
-        String Date = getNowTime();
-        String answer_result = JSON.toJSONString(answerRequest.getAnswers());
-        if (answerRequest.getAnswers().size() == 1 && Objects.isNull(answerRequest.getAnswers().get(0).getQ_id())){
-            answerMapper.insertAnswer(answer_result, student_id, test_id, Date);
-            scoreMapper.insertScore(0, 0, 0, 0, student_id, test_id);
-            return MsgRespond.success("您因多次切换考试页面，被系统于" + Date + "自动交卷，并被标记为零分卷");
-        }
-        for (AnswerRequest.Answer answer : answerRequest.getAnswers()) {
-            String true_answer = questionMapper.getAnswerById(answer.getQ_id());
-            Integer importanceId = questionMapper.getImportanceIdById(answer.getQ_id());
-            if (Objects.equals(true_answer, answer.getAnswer())) {
-                if (importanceId == 1) {
-                    must_score += must_type * mustType.getWeight();
-                } else if (importanceId == 2) {
-                    importance_score += importance_type * importanceType.getWeight();
-                } else if (importanceId == 3) {
-                    normal_score += normal_type * normalType.getWeight();
-                }
-            }
-        }
-
-        //获取综合得分
-        double result_all_score = must_score + importance_score + normal_score;
-        //插入学生答案
-        answerMapper.insertAnswer(answer_result, student_id, test_id, Date);
-        //插入学生得分
-        scoreMapper.insertScore(result_all_score, must_score, importance_score, normal_score, student_id, test_id);
-        return MsgRespond.success("交卷成功！交卷时间为：" + Date + "。可在考试结束后5分钟查看考试结果");
+        // 触发生产考试结果处理消息至队列
+        eventProcessMsgProducer.triggerTestProcess(new TestMsg(
+                String.valueOf(UUID.randomUUID()),
+                getNowTime(),
+                test_id,
+                student_id,
+                Integer.valueOf(testTime.split("__")[1]),
+                answerRequest
+        ));
+        return MsgRespond.success("已提交处理");
     }
 
 
@@ -445,21 +410,14 @@ public class TestServiceImpl implements TestService {
      */
     @Override
     public DataRespond getResultOfTest(int test_id, int student_id) {
-        //判断测试是否存在
-        Test test = testMapper.getTestById(test_id);
-        if (test == null) {
-            return new DataFailRespond("该测试不存在！");
-        }
-        //判断学生身份
-        String StuMark = judgeStu(student_id);
-        if (!StuMark.isBlank()) {
-            return new DataFailRespond("该用户不是学生！");
-        }
         //判断该学生是否有成绩
         ScoreTable scoreTable = scoreMapper.getByTestIdAndStuId(test_id, student_id);
-        if (scoreTable == null || scoreTable.getComposite_score() == 0) {
+        if (scoreTable == null) {
+            return new DataSuccessRespond("该学员暂无成绩", new RankResult(0, "缺考", 0));
+        } else if (scoreTable.getComposite_score() == 0) {
             return new DataSuccessRespond("该学员为零分卷", new RankResult(0, "零分卷", 0));
         }
+
         //获取评估级别
         String level = judgeLevel(scoreTable.getComposite_score());
         List<Integer> rankList = scoreMapper.getCompositeScoreRank(test_id);
@@ -479,13 +437,12 @@ public class TestServiceImpl implements TestService {
      */
     @Override
     public DataRespond TeaGetAllScore(int test_id, int page_size, int offset) {
-        //判断测试是否存在
-        Test test = testMapper.getTestById(test_id);
-        if (test == null) {
-            return new DataFailRespond("该测试不存在！");
+        Integer sumMark = scoreMapper.countAllScoreByTestId(test_id);
+        if (Objects.isNull(sumMark)) {
+            return new DataFailRespond("未能成功获取指定测试的成绩列表");
         }
         //获取指定测试的成绩列表
-        List<ScoreTable> scoreTables = scoreMapper.getAllScoreByTestId(test_id);
+        List<ScoreTable> scoreTables = scoreMapper.getAllScoreByTestId(test_id, page_size, offset);
         List<ScoreResult> scoreResultList = new ArrayList<>();
         //循环获取课程下每个学生姓名，成绩，排名等
         for (ScoreTable scoreTable : scoreTables) {
@@ -494,10 +451,8 @@ public class TestServiceImpl implements TestService {
             ScoreResult scoreResult = getScoreResult(scoreTable, realName);
             scoreResultList.add(scoreResult);
         }
-        //实现分页
-        int endIndex = Math.min(offset + page_size, scoreResultList.size());
-        List<ScoreResult> results = scoreResultList.subList(offset, endIndex);
-        return new DataPagingSuccessRespond("已成功返回评估报告列表", scoreResultList.size(), results);
+
+        return new DataPagingSuccessRespond("已成功返回评估报告列表", sumMark, scoreResultList);
     }
 
     @NotNull
@@ -519,38 +474,33 @@ public class TestServiceImpl implements TestService {
      */
     @Override
     public DataRespond getLessonAllScore(int lesson_id, int page_size, int offset) {
-        //判断课程是否存在
-        String LessonMark = judgeLessonExit(lesson_id);
-        if (!LessonMark.isBlank()) {
-            return new DataFailRespond(LessonMark);
+        Integer sumMark = testMapper.countAllIdByLessonId(lesson_id);
+        if (Objects.isNull(sumMark)) {
+            return new DataFailRespond("未能获取到测试列表");
         }
-        //判断指定课程下的所有测试id
-        List<Integer> allTestIdList = testMapper.getAllIdByLessonId(lesson_id);
-        if (allTestIdList == null) {
-            return new DataFailRespond("该课程不包含测试！");
-        }
-
+        List<Integer> allTestIdList = testMapper.getAllIdByLessonId(lesson_id, page_size, offset);
         List<LessonScoreResult> list = new ArrayList<>();
         for (Integer i : allTestIdList) {
-            //综合分数平均分
-            Double mapper_com_sco = scoreMapper.getComposite_scoreAVGByTestId(i);
-            double composite_score = mapper_com_sco == null ? 0 : mapper_com_sco;
-            //必须类别题型综合分数平均分
-            Double mapper_must_com_sco = scoreMapper.getMustCompositeScoreAVGByTestId(i);
-            double must_composite_score = mapper_must_com_sco == null ? 0 : mapper_must_com_sco;
-            //重要类别题型综合分数平均分
-            Double mapper_imp_com_sco = scoreMapper.getImportanceCompositeScoreAVGByTestId(i);
-            double importance_composite_score = mapper_imp_com_sco == null ? 0 : mapper_imp_com_sco;
-            //普通类别题型综合分数平均分
-            Double mapper_nor_com_sco = scoreMapper.getNormalCompositeScoreAVGByTestId(i);
-            double normal_composite_score = mapper_nor_com_sco == null ? 0 : mapper_nor_com_sco;
-            LessonScoreResult lessonScoreResult = new LessonScoreResult(i, composite_score, must_composite_score, importance_composite_score, normal_composite_score);
-            list.add(lessonScoreResult);
+            AvgScore avgScore = scoreMapper.getAvgCompositeScoreByTestId(i);
+            if (Objects.nonNull(avgScore)) {
+                list.add(getLessonScoreResult(avgScore, i));
+            } else {
+                list.add(new LessonScoreResult(i, 0.0, 0.0, 0.0, 0.0));
+            }
         }
-        //实现分页查询
-        int endIndex = Math.min(offset + page_size, list.size());
-        List<LessonScoreResult> result = list.subList(offset, endIndex);
-        return new DataPagingSuccessRespond("已成功获得该课程下的各项测验平均成绩列表", list.size(), result);
+        return new DataPagingSuccessRespond("已成功获得该课程下的各项测验平均成绩列表", sumMark, list);
+    }
+
+    private LessonScoreResult getLessonScoreResult(AvgScore avgScore, Integer i) {
+        double composite_score = getDouble(avgScore.getAvgComScore());
+        double must_composite_score = getDouble(avgScore.getAvgMustComScore());
+        double importance_composite_score = getDouble(avgScore.getAvgImpComScore());
+        double normal_composite_score = getDouble(avgScore.getAvgNorComScore());
+        return new LessonScoreResult(i, composite_score, must_composite_score, importance_composite_score, normal_composite_score);
+    }
+
+    private double getDouble(Double inputDouble) {
+        return inputDouble == null ? 0.0 : inputDouble;
     }
 
 
@@ -571,8 +521,6 @@ public class TestServiceImpl implements TestService {
         SimpleDateFormat si = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         Date start_time = si.parse(updateTestReq.getStart_datetime());
         Date end_time = si.parse(updateTestReq.getEnd_datetime());
-        System.out.println(start_time);
-        System.out.println(end_time);
 
         long currentTimestamp = System.currentTimeMillis();
         //判断起始时间是否晚于结束时间
@@ -580,19 +528,13 @@ public class TestServiceImpl implements TestService {
             return MsgRespond.fail("结束时间不得早于开始时间！");
         }
         //判断试卷是否发布，如果未发布，则起始时间必须晚于现在
-        if (test.getIsRelease() == 0) {
-            if (start_time.getTime() < currentTimestamp) {
-                return MsgRespond.fail("考试开始时间不得早于现在！");
-            }
+        if (test.getIsRelease() == 0 && start_time.getTime() < currentTimestamp) {
+            return MsgRespond.fail("考试开始时间不得早于现在！");
         }
         //如果已经发布，则考试发布时间不可晚于考试开始时间
-        if (test.getIsRelease() == 1) {
-            Date creat_time = si.parse(test.getCreat_datetime());
-            if (creat_time.getTime() > start_time.getTime()) {
-                return MsgRespond.fail("考试开始时间不可早于试卷的发布时间");
-            }
+        if (test.getIsRelease() == 1 && si.parse(test.getCreat_datetime()).getTime() > start_time.getTime()) {
+            return MsgRespond.fail("考试开始时间不可早于试卷的发布时间");
         }
-
         testMapper.updateTest(updateTestReq.getTest_title(), updateTestReq.getStart_datetime(), updateTestReq.getEnd_datetime(), id);
         return MsgRespond.success("已成功编辑此试卷信息");
     }
@@ -611,27 +553,26 @@ public class TestServiceImpl implements TestService {
         //判断测试是否存在
         Test test = testMapper.getTestById(test_id);
         if (test == null) {
-            return MsgRespond.fail("该试题不存在！");
+            return MsgRespond.fail("该试卷不存在！");
         }
         //判断该测试下是否已经有试题
         Integer idMark = questionMapper.getQuestionByTestId(test_id);
         if (Objects.nonNull(idMark)) {
-            return MsgRespond.fail("试题已正式提交，无法暂存");
+            return MsgRespond.fail("试题已正式提交，无需暂存");
         }
-        Integer isRelease = testMapper.getReleaseState(test_id);
-        if (isRelease == 1) {
-            return MsgRespond.fail("该测试已经发布！");
-        }
+
         //判断是否修改
         if ((!Objects.equals(test.getTest_title(), req.getTest_title())) || (!Objects.equals(test.getStart_datetime(), req.getStart_datetime())) || (!Objects.equals(test.getEnd_datetime(), req.getEnd_datetime()))) {
             testMapper.updateTest(req.getTest_title(), req.getStart_datetime(), req.getEnd_datetime(), test_id);
         }
+
         //获取暂存缓存
         List<CacheReq.Question> list = questionCache.getCache(test_id);
         //判断暂存缓存是否为空，非空则删除
         if (Objects.nonNull(list)) {
             questionCache.deleteQuestion(test_id);
         }
+
         //保存新的暂存试卷
         questionCache.saveCache(test_id, req);
         return MsgRespond.success("暂存成功。暂存时限为七日，七日后若试卷未作任何进一步编辑，则自动销毁");
@@ -674,7 +615,7 @@ public class TestServiceImpl implements TestService {
     @Override
     public DataRespond getIsOverTestPaperIdList(Integer studentId, Integer testId) {
         Integer countMark = answerMapper.countOverTest(studentId, testId);
-        if (Objects.isNull(countMark) || countMark == 0){
+        if (Objects.isNull(countMark)) {
             return new DataSuccessRespond("未完成作答", false);
         }
         return new DataSuccessRespond("已完成作答", true);
@@ -709,28 +650,15 @@ public class TestServiceImpl implements TestService {
      */
     private String judgeTeaInInLesson(int teacher_id, int lesson_id) {
         JSONObject req = planClient.getLessonInfo(lesson_id);
+        if (Objects.equals(req.getInteger("code"), 5005)) {
+            return "请求数据有误";
+        }
         JSONObject data = req.getJSONObject("data");
         Integer TeaId = data.getInteger("teacher_id");
         if (Objects.equals(TeaId, teacher_id)) {
             return "";
         }
         return "该教师不是此课程教师！";
-    }
-
-
-    /**
-     * 判断课程是否存在
-     *
-     * @param lesson_id 课程id
-     * @return 根据处理结果返回对应消息
-     * 2023/11/15
-     */
-    private String judgeLessonExit(int lesson_id) {
-        JSONObject req = planClient.getLessonInfo(lesson_id);
-        if (Objects.equals(req.get("code"), 5005)) {
-            return "该课程不存在！";
-        }
-        return "";
     }
 
 
@@ -758,23 +686,6 @@ public class TestServiceImpl implements TestService {
         Integer important_score = typeMapper.getScoreById(2);
         Integer general_score = typeMapper.getScoreById(3);
         return ComputeUtil.judgeScore(must_score, important_score, general_score, req);
-    }
-
-
-    /**
-     * 判断用户是否是学生
-     *
-     * @param student_id 学生id
-     * @return 根据处理结果返回对应消息
-     * 2023/11/15
-     */
-    private String judgeStu(int student_id) {
-        JSONObject req = userClient.getUserAccountByUid(student_id);
-        JSONObject data = req.getJSONObject("data");
-        if (data.getInteger("authId") == 1) {
-            return "";
-        }
-        return "该用户不是学生！";
     }
 
 
@@ -811,9 +722,8 @@ public class TestServiceImpl implements TestService {
         return level;
     }
 
-
     @SneakyThrows
-    private String validDateTime(String startDateTime, String endDateTime) {
+    private String validTestTime(String startDateTime, String endDateTime) {
         SimpleDateFormat si = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         //判断当前时间是否早于起始时间时
         if (si.parse(startDateTime).getTime() > System.currentTimeMillis()) {
@@ -825,5 +735,6 @@ public class TestServiceImpl implements TestService {
         }
         return "";
     }
+
 
 }

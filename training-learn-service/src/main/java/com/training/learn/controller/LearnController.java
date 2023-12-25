@@ -77,13 +77,6 @@ public class LearnController {
     }
 
 
-    //指定课程发布评论
-    @PostMapping("/v1/lesson/comment")
-    public MsgRespond insertLessonContent(@RequestBody String request) {
-        return commentService.insertCommentOne(request);
-    }
-
-
     //指定课程章节下发布评论
     @PostMapping("/v1/lesson/chapter/comment")
     public MsgRespond insertChapterContent(@RequestBody String request) {
@@ -119,23 +112,6 @@ public class LearnController {
                                            int state
     ) {
         return likeService.LikeComment(user_id, comment_id, state);
-    }
-
-
-    //获取课程的评论列表
-    @GetMapping("/v1/comment/lesson/{lesson_id}/{user_id}/{page_size}/{offset}")
-    public DataRespond getCommentList(@PathVariable
-                                      @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "lesson_id必须为纯数字字段")
-                                      int lesson_id,
-                                      @PathVariable
-                                      @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "user_id必须为纯数字字段")
-                                      int user_id,
-                                      @PathVariable
-                                      @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "page_size必须为纯数字字段")
-                                      int page_size, @PathVariable
-                                      @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "offset必须为纯数字字段")
-                                      int offset) {
-        return replyService.getCommentList(lesson_id, user_id, page_size, offset);
     }
 
 
@@ -203,7 +179,7 @@ public class LearnController {
 
     //删除指定跟帖回复
     @DeleteMapping("/v1/reply/{reply_id}")
-    public MsgRespond DeletReply(@PathVariable
+    public MsgRespond DeleteReply(@PathVariable
                                  @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "reply_id必须为纯数字字段")
                                  int reply_id) {
         return replyService.deleteReply(reply_id);

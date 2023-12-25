@@ -17,8 +17,6 @@ public interface CommentMapper {
     @Insert("insert into t_learn_comment(user_id, lesson_id, chapter_id, content,create_datetime)values (#{user_id},#{lesson_id},#{chapter_id},#{content},#{create_datetime})")
     Integer insertCommentTwo(@Param("user_id")int user_id,@Param("lesson_id")int lesson_id,@Param("chapter_id")int chapter_id,@Param("content")String content,@Param("create_datetime")String create_datetime);
 
-    @Select("select id from t_lesson_chapter where lesson_id=#{lesson_id}")
-    List<Integer> judgeChapterExit(int lesson_id);
 
     @Select("select COUNT(id) from t_learn_comment where id=#{id}")
     Integer judgeCommentExit(int id);
@@ -60,6 +58,6 @@ public interface CommentMapper {
     @Delete("delete from t_learn_comment where id=#{id}")
     Integer deleteCommentById(int id);
 
-    @Select("select * from t_learn_comment where id=#{id}")
+    @Select("select id, user_id, lesson_id, chapter_id, content, create_datetime from t_learn_comment where id=#{id}")
     Comment getCommentById(int id);
 }

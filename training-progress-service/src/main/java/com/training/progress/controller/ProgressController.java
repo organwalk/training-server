@@ -64,7 +64,7 @@ public class ProgressController {
     }
 
 
-    //获取培训计划进度列表()开发中
+    //获取培训计划进度列表
     @GetMapping("/v3/plan/persent/{page_size}/{offset}")
     public DataRespond getAllPlanProgressList(@PathVariable
                                               @Min(value = 1, message = "page_size必须为大于1的整数")
@@ -173,5 +173,10 @@ public class ProgressController {
         return progressService.updateChapterSum(sum, lesson_id);
     }
 
+    // 获取指定课程下的学生ID列表
+    @GetMapping("/v1/lesson/student/list/{lessonId}")
+    public DataRespond getStudentIdList(@PathVariable Integer lessonId){
+        return progressService.getStudentIdList(lessonId);
+    }
 
 }

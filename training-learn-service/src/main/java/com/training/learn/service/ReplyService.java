@@ -14,9 +14,6 @@ public interface ReplyService {
     //回复跟帖
     DataRespond ThreadReply(String request);
 
-    //获取指定课程评论列表
-    DataRespond getCommentList(int lesson_id, int user_id, int page_size, int offset);
-
     //获取指定评论的回复列表
     DataRespond getReplyList(int comment_id, int user_id, int page_size, int offset);
 

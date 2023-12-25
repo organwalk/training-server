@@ -1,20 +1,17 @@
 package com.training.learn.service.Impl;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.training.common.entity.DataRespond;
 import com.training.common.entity.DataSuccessRespond;
 import com.training.common.entity.MsgRespond;
-import com.training.common.entity.req.UserInfoListReq;
-import com.training.learn.client.PlanClient;
 import com.training.learn.client.ResourceClient;
-import com.training.learn.client.UserClient;
 import com.training.learn.entity.request.NoteReq;
 
 import com.training.learn.entity.table.Comment;
 import com.training.learn.mapper.CommentMapper;
 import com.training.learn.mapper.ReplyMapper;
+import com.training.learn.producer.MsgProducer;
 import com.training.learn.reposoty.LikeCache;
 import com.training.learn.service.CommentService;
 import lombok.AllArgsConstructor;
@@ -23,7 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
@@ -38,50 +34,9 @@ import java.util.regex.Pattern;
 public class CommentServiceImpl implements CommentService {
     private final CommentMapper commentMapper;
     private final ReplyMapper replyMapper;
-    private final PlanClient planClient;
     private final ResourceClient resourceClient;
     private final LikeCache likeCache;
-    private final UserClient userClient;
-
-
-    /**
-     * 指定课程发布评论
-     *
-     * @param request 请求实体
-     * @return 根据处理结果返回对应消息
-     * 2023/11/7
-     */
-    @Override
-    public MsgRespond insertCommentOne(String request) {
-        //判断学生与课程的存在性
-        JSONObject jsonObject = JSON.parseObject(request);
-        int user_id = jsonObject.getInteger("user_id");
-        int lesson_id = jsonObject.getInteger("lesson_id");
-        String StuMark = judgeUser(user_id);
-        if (!StuMark.isBlank()) {
-            return MsgRespond.fail(StuMark);
-        }
-        String lessonMark = judgeLessonExit(lesson_id);
-        if (!lessonMark.isBlank()) {
-            return MsgRespond.fail(lessonMark);
-        }
-        //获取当前时间
-        String time = getNowTime();
-        //判断评论内容为普通字符串还是json字符串
-        Object content = jsonObject.get("content");
-        String contentString;
-        if (content instanceof String) {
-            contentString = (String) content;
-        } else {
-            contentString = JSON.toJSONString(content);
-        }
-        if (contentString.length() > 150) {
-            return MsgRespond.fail("评论字数不得超过150字");
-        }
-        //插入评论
-        Integer i = commentMapper.insertCommentOne(user_id, lesson_id, contentString, time);
-        return i > 0 ? MsgRespond.success("当前用户已成功评论此课程") : MsgRespond.fail("评论失败！");
-    }
+    private final MsgProducer msgProducer;
 
 
     /**
@@ -98,36 +53,27 @@ public class CommentServiceImpl implements CommentService {
         int user_id = jsonObject.getInteger("user_id");
         int lesson_id = jsonObject.getInteger("lesson_id");
         int chapter_id = jsonObject.getInteger("chapter_id");
-        //判断学生是否存在
-        String StuMark = judgeUser(user_id);
-        if (!StuMark.isBlank()) {
-            return MsgRespond.fail(StuMark);
+
+        // 生产者发送校验消息
+        String msg = msgProducer.triggerCommentMsg(user_id, lesson_id, chapter_id);
+        if (!Objects.equals(msg, "success")) {
+            return MsgRespond.fail(msg);
         }
-        //判断课程是否存在
-        String lessonMark = judgeLessonExit(lesson_id);
-        if (!lessonMark.isBlank()) {
-            return MsgRespond.fail(lessonMark);
-        }
-        //判断章节是否存在
-        String chapterMark = judgeChapterExit(lesson_id, chapter_id);
-        if (!chapterMark.isBlank()) {
-            return MsgRespond.fail(chapterMark);
-        }
-        //获取当前时间
-        String time = getNowTime();
+
         //判断评论内容为普通字符串或json字符串
         Object content = jsonObject.get("content");
         String contentString;
         if (content instanceof String) {
+            if (((String) content).length() > 150) {
+                return MsgRespond.fail("评论字数不得超过150字");
+            }
             contentString = (String) content;
         } else {
             contentString = JSON.toJSONString(content);
         }
-        if (contentString.length() > 150) {
-            return MsgRespond.fail("评论字数不得超过150字");
-        }
+
         //插入回复
-        Integer i = commentMapper.insertCommentTwo(user_id, lesson_id, chapter_id, contentString, time);
+        Integer i = commentMapper.insertCommentTwo(user_id, lesson_id, chapter_id, contentString, getNowTime());
         return i > 0 ? MsgRespond.success("评论成功") : MsgRespond.fail("评论失败！");
     }
 
@@ -185,22 +131,20 @@ public class CommentServiceImpl implements CommentService {
      */
     @Override
     public MsgRespond insertNote(Integer user_id, Integer lesson_id, Integer chapter_id, NoteReq noteReq) {
-        String StuMark = judgeUser(user_id);
-        if (!StuMark.isBlank()) {
-            return MsgRespond.fail(StuMark);
-        }
-        String LessonMark = judgeLessonExit(lesson_id);
-        if (!LessonMark.isBlank()) {
-            return MsgRespond.fail(LessonMark);
-        }
-        String ChapterInLesson = judgeChapterExit(lesson_id, chapter_id);
-        if (!ChapterInLesson.isBlank()) {
-            return MsgRespond.fail(ChapterInLesson);
+        JSONObject res = resourceClient.getNoteDetail(noteReq.getResource_note_id());
+
+        if (Objects.equals(res.getInteger("code"), 5005)) {
+            return MsgRespond.fail("学习笔记为空");
         }
 
-        String content = JSON.toJSONString(noteReq);
-        String time = getNowTime();
-        Integer i = commentMapper.insertCommentTwo(user_id, lesson_id, chapter_id, content, time);
+        if (!Objects.equals(res.getInteger("lessonId"), lesson_id)
+                || !Objects.equals(res.getInteger("chapterId"), chapter_id)
+                || !Objects.equals(res.getInteger("user_id"), user_id)) {
+            return MsgRespond.fail("请求信息与系统记录不一致");
+        }
+
+        Integer i = commentMapper.insertCommentTwo(user_id, lesson_id, chapter_id, JSON.toJSONString(noteReq), getNowTime());
+
         return i > 0 ? MsgRespond.success("已成功发布此笔记") : MsgRespond.fail("笔记发布失败");
 
     }
@@ -208,65 +152,6 @@ public class CommentServiceImpl implements CommentService {
     @Override
     public DataRespond getFatherComment(Integer id) {
         return new DataSuccessRespond("已成功获取主评论内容", commentMapper.getCommentById(id));
-    }
-
-
-    /**
-     * 判断课程是否存在
-     *
-     * @param lesson_id 课程id
-     * @return 根据处理结果返回对应消息
-     * 2023/11/7
-     */
-    private String judgeLessonExit(int lesson_id) {
-        //调用培训管理服务接口判断课程是否存在
-        JSONObject req = planClient.getLessonInfo(lesson_id);
-        if (Objects.equals(req.get("code"), 5005)) {
-            return "该课程不存在！";
-        }
-        return "";
-    }
-
-
-    /**
-     * 判断是否为员工
-     *
-     * @param student_id 学生id
-     * @return 根据处理结果返回对应消息
-     * 2023/11/7
-     */
-    private String judgeUser(int student_id) {
-        List<Integer> uidList = new ArrayList<>();
-        uidList.add(student_id);
-        JSONArray uidJsonArray = userClient.getUserInfoByUidList(new UserInfoListReq(uidList));
-        if (uidJsonArray.isEmpty()) {
-            return "该用户不存在";
-        }
-        return "";
-    }
-
-
-    /**
-     * 判断章节是否存在
-     *
-     * @param lesson_id  课程id
-     * @param chapter_id 章节id
-     * @return 根据处理结果返回对应消息
-     * 2023/11/7
-     */
-    private String judgeChapterExit(int lesson_id, int chapter_id) {
-        JSONObject req = planClient.getChapterByLId(lesson_id);
-        JSONArray data = req.getJSONArray("data");
-        String result = "章节不存在";
-        for(int i = 0 ;i<data.size();i++){
-            JSONObject chapterJSONObject = data.getJSONObject(i);
-            int id = chapterJSONObject.getIntValue("id");
-            if (Objects.equals(id,chapter_id)){
-                result = "";
-                break;
-            }
-        }
-        return result;
     }
 
 

@@ -151,7 +151,6 @@ public class UserServiceImpl implements UserService {
     @Override
     public DataRespond getUserAccountByUid(Integer uid) {
         UserTable accountInfo = userMapper.selectUserAccountByUid(uid);
-        System.out.println(accountInfo);
         return Objects.nonNull(accountInfo)
                 ? new DataSuccessRespond("已成功获取该用户的账号信息", accountInfo)
                 : new DataFailRespond("该用户账号信息不存在");

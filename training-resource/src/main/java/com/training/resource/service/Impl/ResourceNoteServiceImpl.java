@@ -168,5 +168,14 @@ public class ResourceNoteServiceImpl implements ResourceNoteService {
         return fileResUtil.returnMarkdown(notePath);
     }
 
+    @Override
+    public DataRespond getNoteDetail(Integer noteId) {
+        ResourceNoteTable noteDetail = resourceNoteMapper.selectNoteDetail(noteId);
+        if (Objects.isNull(noteDetail)){
+            return new DataFailRespond("fail");
+        }
+        return new DataSuccessRespond("success", noteDetail);
+    }
+
 
 }

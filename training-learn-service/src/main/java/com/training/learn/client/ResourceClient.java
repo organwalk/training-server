@@ -14,12 +14,12 @@ import org.springframework.web.service.annotation.PostExchange;
 @HttpExchange("http://localhost:8183/api/resource")
 public interface ResourceClient {
 
-    @PostExchange("/v1/file/note")
-    JSONObject insertNoteResource(@RequestBody @ModelAttribute ResourceNoteReq req);
+    @GetMapping("/v1/detail/note/{note_id}")
+    JSONObject getNoteDetail(@PathVariable Integer note_id);
 
     @DeleteExchange("/v1/file/note/{user_id}/{note_id}")
     void deleteNoteResource(@PathVariable int user_id,@PathVariable int note_id);
 
-    @GetExchange("/v2/file/note/{note_id}")
+    @GetExchange("/v1/file/note/{note_id}")
     JSONObject getNoteResource(@PathVariable int note_id);
 }

@@ -31,4 +31,6 @@ public interface ProgressService {
 
     MsgRespond updateChapterSum(Integer sum,Integer lesson_id);
 
+    DataRespond getStudentIdList(Integer lessonId);
+
 }

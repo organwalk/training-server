@@ -212,22 +212,28 @@ public class ResourceController {
     }
 
     // 根据课程和章节ID删除笔记（仅内部）
-    @DeleteMapping("/v2/file/note/lesson/chapter/{lesson_id}/{chapter_id}")
+    @DeleteMapping("/v1/file/note/lesson/chapter/{lesson_id}/{chapter_id}")
     public MsgRespond deleteNoteByChapterId(@PathVariable @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "lesson_id必须为纯数字字段") Integer lesson_id,
                                             @PathVariable @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "chapter_id必须为纯数字字段") Integer chapter_id){
         return resourceNoteService.deleteNoteByChapter(lesson_id, chapter_id);
     }
 
     // 根据课程ID删除笔记（仅内部）
-    @DeleteMapping("/v2/file/note/lesson/{lesson_id}")
+    @DeleteMapping("/v1/file/note/lesson/{lesson_id}")
     public MsgRespond deleteNoteByLessonId(@PathVariable @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "lesson_id必须为纯数字字段") @NotNull(message = "lesson_id不能为空") Integer lesson_id){
         return resourceNoteService.deleteNoteByLesson(lesson_id);
     }
 
     // 根据笔记ID获取笔记
-    @GetMapping("/v2/file/note/{note_id}")
+    @GetMapping("/v1/file/note/{note_id}")
     public ResponseEntity<?> getNote(@PathVariable @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "note_id必须为纯数字字段") @NotNull(message = "note_id不能为空") Integer note_id){
         return resourceNoteService.getNoteById(note_id);
+    }
+
+    // 根据笔记ID获取笔记详情
+    @GetMapping("/v1/detail/note/{note_id}")
+    public DataRespond getNoteDetail(@PathVariable Integer note_id){
+        return resourceNoteService.getNoteDetail(note_id);
     }
 
 

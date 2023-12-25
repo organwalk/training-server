@@ -40,6 +40,6 @@ public interface ProgressLessonMapper {
     @Update("update t_progress_lesson set lesson_chapter_sum = #{lesson_chapter_sum} where lesson_id=#{lesson_id}")
     void UpdateChapterSum(@Param("lesson_chapter_sum")Integer lesson_chapter_sum,@Param("lesson_id")Integer lesson_id);
 
-    @Select("select lesson_id from t_progress_lesson where student_id = #{studentId}")
-    List<Integer> getLessonIdByStudent(Integer studentId);
+    @Select("select student_id from t_progress_lesson where lesson_id = #{lessonId}")
+    List<Integer> getStudentIdList(Integer lessonId);
 }

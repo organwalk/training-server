@@ -51,4 +51,8 @@ public interface ChapterMapper {
     @Select("select id from t_lesson_chapter where lesson_id = #{lesson_id} limit 1")
     Integer existChapter(int lesson_id);
 
+    @Select("select id from t_lesson_chapter where id = #{chapterId} and lesson_id = #{lessonId}")
+    Integer getChapterExist(@Param("chapterId") Integer chapterId,
+                            @Param("lessonId") Integer lessonId);
+
 }

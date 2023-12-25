@@ -9,8 +9,6 @@ import com.training.learn.entity.request.NoteReq;
  * by organwalk 2023-11-29
  */
 public interface CommentService {
-    //在指定课程下发布评论
-    MsgRespond insertCommentOne(String request);
     //在指定课程章节下发布评论
     MsgRespond insertCommentTwo(String request);
     //删除评论

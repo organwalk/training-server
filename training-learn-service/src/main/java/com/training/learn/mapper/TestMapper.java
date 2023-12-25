@@ -39,9 +39,13 @@ public interface TestMapper {
     //获取指定课程和教师的测试总数
     @Select("select COUNT(id) from t_learn_test where lesson_id=#{lesson_id} and teacher_id=#{teacher_id}")
     Integer getCountOfListByLessonIdAndTeacherId(@Param("lesson_id")int lesson_id,@Param("teacher_id")int teacher_id);
+    @Select("select count(id) from t_learn_test where lesson_id = #{lessonId}")
+    Integer countAllIdByLessonId(Integer lessonId);
     //获取指定课程的所有测试id
-    @Select("select id from t_learn_test where lesson_id=#{lesson_id}")
-    List<Integer> getAllIdByLessonId(int lesson_id);
+    @Select("select id from t_learn_test where lesson_id=#{lessonId} limit #{pageSize} offset #{offset}")
+    List<Integer> getAllIdByLessonId(@Param("lessonId") Integer lesson_id,
+                                     @Param("pageSize") Integer pageSize,
+                                     @Param("offset") Integer offset);
     //修改测试信息
     @Update("update  t_learn_test set test_title=#{test_title},start_datetime=#{start_datetime},end_datetime=#{end_datetime} where id=#{id}")
     void updateTest(@Param("test_title")String test_title,@Param("start_datetime")String start_datetime,@Param("end_datetime")String end_datetime,@Param("id")int id);

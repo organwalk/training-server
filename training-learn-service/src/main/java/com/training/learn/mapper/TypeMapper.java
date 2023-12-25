@@ -4,6 +4,8 @@ import com.training.learn.entity.table.TypeTable;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 
+import java.util.List;
+
 /**
  * by zhaozhifeng 11-20
  */
@@ -15,4 +17,6 @@ public interface TypeMapper {
     //获取指定重要程度信息
     @Select("select * from t_learn_test_type where id = #{id}")
     TypeTable getTypeById(int id);
+    @Select("select id, importance_type, weight, score  from t_learn_test_type")
+    List<TypeTable> getTypeList();
 }
