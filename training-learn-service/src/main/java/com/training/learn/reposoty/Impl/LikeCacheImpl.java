@@ -59,15 +59,31 @@ public class LikeCacheImpl implements LikeCache {
 
     private static final String COMMENT_LESSON_KEY = "Comment-Lesson-ID-";
     @Override
-    public void cacheCommentLessonId(Integer commentId, Integer LessonId, Integer userId) {
+    public void cacheCommentLessonId(Integer commentId, Integer lessonId, Integer userId) {
         String key = COMMENT_LESSON_KEY + commentId;
-        redisTemplate.opsForValue().set(key, LessonId + "-" + userId);
+        redisTemplate.opsForValue().set(key, lessonId + "-" + userId);
         redisTemplate.expire(key, 1800, TimeUnit.SECONDS);
     }
 
     @Override
     public String getCommentLessonIdCache(Integer commentId) {
         String key = COMMENT_LESSON_KEY + commentId;
+        Object value = redisTemplate.opsForValue().get(key);
+        return Objects.isNull(value) ? "" : (String) value;
+    }
+
+
+    private static final String COMMENT_REPLY_KEY = "Comment-Reply-ID-";
+    @Override
+    public void cacheCommentReplyId(Integer replyId, Integer commentId, Integer userId) {
+        String key = COMMENT_REPLY_KEY + replyId;
+        redisTemplate.opsForValue().set(key, commentId + "-" + userId);
+        redisTemplate.expire(key, 1800, TimeUnit.SECONDS);
+    }
+
+    @Override
+    public String getCommentReplyIdCache(Integer replyId) {
+        String key = COMMENT_REPLY_KEY + replyId;
         Object value = redisTemplate.opsForValue().get(key);
         return Objects.isNull(value) ? "" : (String) value;
     }

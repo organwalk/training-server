@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * 用户服务的缓存接口实现
  * by organwalk 2023-10-18
@@ -13,7 +15,7 @@ import org.springframework.stereotype.Component;
 @AllArgsConstructor
 public class UserCacheImpl implements UserCache {
     private final RedisTemplate<String, Object> redisTemplate;
-    private final static String ACCESS_TOKEN_KEY = "Training-User-Service-Token";
+    private final static String ACCESS_TOKEN_KEY = "Training-User-Service-Token-";
 
 
     /**
@@ -24,7 +26,8 @@ public class UserCacheImpl implements UserCache {
      */
     @Override
     public void saveAccessToken(String username, String accessToken) {
-        redisTemplate.opsForHash().put(ACCESS_TOKEN_KEY, username, accessToken);
+        redisTemplate.opsForValue().set(ACCESS_TOKEN_KEY + username, accessToken);
+        redisTemplate.expire(ACCESS_TOKEN_KEY + username, 3, TimeUnit.DAYS);
     }
 
     /**
@@ -35,7 +38,7 @@ public class UserCacheImpl implements UserCache {
      */
     @Override
     public String getAccessToken(String username) {
-        String accessToken = (String) redisTemplate.opsForHash().get(ACCESS_TOKEN_KEY, username);
+        String accessToken = (String) redisTemplate.opsForValue().get(ACCESS_TOKEN_KEY + username);
         return accessToken != null ? accessToken : "";
     }
 
@@ -46,7 +49,6 @@ public class UserCacheImpl implements UserCache {
      */
     @Override
     public void deleteAccessToken(String username) {
-        redisTemplate.opsForHash().delete(ACCESS_TOKEN_KEY, username);
-
+        redisTemplate.opsForHash().delete(ACCESS_TOKEN_KEY + username);
     }
 }

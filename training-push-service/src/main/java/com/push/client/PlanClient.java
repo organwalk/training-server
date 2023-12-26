@@ -20,6 +20,6 @@ public interface PlanClient {
     @GetExchange("/v1/lesson/info/{lesson_id}")
     JSONObject getLessonInfo(@PathVariable int lesson_id);
 
-    @GetExchange("/v1/lesson/chapter/{lesson_id}")
-    JSONObject getChapterByLId(@PathVariable int lesson_id);
+    @GetExchange("/v1/lesson/chapter/detail/{chapterId}")
+    JSONObject getChapterDetail(@PathVariable Integer chapterId);
 }

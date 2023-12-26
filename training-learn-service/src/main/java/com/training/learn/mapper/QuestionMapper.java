@@ -26,9 +26,7 @@ public interface QuestionMapper {
     //根据id获取试题详情
     @Select("select * from t_learn_test_questions where id=#{id}")
     QuestionTable getQuestionById(int id);
-    //删除指定测试下的所有试题
-    @Delete("delete from t_learn_test_questions where test_id = #{test_id}")
-    void deleteQuestionByTestId(int test_id);
+
     //获取指定试题的正确答案
     @Select("select true_answer from t_learn_test_questions where id=#{id}")
     String getAnswerById(int id);

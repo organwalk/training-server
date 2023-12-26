@@ -13,8 +13,6 @@ public interface ProgressService {
 
     DataRespond getStuAllByLessonId(int lesson_id, int page_size, int offset);
 
-    DataRespond getAllPlanProgressList(int page_size, int offset);
-
     DataRespond getAllStuLessonPresent(int lesson_id,int page_size,int offset);
 
     MsgRespond insertProgressPlan(int plan_id,Integer lesson_id,int teacher_id);

@@ -15,9 +15,7 @@ public interface ScoreMapper {
     //判断该学生指定课程的成绩是否已经存在
     @Select("select id from t_learn_test_score where test_id=#{test_id} and student_id=#{student_id}")
     Integer judgeExitByTestIdAndStuId(@Param("test_id")int test_id,@Param("student_id")int student_id);
-    //删除指定课程的所有成绩
-    @Delete("delete from t_learn_test_score where test_id=#{test_id}")
-    void deleteByTestId(int test_id);
+
     //插入学生成绩
     @Insert("insert into t_learn_test_score(composite_score, must_type_composite_score, important_type_composite_score, normal_type_composite_score, student_id, test_id)values (#{composite_score},#{must_type_composite_score},#{important_type_composite_score},#{normal_type_composite_score},#{student_id},#{test_id})")
     void insertScore(@Param("composite_score")double composite_score,@Param("must_type_composite_score")double must_type_composite_score,@Param("important_type_composite_score")double important_type_composite_score,@Param("normal_type_composite_score")double normal_type_composite_score,@Param("student_id")int student_id,@Param("test_id")int test_id);

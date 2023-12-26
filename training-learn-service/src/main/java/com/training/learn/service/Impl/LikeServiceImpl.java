@@ -5,9 +5,10 @@ import com.training.common.entity.MsgRespond;
 import com.training.common.entity.req.UserInfoListReq;
 import com.training.learn.client.UserClient;
 import com.training.learn.entity.msg.LikeMsg;
+import com.training.learn.entity.msg.ReplyLikeMsg;
 import com.training.learn.entity.table.Comment;
+import com.training.learn.entity.table.Reply;
 import com.training.learn.mapper.CommentMapper;
-import com.training.learn.mapper.LikeMapper;
 import com.training.learn.mapper.ReplyMapper;
 import com.training.learn.producer.EventProcessMsgProducer;
 import com.training.learn.reposoty.LikeCache;
@@ -32,7 +33,6 @@ import java.util.UUID;
 @Transactional
 public class LikeServiceImpl implements LikeService {
 
-    private final LikeMapper likeMapper;
     private final CommentMapper commentMapper;
     private final ReplyMapper replyMapper;
     private final LikeCache likeCache;
@@ -104,57 +104,43 @@ public class LikeServiceImpl implements LikeService {
      */
     @Override
     public MsgRespond LikeReply(int user_id, int reply_id, int state) {
-        //判断回复是否存在
-        Integer replyMark = replyMapper.judgeReplyExitById(reply_id);
-        if (replyMark == null) {
-            return MsgRespond.fail("该回复不存在");
-        }
         //判断学生存在性
         String StuMark = judgeUser(user_id);
         if (!StuMark.isBlank()) {
             return MsgRespond.fail(StuMark);
         }
-        //获取是否拥有点赞记录
-        Integer OldState = likeMapper.judgeReplyLikeOrNot(user_id, reply_id);
-        //获取评论id
-        Integer CommentId = replyMapper.getCommentIdById(reply_id);
-        //通过评论Id获取课程id
-        Integer lessonId = commentMapper.getLessonIdByCommentId(CommentId);
-        String Key = String.valueOf(lessonId);
-        String field = String.valueOf(reply_id);
-        //获取缓存中的点赞数
-        Integer sum = (Integer) likeCache.getReplyLike(Key, field);
-        Integer i = 0;
-        if (OldState != null) {
-            if (OldState == 0 && state == 0) {
-                return MsgRespond.fail("未对该回复点赞！");
-            } else if (OldState == 0 && state == 1) {
-                i = likeMapper.UpdateReplyStateSetOne(reply_id, user_id);
-                if (sum != null) {
-                    likeCache.deleteReplyLike(Key, field);
-                }
-            } else if (OldState == 1 && state == 0) {
-                Integer j = likeMapper.UpdateReplyStateSetZero(reply_id, user_id);
-                if (sum != null) {
-                    likeCache.deleteReplyLike(Key, field);
-                }
-                return j > 0 ? MsgRespond.success("取消点赞成功！") : MsgRespond.fail("取消点赞失败！");
-            } else if (OldState == 1 && state == 1) {
-                return MsgRespond.fail("请勿重复点赞！");
+
+        Integer commentId;
+        Integer replyUser;
+        //判断回复是否存在
+        String cache = likeCache.getCommentReplyIdCache(reply_id);
+        if (cache.isBlank()){
+            Reply reply = replyMapper.getReply(reply_id);
+            if (Objects.isNull(reply)) {
+                return MsgRespond.fail("该回复不存在");
             }
+
+            commentId = reply.getComment_id();
+            replyUser = reply.getUser_id();
+            likeCache.cacheCommentReplyId(reply_id, commentId, replyUser);
+        }else {
+            commentId = Integer.valueOf(cache.split("-")[0]);
+            replyUser = Integer.valueOf(cache.split("-")[1]);
         }
-        if (OldState == null) {
-            if (state == 0) {
-                return MsgRespond.fail("未对该回复点赞！");
-            } else if (state == 1) {
-                String time = getNowTime();
-                i = likeMapper.LikeReply(user_id, reply_id, 1, time);
-                if (sum != null) {
-                    likeCache.deleteReplyLike(Key, field);
-                }
-            }
-        }
-        return i > 0 ? MsgRespond.success("点赞成功！") : MsgRespond.fail("点赞失败！");
+
+        eventProcessMsgProducer.triggerReplyLikeProcess(
+                new ReplyLikeMsg(
+                        String.valueOf(UUID.randomUUID()),
+                        user_id,
+                        reply_id,
+                        commentId,
+                        replyUser,
+                        state,
+                        getNowTime()
+                )
+        );
+
+        return MsgRespond.success("已进行处理");
     }
 
 

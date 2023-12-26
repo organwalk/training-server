@@ -33,17 +33,14 @@ public interface LikeMapper {
     @Select("select state from t_learn_like where reply_id=#{reply_id} and user_id =#{user_id}")
     Integer getStateByReplyId(@Param("reply_id")int reply_id,@Param("user_id")int user_id);
 
-    @Select("select state from t_learn_like where user_id=#{user_id} and reply_id=#{reply_id}")
-    Integer judgeReplyLikeOrNot(@Param("user_id")int user_id,@Param("reply_id")int reply_id);
-
     @Update("update t_learn_like set state=1 where reply_id=#{reply_id} and user_id=#{user_id}")
-    Integer UpdateReplyStateSetOne(@Param("reply_id")int reply_id,@Param("user_id")int user_id);
+    void UpdateReplyStateSetOne(@Param("reply_id")int reply_id,@Param("user_id")int user_id);
 
     @Update("update t_learn_like set state=0 where reply_id=#{reply_id} and user_id=#{user_id}")
-    Integer UpdateReplyStateSetZero(@Param("reply_id")int reply_id,@Param("user_id")int user_id);
+    void UpdateReplyStateSetZero(@Param("reply_id")int reply_id,@Param("user_id")int user_id);
 
     @Insert("insert into t_learn_like(user_id, reply_id, state, create_datetime)values(#{user_id},#{reply_id},#{state},#{create_datetime}) ")
-    Integer LikeReply(@Param("user_id")int user_id,@Param("reply_id")int reply_id,@Param("state")int state,@Param("create_datetime")String create_datetime);
+    void LikeReply(@Param("user_id")int user_id,@Param("reply_id")int reply_id,@Param("state")int state,@Param("create_datetime")String create_datetime);
 
     @Delete("delete from t_learn_like where comment_id=#{comment_id} and user_id=#{user_id}")
     void DeleteByComIdAndUserId(@Param("comment_id")int comment_id,@Param("user_id")int user_id);

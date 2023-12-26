@@ -14,9 +14,6 @@ public interface TypeMapper {
     //获取指定重要程度的分数
     @Select("select score from t_learn_test_type where id=#{id}")
     Integer getScoreById(int id);
-    //获取指定重要程度信息
-    @Select("select * from t_learn_test_type where id = #{id}")
-    TypeTable getTypeById(int id);
     @Select("select id, importance_type, weight, score  from t_learn_test_type")
     List<TypeTable> getTypeList();
 }

@@ -39,14 +39,8 @@ public interface ChapterMapper {
     @Delete("delete from t_lesson_chapter where lesson_id=#{lesson_id}")
     Integer deleteAllChapterByLessonId(int lesson_id);
 
-    @Select("select * from t_lesson_chapter where id=#{id}")
+    @Select("select id, chapter_name, lesson_id from t_lesson_chapter where id=#{id}")
     ChapterTable getChapterByID(int id);
-
-    @Select("select * from t_lesson_chapter where lesson_id=#{lesson_id} and id=#{id}")
-    ChapterTable ForHttp(@Param("lesson_id")int lesson_id,@Param("id")int id);
-
-    @Select("select COUNT(id) from t_lesson_chapter where lesson_id=#{lesson_id}")
-    Integer getChapCountByLessonId(int lesson_id);
 
     @Select("select id from t_lesson_chapter where lesson_id = #{lesson_id} limit 1")
     Integer existChapter(int lesson_id);

@@ -7,6 +7,7 @@ import com.training.common.entity.*;
 import com.training.common.entity.req.UserInfoListReq;
 import com.training.learn.client.DeptClient;
 import com.training.learn.client.UserClient;
+import com.training.learn.entity.msg.ReplyPushMsg;
 import com.training.learn.entity.result.CommentList;
 import com.training.learn.entity.result.ReplyList;
 import com.training.learn.entity.table.Comment;
@@ -14,6 +15,7 @@ import com.training.learn.entity.table.Reply;
 import com.training.learn.mapper.CommentMapper;
 import com.training.learn.mapper.LikeMapper;
 import com.training.learn.mapper.ReplyMapper;
+import com.training.learn.producer.EventProcessMsgProducer;
 import com.training.learn.reposoty.LikeCache;
 import com.training.learn.service.ReplyService;
 import lombok.AllArgsConstructor;
@@ -25,6 +27,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 /**
  * by zhaozhifeng 2023-11-10
@@ -41,6 +44,7 @@ public class ReplyServiceImpl implements ReplyService {
     private final UserClient userClient;
     private final DeptClient deptClient;
     private final LikeCache likeCache;
+    private final EventProcessMsgProducer eventProcessMsgProducer;
 
 
     /**
@@ -59,26 +63,23 @@ public class ReplyServiceImpl implements ReplyService {
             return new DataFailRespond("评论不得超过150字");
         }
 
-        Integer user_id = req.getInteger("user_id");
         //判断学生是否存在
-        String StuMark = judgeUser(user_id);
+        Integer user_id = req.getInteger("user_id");
+        String StuMark = judgeUser(List.of(user_id));
         if (!StuMark.isBlank()) {
             return new DataFailRespond(StuMark);
         }
 
         Integer comment_id = req.getInteger("comment_id");
         //获取评论存在
-        String CommentMark = judgeCommentExit(comment_id);
-        if (!CommentMark.isBlank()) {
-            return new DataFailRespond(CommentMark);
+        Comment comment = commentMapper.getCommentById(comment_id);
+        if (Objects.isNull(comment)) {
+            return new DataFailRespond("该评论不存在");
         }
 
         //插入回复
         Reply reply = new Reply(null, user_id, comment_id, content, getNowTime());
-        replyMapper.replyComment(reply);
-        return Objects.nonNull(reply.getId())
-                ? new DataSuccessRespond("已成功为此评论发表回复", reply.getId())
-                : new DataFailRespond("评论失败！");
+        return pushReply(reply, comment, user_id);
     }
 
 
@@ -96,26 +97,50 @@ public class ReplyServiceImpl implements ReplyService {
         JSONObject content_req = req.getJSONObject("content");
         Integer reply_user_id = content_req.getInteger("reply_user_id");
         //判断学生是否存在
-        String StuMark = judgeUser(user_id);
-        String Reply_StuMark = judgeUser(reply_user_id);
-        if (!StuMark.isBlank() && !Reply_StuMark.isBlank()) {
+        String StuMark = judgeUser(List.of(user_id, reply_user_id));
+        if (!StuMark.isBlank()) {
             return new DataFailRespond(StuMark);
         }
 
-        Integer commend_id = req.getInteger("comment_id");
+        //获取评论存在
+        Integer comment_id = req.getInteger("comment_id");
+        Comment comment = commentMapper.getCommentById(comment_id);
+        if (Objects.isNull(comment)) {
+            return new DataFailRespond("该评论不存在");
+        }
         //判断回复是否存在
-        String ReplyMark = judgeReplyExit(commend_id, reply_user_id);
+        String ReplyMark = judgeReplyExit(comment_id, reply_user_id);
         if (!ReplyMark.isBlank()) {
             return new DataFailRespond(ReplyMark);
         }
+
         //获取当前时间
         String time = getNowTime();
         //获取评论内容并转化为json字符串形式
         Object content = req.get("content");
         String contentString = JSON.toJSONString(content);
-        Reply reply = new Reply(null, user_id, commend_id, contentString, time);
+        Reply reply = new Reply(null, user_id, comment_id, contentString, time);
+        return pushReply(reply, comment, user_id);
+    }
+
+    private DataRespond pushReply(Reply reply, Comment comment, Integer user_id){
         replyMapper.replyComment(reply);
-        return Objects.nonNull(reply.getId()) ? new DataSuccessRespond("已成功回复此跟帖", reply.getId()) : new DataFailRespond("回复失败！");
+
+        // 生产回复通知推送消息
+        if (Objects.nonNull(reply.getId())){
+            eventProcessMsgProducer.triggerReplyPush(
+                    new ReplyPushMsg(
+                            String.valueOf(UUID.randomUUID()),
+                            user_id,
+                            new ReplyPushMsg.Content(comment.getLessonId(), comment.getChapterId(), comment.getContent()),
+                            reply.getId(),
+                            List.of(comment.getUserId())
+                    )
+            );
+            return new DataSuccessRespond("已成功为此评论发表回复", reply.getId());
+        }
+
+        return new DataFailRespond("操作失败");
     }
 
 
@@ -282,31 +307,16 @@ public class ReplyServiceImpl implements ReplyService {
     /**
      * 判断是否为员工
      *
-     * @param student_id 学生id
+     * @param uidList 学生id列表
      * @return 根据处理结果返回对应消息
      */
-    private String judgeUser(int student_id) {
-        List<Integer> uidList = new ArrayList<>();
-        uidList.add(student_id);
+    private String judgeUser(List<Integer> uidList) {
         JSONArray uidJsonArray = userClient.getUserInfoByUidList(new UserInfoListReq(uidList));
-        if (uidJsonArray.isEmpty()) {
+        if (!Objects.equals(uidList.size(), uidJsonArray.size())) {
             return "该用户不存在";
         }
         return "";
     }
-
-
-    /**
-     * 判断评论是否存在
-     *
-     * @param comment_id 评论id
-     * @return 根据处理结果返回对应消息
-     */
-    private String judgeCommentExit(int comment_id) {
-        Integer i = commentMapper.judgeCommentExit(comment_id);
-        return i > 0 ? "" : "该评论不存在！";
-    }
-
 
     /**
      * 获取当前时间

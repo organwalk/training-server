@@ -5,7 +5,10 @@ import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.training.common.entity.*;
 import com.training.learn.client.PlanClient;
+import com.training.learn.client.ProgressClient;
 import com.training.learn.client.UserClient;
+import com.training.learn.entity.msg.ReleaseTestPushMsg;
+import com.training.learn.entity.msg.ReplyLikeMsg;
 import com.training.learn.entity.msg.TestMsg;
 import com.training.learn.entity.request.*;
 
@@ -51,6 +54,7 @@ public class TestServiceImpl implements TestService {
     private final QuestionCache questionCache;
     private final TestCache testCache;
     private final EventProcessMsgProducer eventProcessMsgProducer;
+    private final ProgressClient progressClient;
 
 
     /**
@@ -178,6 +182,23 @@ public class TestServiceImpl implements TestService {
             return MsgRespond.fail("发布失败！原因：与考试《" + timeConflictObj.getTest_title() + "》时间冲突，" + timeConflictObj.getStart_datetime() + "至" + timeConflictObj.getEnd_datetime());
         }
         testMapper.updateIsRelease(test_id, date, 1);
+
+        JSONObject res = planClient.getLessonInfo(test.getLesson_id());
+        if (Objects.equals(res.getInteger("code"), 2002)){
+            JSONObject proRes = progressClient.getStudentIdList(test.getLesson_id()).join();
+            if (Objects.equals(proRes.getInteger("code"), 2002)){
+                eventProcessMsgProducer.triggerReleaseTestPush(
+                        new ReleaseTestPushMsg(
+                                String.valueOf(UUID.randomUUID()),
+                                test.getTeacher_id(),
+                                new ReleaseTestPushMsg.Content(res.getJSONObject("data").getString("lesson_name")),
+                                test_id,
+                                proRes.getObject("data", new TypeReference<List<Integer>>(){})
+                        )
+                );
+            }
+        }
+
         return MsgRespond.success("已成功发布试卷");
     }
 

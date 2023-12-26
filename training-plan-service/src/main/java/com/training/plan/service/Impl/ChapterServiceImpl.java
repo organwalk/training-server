@@ -166,6 +166,13 @@ public class ChapterServiceImpl implements ChapterService {
         return i>0?MsgRespond.success("已成功删除该课程的所有章节"):MsgRespond.fail("删除失败！");
     }
 
+    @Override
+    public DataRespond getChapterDetail(Integer chapterId) {
+        ChapterTable chapterTable = chapterMapper.getChapterByID(chapterId);
+        return Objects.isNull(chapterTable)
+                ? new DataFailRespond("未能获取到章节信息")
+                : new DataSuccessRespond("已成功获取章节信息", chapterTable);
+    }
 
 
 }

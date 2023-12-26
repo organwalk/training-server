@@ -367,5 +367,10 @@ public class TrainingPlanController {
         return studentService.getPlanListByStudent(student_id);
     }
 
+    // 根据章节ID获取指定章节名称
+    @GetMapping("/v1/lesson/chapter/detail/{chapterId}")
+    public DataRespond getChapterDetail(@PathVariable Integer chapterId){
+        return chapterService.getChapterDetail(chapterId);
+    }
 
 }

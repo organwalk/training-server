@@ -14,7 +14,4 @@ public interface OptionMapper {
     //获取指定问题的选项信息
     @Select("select * from t_learn_test_options where question_id=#{question_id}")
     OptionsTable getOptionByQuesId(int question_id);
-    //删除指定问题的选项信息
-    @Delete("delete from t_learn_test_options where question_id=#{question_id}")
-    void deleteByQuesId(int question_id);
 }

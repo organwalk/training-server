@@ -19,8 +19,11 @@ public interface LikeCache {
 
     void deleteReplyLike(String key,String field);
 
-    void cacheCommentLessonId(Integer commentId, Integer LessonId, Integer userId);
+    void cacheCommentLessonId(Integer commentId, Integer lessonId, Integer userId);
     String getCommentLessonIdCache(Integer commentId);
+
+    void cacheCommentReplyId(Integer replyId, Integer commentId, Integer userId);
+    String getCommentReplyIdCache(Integer replyId);
 
 
 }
