@@ -1,5 +1,6 @@
 package com.training.resource.controller;
 
+import com.alibaba.csp.sentinel.annotation.SentinelResource;
 import com.training.common.entity.DataFailRespond;
 import com.training.common.entity.DataRespond;
 import com.training.common.entity.MsgRespond;
@@ -7,6 +8,7 @@ import com.training.resource.entity.request.ResourceLessonReq;
 import com.training.resource.entity.request.ResourceNormalReq;
 import com.training.resource.entity.request.ResourceNoteReq;
 import com.training.resource.entity.request.TagReq;
+import com.training.resource.exceptions.GlobeBlockException;
 import com.training.resource.service.ResourceLessonService;
 import com.training.resource.service.ResourceNormalService;
 import com.training.resource.service.ResourceNoteService;
@@ -16,7 +18,6 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
-import org.springframework.http.HttpRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -162,14 +163,11 @@ public class ResourceController {
 
     // 删除指定课程章节教材文件
     @DeleteMapping("/v2/lesson/chapter/{chapter_id}")
+    @SentinelResource(value = "deleteOneLessonResource",
+            blockHandlerClass = GlobeBlockException.class,
+            blockHandler = "blockedDeleteOneLessonResource")
     public MsgRespond deleteOneLessonResource(@PathVariable Integer chapter_id){
         return resourceLessonService.deleteOneLessonResource(chapter_id);
-    }
-
-    // 删除指定课程下所有教材文件
-    @PostMapping("/v2/lesson/{lesson_id}")
-    public MsgRespond deleteAllLessonResource(@PathVariable @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "lesson_id必须为纯数字字段") Integer lesson_id){
-        return resourceLessonService.deleteAllLessonResource(lesson_id);
     }
 
     // 根据课程教材ID获取教材
@@ -204,6 +202,9 @@ public class ResourceController {
 
     // 根据笔记ID删除用户发布的笔记
     @DeleteMapping("/v1/file/note/{user_id}/{note_id}")
+    @SentinelResource(value = "deleteOneNote",
+            blockHandlerClass = GlobeBlockException.class,
+            blockHandler = "blockedDeleteOneNote")
     public MsgRespond deleteOneNote(@PathVariable @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "user_id必须为纯数字字段") Integer user_id,
                                     @PathVariable @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "note_id必须为纯数字字段") Integer note_id,
                                     @RequestHeader(name = "username") String username,
@@ -232,6 +233,9 @@ public class ResourceController {
 
     // 根据笔记ID获取笔记详情
     @GetMapping("/v1/detail/note/{note_id}")
+    @SentinelResource(value = "getNoteDetail",
+            blockHandlerClass = GlobeBlockException.class,
+            blockHandler = "blockedGetNoteDetail")
     public DataRespond getNoteDetail(@PathVariable Integer note_id){
         return resourceNoteService.getNoteDetail(note_id);
     }

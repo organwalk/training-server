@@ -1,7 +1,6 @@
 package com.training.plan.service.Impl;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.training.common.entity.*;
 import com.training.common.entity.req.UserInfoListReq;
@@ -76,8 +75,11 @@ public class TrainPlanTeacherServiceImpl implements TrainPlanTeacherService {
         if (teacherIdList.isEmpty()){
             return new DataFailRespond("教师列表为空，请进行添加");
         }
-        JSONArray TeaList = userClient.getUserInfoByUidList(new UserInfoListReq(teacherIdList));
-        List<User> userList = JSONArray.parseArray(TeaList.toJSONString(),User.class);
+        JSONObject res = userClient.getUserInfoByUidList(new UserInfoListReq(teacherIdList));
+        if (Objects.equals(res.getInteger("code"), 5005)){
+            return new DataFailRespond(res.getString("msg"));
+        }
+        List<User> userList = res.getJSONArray("data").toJavaList(User.class);
         List<Integer> IdList = trainPlanTeacherMapper.getAllTeaId(plan_id);
         List<TeacherInfo> list = new ArrayList<>();
         for(int i =0;i<userList.size();i++){
@@ -135,7 +137,7 @@ public class TrainPlanTeacherServiceImpl implements TrainPlanTeacherService {
         }
         JSONObject resObject = userClient.getUserAccountByUid(training_teacher_id);
         if(Objects.equals(resObject.get("code"),5005)){
-            return "该教师不存在，无法添加！";
+            return resObject.getString("msg");
         }
         if (!Objects.equals(resObject.getJSONObject("data").get("authId"),2)){
             return "该用户不是教师，无法添加！";

@@ -21,7 +21,7 @@ public interface UserClient {
 
     // 根据用户ID列表获取用户信息列表
     @GetExchange("/v1/info/list")
-    JSONArray getUserInfoByUidList(@RequestBody UserInfoListReq req);
+    JSONObject getUserInfoByUidList(@RequestBody UserInfoListReq req);
 
 
 }

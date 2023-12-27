@@ -3,7 +3,6 @@ package com.training.plan.service.Impl;
 import com.alibaba.fastjson.JSONObject;
 import com.training.common.entity.*;
 import com.training.plan.client.DeptClient;
-import com.training.plan.client.ProgressClient;
 import com.training.plan.entity.request.PlanUpdateReq;
 import com.training.plan.entity.request.TestReq;
 import com.training.plan.entity.request.TrainingPlanReq;
@@ -11,9 +10,6 @@ import com.training.plan.entity.result.DeptInfo;
 import com.training.plan.entity.result.TrainPlanInfo;
 import com.training.plan.entity.table.TrainingPlanTable;
 import com.training.plan.mapper.*;
-import com.training.plan.reposoty.LessonCache;
-import com.training.plan.reposoty.PlanCache;
-import com.training.plan.service.ChapterService;
 import com.training.plan.service.TrainingPlanService;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -34,13 +30,6 @@ public class TrainingPlanServiceImpl implements TrainingPlanService {
 
     private final TrainingPlanMapper trainingPlanMapper;
     private final DeptClient deptClient;
-    private final PlanCache planCache;
-    private final LessonMapper lessonMapper;
-    private final LessonCache lessonCache;
-    private final ProgressClient progressClient;
-    private final ChapterService chapterService;
-
-
 
     /**
      * 创建计划的具体实现
@@ -98,6 +87,9 @@ public class TrainingPlanServiceImpl implements TrainingPlanService {
         }
         //获取指定部门信息
         DeptInfo deptInfo = getDeptInfo(dept_id);
+        if (Objects.isNull(deptInfo)){
+            return new DataFailRespond("部门管理服务异常，无法正常获取部门信息");
+        }
         //获取指定部门计划列表
         List<TrainingPlanTable> tables = trainingPlanMapper.getDeptAllPlan(dept_id,page_size,offset);
         List<TrainPlanInfo> list = new ArrayList<>();
@@ -150,6 +142,9 @@ public class TrainingPlanServiceImpl implements TrainingPlanService {
         }
         //获取计划对应的部门信息
         DeptInfo deptInfo = getDeptInfo(trainingPlanTable.getDept_id());
+        if (Objects.isNull(deptInfo)){
+            return new DataFailRespond("部门管理服务异常，无法正常获取部门信息");
+        }
         TrainPlanInfo trainPlanInfo = new TrainPlanInfo(trainingPlanTable,deptInfo);
         return new DataSuccessRespond("查询成功！",trainPlanInfo);
     }
@@ -201,55 +196,7 @@ public class TrainingPlanServiceImpl implements TrainingPlanService {
         Integer i = trainingPlanMapper.changeState(state,id);
         return i>0?MsgRespond.success("修改成功！"):MsgRespond.fail("修改失败!");
     }
-    /**
-     * 根据id删除指定计划的具体实现
-     * @param id 计划id
-     * @return 根据处理结果返回对应消息
-     */
-    @Override
-    public MsgRespond deletePlan(int id) {
-        //判断计划是否存在
-        TrainingPlanTable trainingPlanTable = trainingPlanMapper.getTrainById(id);
-        if (trainingPlanTable == null){
-            return MsgRespond.fail("未找到该计划！");
-        }
 
-        //删除计划对应的教师和学生缓存
-        planCache.deleteTeacherByPlanId(id);
-        planCache.deleteStudentByPlanId(id);
-
-        //删除计划列表下的课程与其对应章节
-        JSONObject res = progressClient.getLessonIdByPlanId(id, 999999, 0);
-        if (Objects.equals(res.getInteger("code"), 5005)){
-            return MsgRespond.fail("删除失败，原因：进度跟踪服务错误");
-        }
-        List<Integer> lessonIdList = res.getJSONArray("data").toJavaList(Integer.class);
-        List<Integer> failList = new ArrayList<>();
-        lessonIdList.forEach(lessonId -> {
-            lessonCache.deleteChapter(String.valueOf(lessonId));
-            Integer code = chapterService.deleteAllChapterByLessonId(lessonId).getCode();
-            if (code == 5005){
-                failList.add(lessonId);
-            }
-            lessonMapper.deleteLessonById(lessonId);
-        });
-
-        if (Objects.equals(failList.size(), lessonIdList.size())){
-            return MsgRespond.fail("内部服务错误，删除失败");
-        }
-
-        //删除计划
-        int i = trainingPlanMapper.DeletePlan(id);
-        if(i<=0){
-            return MsgRespond.fail("删除失败！");
-        }
-
-
-
-
-
-        return MsgRespond.success("删除成功！");
-    }
 
     /**
      * 根据关键词模糊查询计划信息
@@ -288,8 +235,11 @@ public class TrainingPlanServiceImpl implements TrainingPlanService {
      * @return 根据处理结果返回对应消息
      */
     private DeptInfo getDeptInfo(int dept_id){
-        JSONObject req = deptClient.getDeptInfoByDeptId(dept_id);
-        JSONObject data = req.getJSONObject("data");
+        JSONObject res = deptClient.getDeptInfoByDeptId(dept_id);
+        if (Objects.equals(res.getInteger("code"), 5005)){
+            return null;
+        }
+        JSONObject data = res.getJSONObject("data");
         int deptId = data.getInteger("id");
         String dept_name = data.getString("deptName");
         int head_id = data.getInteger("headId");

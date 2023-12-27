@@ -1,8 +1,10 @@
 package com.training.plan.controller;
 
+import com.alibaba.csp.sentinel.annotation.SentinelResource;
 import com.training.common.entity.DataRespond;
 import com.training.common.entity.MsgRespond;
 import com.training.plan.entity.request.*;
+import com.training.plan.exceptions.GlobeBlockException;
 import com.training.plan.service.*;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
@@ -89,6 +91,9 @@ public class TrainingPlanController {
 
     //获取指定计划信息
     @GetMapping("/v1/plan/info/{plan_id}")
+    @SentinelResource(value = "getTrainPlanById",
+            blockHandlerClass = GlobeBlockException.class,
+            blockHandler = "blockedGetTrainPlanById")
     public DataRespond getTrainPlanById(@PathVariable
                                         @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "plan_id必须为纯数字字段")
                                         int plan_id
@@ -180,16 +185,6 @@ public class TrainingPlanController {
 
     }
 
-    //根据计划id删除计划
-    @DeleteMapping("/v3/plan/{plan_id}")
-    public MsgRespond DeletePlan(@PathVariable
-                                 @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "plan_id必须为纯数字字段")
-                                 Integer plan_id
-    ) {
-        return trainingPlanService.deletePlan(plan_id);
-
-    }
-
     //添加课程
     @PostMapping("/v2/lesson/{plan_id}")
     public MsgRespond insertLesson(@Validated @RequestBody LessonReq req,
@@ -201,6 +196,9 @@ public class TrainingPlanController {
 
     //获取指定教师的所有课程
     @GetMapping("/v1/lesson/{teacher_id}/{page_size}/{offset}")
+    @SentinelResource(value = "getTeaAllLess",
+            blockHandlerClass = GlobeBlockException.class,
+            blockHandler = "blockedGetTeaAllLess")
     public DataRespond getTeaAllLess(@PathVariable
                                      @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "teacher_id必须为纯数字字段")
                                      Integer teacher_id,
@@ -217,6 +215,9 @@ public class TrainingPlanController {
 
     //通过课程id获取指定课程
     @GetMapping("/v1/lesson/info/{lesson_id}")
+    @SentinelResource(value = "getLessInfoById",
+            blockHandlerClass = GlobeBlockException.class,
+            blockHandler = "blockedGetLessInfoById")
     public DataRespond getLessInfoById(@PathVariable
                                        @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "lesson_id必须为纯数字字段")
                                        Integer lesson_id) {
@@ -262,6 +263,9 @@ public class TrainingPlanController {
 
     //获取指定课程的所有章节
     @GetMapping("/v1/lesson/chapter/{lesson_id}")
+    @SentinelResource(value = "getChapterByLID",
+            blockHandlerClass = GlobeBlockException.class,
+            blockHandler = "blockedGetChapterByLID")
     public DataRespond getChapterByLID(@PathVariable
                                        @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "lesson_id必须为纯数字字段")
                                        Integer lesson_id) {
@@ -282,14 +286,6 @@ public class TrainingPlanController {
                                         @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "chapter_id必须为纯数字字段")
                                         Integer chapter_id) {
         return chapterService.deleteChapterById(chapter_id);
-    }
-
-    //删除指定课程下的所有章节
-    @DeleteMapping("/v2/lesson/chapter/teacher/{teacher_id}")
-    public MsgRespond deleteAllChapterByLessonId(@PathVariable
-                                                 @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "chapter_id必须为纯数字字段")
-                                                 Integer teacher_id) {
-        return chapterService.deleteAllChapterByLessonId(teacher_id);
     }
 
     //设定课程状态为发布
@@ -327,6 +323,9 @@ public class TrainingPlanController {
 
     //删除指定课程教材下的测试
     @DeleteMapping("/v4/lesson/test/resource/{resource_lesson_id}")
+    @SentinelResource(value = "deleteByRLId",
+            blockHandlerClass = GlobeBlockException.class,
+            blockHandler = "blockedDeleteByRLId")
     public MsgRespond deleteByRLId(@PathVariable
                                    @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "resource_lesson_id必须为纯数字字段")
                                    Integer resource_lesson_id) {
@@ -357,19 +356,22 @@ public class TrainingPlanController {
 
     // 获取指定讲师所处的培训计划列表
     @GetMapping("/v2/teacher/plan/{teacher_id}")
-    public DataRespond getPlanListByTeacherId(@PathVariable Integer teacher_id){
+    public DataRespond getPlanListByTeacherId(@PathVariable Integer teacher_id) {
         return teacherService.getPlanListByTeacher(teacher_id);
     }
 
     // 获取指定学员所处的培训计划列表
     @GetMapping("/v1/student/plan/{student_id}")
-    public DataRespond getPlanListByStudentId(@PathVariable Integer student_id){
+    public DataRespond getPlanListByStudentId(@PathVariable Integer student_id) {
         return studentService.getPlanListByStudent(student_id);
     }
 
     // 根据章节ID获取指定章节名称
     @GetMapping("/v1/lesson/chapter/detail/{chapterId}")
-    public DataRespond getChapterDetail(@PathVariable Integer chapterId){
+    @SentinelResource(value = "getChapterDetail",
+            blockHandlerClass = GlobeBlockException.class,
+            blockHandler = "blockedGetChapterDetail")
+    public DataRespond getChapterDetail(@PathVariable Integer chapterId) {
         return chapterService.getChapterDetail(chapterId);
     }
 

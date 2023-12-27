@@ -1,11 +1,12 @@
 package com.training.department.controller;
 
+import com.alibaba.csp.sentinel.annotation.SentinelResource;
 import com.training.common.entity.DataRespond;
 import com.training.common.entity.MsgRespond;
 import com.training.common.entity.req.DeptListReq;
 import com.training.department.entity.request.DeptReq;
 import com.training.department.entity.request.MembersReq;
-import com.training.department.entity.table.DeptTable;
+import com.training.department.exceptions.GlobeBlockException;
 import com.training.department.service.DepartmentService;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Min;
@@ -13,8 +14,6 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 /**
  * 定义部门管理服务接口
@@ -56,14 +55,6 @@ public class DeptServiceController {
         return deptService.editDeptInfo(dept_id, req);
     }
 
-    // 删除指定部门
-    @DeleteMapping("/v3/department/{dept_id}")
-    public MsgRespond deleteDept(@PathVariable
-                                 @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "dept_id必须为纯数字字段")
-                                 Integer dept_id) {
-        return deptService.deleteDept(dept_id);
-    }
-
     // 获取指定部门下的成员列表
     @GetMapping("/v1/department/{dept_id}/{page_size}/{offset}")
     public DataRespond getDeptMemberList(@PathVariable
@@ -88,6 +79,9 @@ public class DeptServiceController {
 
     // 删除指定部门下的指定员工
     @DeleteMapping("/v3/worker/{dept_id}/{uid}")
+    @SentinelResource(value = "deleteMember",
+            blockHandlerClass = GlobeBlockException.class,
+            blockHandler = "blockedDeleteMember")
     public MsgRespond deleteMember(@PathVariable
                                    @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "dept_id必须为纯数字字段")
                                    Integer dept_id,
@@ -99,18 +93,27 @@ public class DeptServiceController {
 
     // 获取指定员工的部门ID
     @GetMapping("/v1/department/{uid}")
-    public Integer getDeptId(@PathVariable Integer uid) {
+    @SentinelResource(value = "getDeptId",
+            blockHandlerClass = GlobeBlockException.class,
+            blockHandler = "blockedGetDeptId")
+    public DataRespond getDeptId(@PathVariable Integer uid) {
         return deptService.getDeptIdByUid(uid);
     }
 
     // 获取部门存在状态
     @GetMapping("/v1/department/status/{dept_id}")
-    public Integer getDeptExistStatus(@PathVariable Integer dept_id) {
+    @SentinelResource(value = "getDeptExistStatus",
+            blockHandlerClass = GlobeBlockException.class,
+            blockHandler = "blockedGetDeptExistStatus")
+    public DataRespond getDeptExistStatus(@PathVariable Integer dept_id) {
         return deptService.getDeptExistStatus(dept_id);
     }
 
     // 获取指定部门信息
     @GetMapping("/v1/department/info/{dept_id}")
+    @SentinelResource(value = "getDeptInfo",
+            blockHandlerClass = GlobeBlockException.class,
+            blockHandler = "blockedGetDeptInfo")
     public DataRespond getDeptInfo(@PathVariable
                                    @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "dept_id必须为纯数字字段")
                                    Integer dept_id) {
@@ -119,7 +122,10 @@ public class DeptServiceController {
 
     // 根据部门ID列表获取部门列表
     @GetMapping("/v1/info/list")
-    public List<DeptTable> getDeptList(@RequestBody DeptListReq req) {
+    @SentinelResource(value = "getDeptList",
+            blockHandlerClass = GlobeBlockException.class,
+            blockHandler = "blockedGetDeptList")
+    public DataRespond getDeptList(@RequestBody DeptListReq req) {
         return deptService.getDeptListByDeptList(req.getDeptIdList());
     }
 

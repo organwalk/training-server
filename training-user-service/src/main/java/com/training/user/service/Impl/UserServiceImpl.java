@@ -156,6 +156,7 @@ public class UserServiceImpl implements UserService {
                 : new DataFailRespond("该用户账号信息不存在");
     }
 
+
     /**
      * 编辑指定用户的账号信息具体实现
      * @param uid 用户ID
@@ -182,8 +183,8 @@ public class UserServiceImpl implements UserService {
             req.setPassword(null);
         }
         // 检查用户是否加入了部门
-        Integer deptMark = deptClient.getDeptIdByUid(uid);
-        if (Objects.nonNull(deptMark)){
+        JSONObject deptRes = deptClient.getDeptIdByUid(uid);
+        if (Objects.equals(deptRes.getInteger("code"), 2002)){
             // 检查是否更改了权限
             if (!Objects.equals(req.getAuth_id(), oldAuthId)){
                 return MsgRespond.fail("该用户以员工身份加入了部门，无法修改权限。请在解除其部门关系后重试");
@@ -215,10 +216,10 @@ public class UserServiceImpl implements UserService {
             return MsgRespond.fail("该用户存在上传资源，无法删除。请先清除此用户上传的资源");
         }
         // 检查用户是否加入了部门
-        Integer deptMark = deptClient.getDeptIdByUid(uid);
-        if (Objects.nonNull(deptMark)){
+        JSONObject deptRes = deptClient.getDeptIdByUid(uid);
+        if (Objects.equals(deptRes.getInteger("code"), 2002)){
             // 检查是否成功删除用户在部门内的关系
-            JSONObject memberInfo = deptClient.deleteMember(deptMark, uid);
+            JSONObject memberInfo = deptClient.deleteMember(deptRes.getInteger("data"), uid);
             if (Objects.equals(memberInfo.get("code"), 5005)){
                 return MsgRespond.fail((String) memberInfo.get("msg"));
             }
@@ -310,8 +311,12 @@ public class UserServiceImpl implements UserService {
      * by organwalk 2023-10-19
      */
     @Override
-    public List<UserInfo> getUserInfoListByUidList(List<Integer> uidList) {
-        return userMapper.batchSelectUserByUidList(uidList);
+    public DataRespond getUserInfoListByUidList(List<Integer> uidList) {
+        List<UserInfo> userInfoList = userMapper.batchSelectUserByUidList(uidList);
+        if (userInfoList.isEmpty()){
+            return new DataFailRespond("无法获取到用户信息");
+        }
+        return new DataSuccessRespond("已成功获取用户信息", userInfoList);
     }
 
     /**

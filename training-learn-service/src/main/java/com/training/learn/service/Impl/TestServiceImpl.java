@@ -196,7 +196,11 @@ public class TestServiceImpl implements TestService {
                                 proRes.getObject("data", new TypeReference<List<Integer>>(){})
                         )
                 );
+            }else {
+                return MsgRespond.fail(res.getString("msg"));
             }
+        }else {
+            return MsgRespond.fail(res.getString("msg"));
         }
 
         return MsgRespond.success("已成功发布试卷");
@@ -261,36 +265,6 @@ public class TestServiceImpl implements TestService {
             return new DataFailRespond("该试卷不存在！");
         }
 
-        //判断请求用户为普通员工时
-        if (Objects.equals(auth, "none")) {
-            if (test.getIsRelease() == 0) {
-                return new DataFailRespond("考生无法查看尚未发布的试卷");
-            }
-            // 校验考试时间
-            String msg = validTestTime(test.getStart_datetime(), test.getEnd_datetime());
-            if (!msg.isBlank()) return new DataFailRespond(msg);
-            // 获取缓存
-            List<StuQuestionResult.Question> questionList = questionCache.getStuQuestion(test_id, auth);
-            if (Objects.isNull(questionList) || questionList.isEmpty()) {
-                questionList = new ArrayList<>();
-                List<Integer> allQuestionIdList = questionMapper.getIdByTestId(test_id);
-                for (Integer i : allQuestionIdList) {
-                    QuestionTable questionTable = questionMapper.getQuestionById(i);
-                    OptionsTable optionsTable = optionMapper.getOptionByQuesId(i);
-
-                    Map<String, String> options = JSON.parseObject(optionsTable.getOption(), new TypeReference<>() {
-                    });
-                    StuQuestionResult.Question question = new StuQuestionResult.Question(i, questionTable.getQuestion_content(), options, optionsTable.getIsMore());
-
-                    questionList.add(question);
-                }
-                questionCache.saveStuQuestion(test_id, auth, questionList);
-            }
-            StuQuestionResult stuQuestionResult = new StuQuestionResult(test.getTest_title(), test.getStart_datetime(), test.getEnd_datetime(), questionList);
-
-            return new DataSuccessRespond("已成功获取试题列表", stuQuestionResult);
-        }
-
         //判断请求用户为教师时
         if (Objects.equals(auth, "teacher")) {
             //获取缓存数据
@@ -320,8 +294,34 @@ public class TestServiceImpl implements TestService {
 
             TeaQuestionResult teaQuestionResult = new TeaQuestionResult(test.getTest_title(), test.getStart_datetime(), test.getEnd_datetime(), questionList);
             return new DataSuccessRespond("已成功获取试题列表", teaQuestionResult);
+        }else {
+            if (test.getIsRelease() == 0) {
+                return new DataFailRespond("考生无法查看尚未发布的试卷");
+            }
+            // 校验考试时间
+            String msg = validTestTime(test.getStart_datetime(), test.getEnd_datetime());
+            if (!msg.isBlank()) return new DataFailRespond(msg);
+            // 获取缓存
+            List<StuQuestionResult.Question> questionList = questionCache.getStuQuestion(test_id, auth);
+            if (Objects.isNull(questionList) || questionList.isEmpty()) {
+                questionList = new ArrayList<>();
+                List<Integer> allQuestionIdList = questionMapper.getIdByTestId(test_id);
+                for (Integer i : allQuestionIdList) {
+                    QuestionTable questionTable = questionMapper.getQuestionById(i);
+                    OptionsTable optionsTable = optionMapper.getOptionByQuesId(i);
+
+                    Map<String, String> options = JSON.parseObject(optionsTable.getOption(), new TypeReference<>() {
+                    });
+                    StuQuestionResult.Question question = new StuQuestionResult.Question(i, questionTable.getQuestion_content(), options, optionsTable.getIsMore());
+
+                    questionList.add(question);
+                }
+                questionCache.saveStuQuestion(test_id, auth, questionList);
+            }
+            StuQuestionResult stuQuestionResult = new StuQuestionResult(test.getTest_title(), test.getStart_datetime(), test.getEnd_datetime(), questionList);
+
+            return new DataSuccessRespond("已成功获取试题列表", stuQuestionResult);
         }
-        return new DataFailRespond("获取失败！");
     }
 
 
@@ -469,6 +469,9 @@ public class TestServiceImpl implements TestService {
         for (ScoreTable scoreTable : scoreTables) {
             //获取学生真实姓名
             String realName = getRealName(scoreTable.getStudent_id());
+            if (realName.isBlank()){
+                return new DataFailRespond("用户服务异常，无法正常获取用户信息");
+            }
             ScoreResult scoreResult = getScoreResult(scoreTable, realName);
             scoreResultList.add(scoreResult);
         }
@@ -651,13 +654,17 @@ public class TestServiceImpl implements TestService {
      * 2023/11/14
      */
     private String judgeTea(int teacher_id) {
-        JSONObject req = userClient.getUserAccountByUid(teacher_id);
-        JSONObject data = req.getJSONObject("data");
-        Integer authId = data.getInteger("authId");
-        if (Objects.equals(authId, 2)) {
-            return "";
+        JSONObject res = userClient.getUserAccountByUid(teacher_id);
+        if (Objects.equals(res.getInteger("code"), 2002)){
+            JSONObject data = res.getJSONObject("data");
+            Integer authId = data.getInteger("authId");
+            if (Objects.equals(authId, 2)) {
+                return "";
+            }
+            return "该用户不是教师！";
+        }else {
+            return res.getString("msg");
         }
-        return "该用户不是教师！";
     }
 
 
@@ -670,11 +677,11 @@ public class TestServiceImpl implements TestService {
      * 2023/11/14
      */
     private String judgeTeaInInLesson(int teacher_id, int lesson_id) {
-        JSONObject req = planClient.getLessonInfo(lesson_id);
-        if (Objects.equals(req.getInteger("code"), 5005)) {
-            return "请求数据有误";
+        JSONObject res = planClient.getLessonInfo(lesson_id);
+        if (Objects.equals(res.getInteger("code"), 5005)) {
+            return res.getString("msg");
         }
-        JSONObject data = req.getJSONObject("data");
+        JSONObject data = res.getJSONObject("data");
         Integer TeaId = data.getInteger("teacher_id");
         if (Objects.equals(TeaId, teacher_id)) {
             return "";
@@ -718,8 +725,11 @@ public class TestServiceImpl implements TestService {
      * 2023/11/15
      */
     private String getRealName(int student_id) {
-        JSONObject req = userClient.getUserAccountByUid(student_id);
-        JSONObject data = req.getJSONObject("data");
+        JSONObject res = userClient.getUserAccountByUid(student_id);
+        if (Objects.equals(res.getInteger("code"), 5005)){
+            return "";
+        }
+        JSONObject data = res.getJSONObject("data");
         return data.getString("realName");
     }
 

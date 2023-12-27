@@ -7,12 +7,10 @@ import org.springframework.web.service.annotation.HttpExchange;
 
 /**
  * 进度服务接口远程调用
- * by organalk 2023-11-23
+ * by organwalk 2023-11-23
  */
 @HttpExchange("http://localhost:8183/api/resource")
 public interface ResourceClient {
     @DeleteExchange("/v2/lesson/chapter/{chapter_id}")
     JSONObject deleteOneLessonResource(@PathVariable Integer chapter_id);
-    @DeleteExchange("/v2/resource/lesson/{lesson_id}")
-    void deleteAllLessonResource(@PathVariable Integer lesson_id);
 }

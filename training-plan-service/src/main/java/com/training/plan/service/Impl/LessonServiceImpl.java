@@ -50,6 +50,9 @@ public class LessonServiceImpl implements LessonService {
         }
         //获取教师信息并判断是否为教师
         User user = getUser(req.getTeacher_id());
+        if (Objects.isNull(user)){
+            return MsgRespond.fail("用户服务异常，无法正常编辑账号信息");
+        }
         if (!Objects.equals(user.getAuth_id(),2)){
             return MsgRespond.fail("该用户不是教师，请重新选择");
         }
@@ -63,7 +66,7 @@ public class LessonServiceImpl implements LessonService {
 
         JSONObject j = progressClient.insertInProPlan(plan_id,req.getTeacher_id(),lessonTable.getId());
 
-        return !Objects.equals(j.get("code"),5005) ?MsgRespond.success("添加课程成功！"):MsgRespond.fail("添加课程失败！");
+        return !Objects.equals(j.get("code"),5005) ? MsgRespond.success("添加课程成功！"):MsgRespond.fail(j.getString("msg"));
     }
     /**
      * 根据教师id获取教师的所有课程的具体实现
@@ -183,7 +186,10 @@ public class LessonServiceImpl implements LessonService {
                 return MsgRespond.fail("当前培训计划尚未分配人员，无法发布课程");
             }
             for (Integer j:stuIdList){
-                progressClient.insertProgress(id,j,over_chapter,chapterSum);
+                JSONObject res = progressClient.insertProgress(id,j,over_chapter,chapterSum);
+                if (Objects.equals(res.getInteger("code"), 5005)){
+                    return MsgRespond.fail(res.getString("msg"));
+                }
             }
         }
         return i>0?MsgRespond.success("已成功发布课程"):MsgRespond.fail("发布失败");
@@ -208,14 +214,17 @@ public class LessonServiceImpl implements LessonService {
      * @return 根据处理结果返回对应消息
      */
     private User getUser(int id){
-        JSONObject req = userClient.getUserAccountByUid(id);
-        JSONObject data = req.getJSONObject("data");
+        JSONObject res = userClient.getUserAccountByUid(id);
+        if (Objects.equals(res.getInteger("code"), 5005)){
+            return null;
+        }
+        JSONObject data = res.getJSONObject("data");
         int uid = data.getInteger("id");
-        String realname = data.getString("realName");
+        String realName = data.getString("realName");
         String mobile = data.getString("mobile");
         int auth_id = data.getInteger("authId");
         JSONObject Auth = data.getJSONObject("auth");
-        return new User(uid,realname,mobile,auth_id,null,new User.Auth(auth_id,Auth.getString("authName")));
+        return new User(uid,realName,mobile,auth_id,null,new User.Auth(auth_id,Auth.getString("authName")));
     }
     /**
      * 根据id判断用户是否存在的具体实现
@@ -223,11 +232,9 @@ public class LessonServiceImpl implements LessonService {
      * @return 根据处理结果返回对应消息
      */
     private String UserExit(int id){
-        JSONObject req = userClient.getUserAccountByUid(id);
-        JSONObject data = req.getJSONObject("data");
-        String realname = data.getString("realName");
-        if (realname.isBlank()){
-            return "该教师不存在";
+        JSONObject res = userClient.getUserAccountByUid(id);
+        if (Objects.equals(res.getInteger("code"), 5005)){
+            return res.getString("msg");
         }
         return "";
 

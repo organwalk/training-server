@@ -127,6 +127,9 @@ public class ProgressServiceImpl implements ProgressService {
         List<ProgressChapter> progressChapters = chapterMapper.getProChapByStuId(lesson_id,page_size,offset);
         for (ProgressChapter progressChapter : progressChapters) {
             Chapter chapter = getChapter(lesson_id, progressChapter.getOver_chapter_id());
+            if (Objects.isNull(chapter)){
+                return new DataFailRespond("培训管理服务异常，无法正常获取指定课程的所有章节");
+            }
             StuChapterAll stuChapterAll = new StuChapterAll(lesson_id, progressChapter.getStudent_id(), progressChapter.getOver_chapter_id(), chapter, progressChapter.getCompletion_date());
             result.add(stuChapterAll);
         }
@@ -187,6 +190,9 @@ public class ProgressServiceImpl implements ProgressService {
     @Override
     public DataRespond getTeaAllPresent(int planId, int teacher_id, String auth, String username) {
         String name1 = getName(teacher_id);
+        if (name1.isBlank()){
+            return new DataFailRespond("用户服务异常，无法正常获取用户账号信息");
+        }
         if (Objects.equals(auth, "teacher") && !Objects.equals(username, name1)) {
             return new DataFailRespond("只能查看自己的课程进度信息");
         }
@@ -210,6 +216,9 @@ public class ProgressServiceImpl implements ProgressService {
             all_total_progresss += lessonPresent;
 
             String name = getLessonById(i);
+            if (name.isBlank()){
+                return new DataFailRespond("培训管理服务异常，无法正常获取课程信息");
+            }
             if (Double.isNaN(lessonPresent)) {
                 lessonPresent = 0;
             }
@@ -271,8 +280,8 @@ public class ProgressServiceImpl implements ProgressService {
      */
     @Override
     public DataRespond gerLessonIdListByPlanId(int plan_id, int page_size, int offset) {
-        Integer Mark = planMapper.judgePlanExit(plan_id);
-        if (Objects.equals(Mark, 0)) {
+        Integer mark = planMapper.judgePlanExit(plan_id);
+        if (Objects.equals(mark, 0)) {
             return new DataFailRespond("该计划不存在！");
         }
         Integer Count = planMapper.getCountByPlanId(plan_id);
@@ -361,9 +370,9 @@ public class ProgressServiceImpl implements ProgressService {
      * @return 根据处理结果返回对应消息
      */
     private String judgeStuExit(int id) {
-        JSONObject req = userClient.getUserAccountByUid(id);
-        if (Objects.equals(req.get("code"), 5005)) {
-            return "该学生不存在！";
+        JSONObject res = userClient.getUserAccountByUid(id);
+        if (Objects.equals(res.get("code"), 5005)) {
+            return res.getString("msg");
         }
         return "";
     }
@@ -389,8 +398,11 @@ public class ProgressServiceImpl implements ProgressService {
      * @return 根据处理结果返回对应消息
      */
     private String getName(int id) {
-        JSONObject req = userClient.getUserAccountByUid(id);
-        JSONObject data = req.getJSONObject("data");
+        JSONObject res = userClient.getUserAccountByUid(id);
+        if (Objects.equals(res.getInteger("code"), 5005)){
+            return "";
+        }
+        JSONObject data = res.getJSONObject("data");
         return data.getString("username");
     }
 
@@ -402,17 +414,20 @@ public class ProgressServiceImpl implements ProgressService {
      * @return 根据处理结果返回对应消息
      */
     private String judgeLessonExit(int id) {
-        JSONObject req = planClient.getLessonInfo(id);
-        if (Objects.equals(req.get("code"), 5005)) {
-            return "该课程不存在！";
+        JSONObject res = planClient.getLessonInfo(id);
+        if (Objects.equals(res.get("code"), 5005)) {
+            return res.getString("msg");
         }
         return "";
     }
 
 
     private String getLessonById(int id) {
-        JSONObject req = planClient.getLessonInfo(id);
-        JSONObject data = req.getJSONObject("data");
+        JSONObject res = planClient.getLessonInfo(id);
+        if (Objects.equals(res.getInteger("code"), 5005)){
+            return "";
+        }
+        JSONObject data = res.getJSONObject("data");
         return data.getString("lesson_name");
     }
 
@@ -437,7 +452,7 @@ public class ProgressServiceImpl implements ProgressService {
             }
             return found ? "" : "该章节不存在";
         }else {
-            return "课程不存在";
+            return res.getString("msg");
         }
     }
 
@@ -450,9 +465,11 @@ public class ProgressServiceImpl implements ProgressService {
      */
 
     private Chapter getChapter(int id, int chapter_id) {
-        JSONObject list = planClient.getAllChapterByLessonId(id);
-        JSONArray req = JSON.parseObject(String.valueOf(list)).getJSONArray("data");
-        List<Chapter> chapters = JSONArray.parseArray(req.toJSONString(), Chapter.class);
+        JSONObject res = planClient.getAllChapterByLessonId(id);
+        if (Objects.equals(res.getInteger("code"), 5005)){
+            return null;
+        }
+        List<Chapter> chapters = res.getJSONArray("data").toJavaList(Chapter.class);
         Chapter trachapter = null;
         for (Chapter chapter : chapters) {
             if (chapter.getId() == chapter_id) {
@@ -471,9 +488,9 @@ public class ProgressServiceImpl implements ProgressService {
      * @return 根据处理结果返回对应消息
      */
     private String judgePlanExit(int id) {
-        JSONObject req = planClient.getPlanByPlanId(id);
-        if (Objects.equals(req.get("code"), 5005)) {
-            return "该计划不存在";
+        JSONObject res = planClient.getPlanByPlanId(id);
+        if (Objects.equals(res.get("code"), 5005)) {
+            return res.getString("msg");
         }
         return "";
     }

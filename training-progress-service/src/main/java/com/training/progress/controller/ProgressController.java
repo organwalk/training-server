@@ -1,7 +1,9 @@
 package com.training.progress.controller;
 
+import com.alibaba.csp.sentinel.annotation.SentinelResource;
 import com.training.common.entity.DataRespond;
 import com.training.common.entity.MsgRespond;
+import com.training.progress.exceptions.GlobeBlockException;
 import com.training.progress.service.ProgressService;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Min;
@@ -33,6 +35,9 @@ public class ProgressController {
 
 
     @PostMapping("/v2/lesson/student/{lesson_id}/{student_id}/{over_chapter_sum}/{lesson_chapter_sum}")
+    @SentinelResource(value = "updateStuLessonProgress",
+            blockHandlerClass = GlobeBlockException.class,
+            blockHandler = "blockedUpdateStuLessonProgress")
     public MsgRespond updateStuLessonProgress(@PathVariable
                                               @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "lesson_id必须为纯数字字段")
                                               int lesson_id,
@@ -95,7 +100,10 @@ public class ProgressController {
 
     //建立课程进度跟踪机制
     @PostMapping("/v2/plan/lesson/teacher/{plan_id}/{teacher_id}/{lesson_id}")
-    public MsgRespond LessonTrack(@PathVariable
+    @SentinelResource(value = "lessonTrack",
+            blockHandlerClass = GlobeBlockException.class,
+            blockHandler = "blockedLessonTrack")
+    public MsgRespond lessonTrack(@PathVariable
                                   @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "plan_id必须为纯数字字段")
                                   int plan_id,
                                   @PathVariable
@@ -122,6 +130,9 @@ public class ProgressController {
 
     //获取指定培训计划下建立跟踪机制的课程ID列表
     @GetMapping("/v1/plan/lesson/{plan_id}/{page_size}/{offset}")
+    @SentinelResource(value = "getLessonIdListByPlanId",
+            blockHandlerClass = GlobeBlockException.class,
+            blockHandler = "blockedGetLessonIdListByPlanId")
     public DataRespond getLessonIdListByPlanId(@PathVariable
                                                @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "plan_id必须为纯数字字段")
                                                int plan_id,
@@ -137,6 +148,9 @@ public class ProgressController {
 
     //获取指定培训计划下指定学员的课程进度百分比列表
     @GetMapping("/v1/plan/lesson/persent/{plan_id}/{student_id}/{page_size}/{offset}")
+    @SentinelResource(value = "getLessonByPIdAndStuId",
+            blockHandlerClass = GlobeBlockException.class,
+            blockHandler = "blockedGetLessonByPIdAndStuId")
     public DataRespond getLessonByPIdAndStuId(@PathVariable
                                               @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "plan_id必须为纯数字字段")
                                               int plan_id,
@@ -166,6 +180,9 @@ public class ProgressController {
 
     //更新章节总数
     @PostMapping("/v2/lesson/student/{sum}/{lesson_id}")
+    @SentinelResource(value = "updateChapterSum",
+            blockHandlerClass = GlobeBlockException.class,
+            blockHandler = "blockedUpdateChapterSum")
     public MsgRespond updateChapterSum(@PathVariable Integer sum,
                                        @PathVariable
                                        @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "lesson_id必须为纯数字字段")
@@ -175,6 +192,9 @@ public class ProgressController {
 
     // 获取指定课程下的学生ID列表
     @GetMapping("/v1/lesson/student/list/{lessonId}")
+    @SentinelResource(value = "getStudentIdList",
+            blockHandlerClass = GlobeBlockException.class,
+            blockHandler = "blockedGetStudentIdList")
     public DataRespond getStudentIdList(@PathVariable Integer lessonId){
         return progressService.getStudentIdList(lessonId);
     }

@@ -56,6 +56,9 @@ public class TrainingServiceImpl implements TrainingService {
 
         for (Integer i : PlanIdList) {
             JSONObject res = progressClient.getLessonPersentList(i, student_id, 999999, 0).join();
+            if (Objects.equals(res.getInteger("code"), 5005)){
+                return new DataFailRespond(res.getString("msg"));
+            }
             List<LessonIdAndPersent> progressList =  res.getJSONArray("data").toJavaList(LessonIdAndPersent.class);
             double persentSum = progressList.stream().mapToDouble(LessonIdAndPersent::getPresent).sum();
             double x = persentSum / progressList.size();
@@ -65,6 +68,9 @@ public class TrainingServiceImpl implements TrainingService {
             String formattedAverage = df.format(x); // 格式化平均值
             double roundedAverage = Double.parseDouble(formattedAverage);
             Plan p = getPlanById(i);
+            if (Objects.isNull(p)){
+                return new DataFailRespond("培训管理服务异常，无法正常获取培训计划信息");
+            }
             PlanResult result = new PlanResult(i, p.getTraining_title(), p.getTraining_purpose(), p.getTraining_start_time(), p.getTraining_end_time(), p.getDept_id(), p.getTraining_state(), roundedAverage, p.getExtra());
             list.add(result);
         }
@@ -92,19 +98,29 @@ public class TrainingServiceImpl implements TrainingService {
             return new DataFailRespond("未能成功获取课程列表");
         }
 
-        JSONObject res = progressClient.getLessonPersentList(plan_id, student_id, 999999, 0).join();
+        JSONObject res;
+        res = progressClient.getLessonPersentList(plan_id, student_id, 999999, 0).join();
+        if (Objects.equals(res.getInteger("code"), 5005)){
+            return new DataFailRespond(res.getString("msg"));
+        }
         List<LessonIdAndPersent> progressList =  res.getJSONArray("data").toJavaList(LessonIdAndPersent.class);
 
         List<Integer> lessonIdList = trainingMapper.getLessonIdListByPId(plan_id, page_size, offset);
         List<LessonResult> lessonResults = new ArrayList<>();
         for (Integer i : lessonIdList) {
-            JSONObject req = planClient.getLessonInfo(i);
-            JSONObject data = req.getJSONObject("data");
+            JSONObject infoRes = planClient.getLessonInfo(i);
+            if (Objects.equals(infoRes.getInteger("code"), 5005)){
+                return new DataFailRespond(infoRes.getString("msg"));
+            }
+            JSONObject data = infoRes.getJSONObject("data");
             String lessonName = data.getString("lesson_name");
             String lessonDes = data.getString("lesson_des");
             String lessonState = data.getString("lesson_state");
             Integer teacherId = data.getInteger("teacher_id");
             TeacherInfo teacherInfo = getTeaInfo(teacherId);
+            if (Objects.isNull(teacherInfo)){
+                return new DataFailRespond("用户服务异常，无法正常获取用户信息");
+            }
             ProgressLesson lessonProgress = trainingMapper.getLessonProgressByLIdAndStuId(i, student_id);
             double x = 0;
             if (lessonProgress != null) {
@@ -172,8 +188,11 @@ public class TrainingServiceImpl implements TrainingService {
      * @return 根据处理结果返回对应消息
      */
     private Plan getPlanById(int id) {
-        JSONObject req = planClient.getPlanInfoById(id);
-        JSONObject data = req.getJSONObject("data");
+        JSONObject res = planClient.getPlanInfoById(id);
+        if (Objects.equals(res.getInteger("code"), 5005)){
+            return null;
+        }
+        JSONObject data = res.getJSONObject("data");
         JSONObject table = data.getJSONObject("table");
         JSONObject dept = data.getJSONObject("deptInfo");
 
@@ -211,8 +230,11 @@ public class TrainingServiceImpl implements TrainingService {
      * @return 根据处理结果返回对应消息
      */
     private TeacherInfo getTeaInfo(int id) {
-        JSONObject req = userClient.getUserAccountByUid(id);
-        JSONObject data = req.getJSONObject("data");
+        JSONObject res = userClient.getUserAccountByUid(id);
+        if (Objects.equals(res.getInteger("code"), 5005)){
+            return null;
+        }
+        JSONObject data = res.getJSONObject("data");
         String realName = data.getString("realName");
         String mobile = data.getString("mobile");
         return new TeacherInfo(realName, mobile);
@@ -226,18 +248,18 @@ public class TrainingServiceImpl implements TrainingService {
      * @return 根据处理结果返回对应消息
      */
     private String judgeStuExit(int student_id) {
-        JSONObject req = userClient.getUserAccountByUid(student_id);
-        if (Objects.equals(req.get("code"), 5005)) {
-            return "该学生不存在！";
+        JSONObject res = userClient.getUserAccountByUid(student_id);
+        if (Objects.equals(res.get("code"), 5005)) {
+            return res.getString("msg");
         }
         return "";
     }
 
 
     private String judgeLessonExit(int lesson_id) {
-        JSONObject req = planClient.getLessonInfo(lesson_id);
-        if (Objects.equals(req.get("code"), 5005)) {
-            return "该课程不存在";
+        JSONObject res = planClient.getLessonInfo(lesson_id);
+        if (Objects.equals(res.get("code"), 5005)) {
+            return res.getString("msg");
         }
         return "";
     }

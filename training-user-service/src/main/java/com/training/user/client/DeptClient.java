@@ -15,7 +15,7 @@ public interface DeptClient {
 
     // 获取指定员工的部门ID
     @GetExchange("/v1/department/{uid}")
-    Integer getDeptIdByUid(@PathVariable Integer uid);
+    JSONObject getDeptIdByUid(@PathVariable Integer uid);
     // 删除部门成员
     @DeleteExchange("/v3/worker/{dept_id}/{uid}")
     JSONObject deleteMember(@PathVariable Integer dept_id, @PathVariable Integer uid);

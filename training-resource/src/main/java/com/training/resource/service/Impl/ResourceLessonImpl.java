@@ -24,7 +24,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -127,7 +126,10 @@ public class ResourceLessonImpl implements ResourceLessonService {
             }
 
             // 删除该教材资源的视频测试题
-            planClient.deleteAllVideoTestByResourceLessonId(idMark);
+            JSONObject res = planClient.deleteAllVideoTestByResourceLessonId(idMark);
+            if (Objects.equals(res.getInteger("code"), 5005)){
+                return MsgRespond.fail(res.getString("msg"));
+            }
 
             UPLOAD_CACHE.put(chapterId, true);
         }
@@ -200,46 +202,6 @@ public class ResourceLessonImpl implements ResourceLessonService {
             return MsgRespond.fail(msg);
         }
         return MsgRespond.success("已成功删除此课程文件");
-    }
-
-    /**
-     * 删除指定课程下所有教材文件
-     * @param lessonId 课程ID
-     * @return 根据处理结果返回消息提示
-     * by organwalk 2023-11-04
-     */
-    @Override
-    public MsgRespond deleteAllLessonResource(Integer lessonId) {
-        // 检查课程存在性
-        Integer idMark = resourceLessonMapper.selectIdByDeleteAllLessonArgs(lessonId);
-        if (Objects.isNull(idMark)) {
-            return MsgRespond.fail("重新检查指定的讲师、课程是否正确");
-        }
-
-        // 获取需要删除的课程列表，并初始化一个记录删除失败的章节列表
-        List<Integer> chapterIdList = resourceLessonMapper.getChapterIdListByLessonId(lessonId);
-        List<Integer> failedDeletions = new ArrayList<>();
-
-        // 遍历删除章节列表下的教材
-        chapterIdList.forEach(chapterId -> {
-            String msg = deleteResourceLesson(chapterId);
-            if (!msg.isBlank()){
-                failedDeletions.add(chapterId);
-            }
-        });
-
-        // 如果失败删除不为空，则进行相应返回
-        if (!failedDeletions.isEmpty()){
-            Integer failSize = failedDeletions.size();
-            Integer chapterSize = chapterIdList.size();
-            // 如果失败删除次数与章节数相同，表明删除失败
-            if (Objects.equals(failSize, chapterSize)){
-                return MsgRespond.fail("删除此课程下的章节教材资源失败");
-            }
-            return MsgRespond.success("已成功删除此课程大部分资源文件，未删除" + failSize + "份文件");
-        }
-
-        return MsgRespond.success("已成功删除此课程教材文件");
     }
 
     /**

@@ -1,6 +1,7 @@
 package com.training.learn.service.Impl;
 
 import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.training.common.entity.MsgRespond;
 import com.training.common.entity.req.UserInfoListReq;
 import com.training.learn.client.UserClient;
@@ -166,9 +167,9 @@ public class LikeServiceImpl implements LikeService {
     private String judgeUser(int student_id) {
         List<Integer> uidList = new ArrayList<>();
         uidList.add(student_id);
-        JSONArray uidJsonArray = userClient.getUserInfoByUidList(new UserInfoListReq(uidList));
-        if (uidJsonArray.isEmpty()) {
-            return "该用户不存在";
+        JSONObject res = userClient.getUserInfoByUidList(new UserInfoListReq(uidList));
+        if (Objects.equals(res.getInteger("code"), 5005)){
+            return res.getString("msg");
         }
         return "";
     }

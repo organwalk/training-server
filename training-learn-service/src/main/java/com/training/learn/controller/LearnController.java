@@ -1,9 +1,11 @@
 package com.training.learn.controller;
 
+import com.alibaba.csp.sentinel.annotation.SentinelResource;
 import com.training.common.entity.DataRespond;
 import com.training.common.entity.MsgRespond;
 import com.training.learn.entity.request.*;
 
+import com.training.learn.exceptions.GlobeBlockException;
 import com.training.learn.service.*;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Max;
@@ -203,12 +205,18 @@ public class LearnController {
 
     // 获取主评论内容
     @GetMapping("/v1/comment/{comment_id}")
+    @SentinelResource(value = "getComment",
+            blockHandlerClass = GlobeBlockException.class,
+            blockHandler = "blockedGetComment")
     public DataRespond getComment(@PathVariable Integer comment_id) {
         return commentService.getFatherComment(comment_id);
     }
 
     // 获取跟帖评论内容
     @GetMapping("/v1/reply/{reply_id}")
+    @SentinelResource(value = "getReply",
+            blockHandlerClass = GlobeBlockException.class,
+            blockHandler = "blockedGetReply")
     public DataRespond getReply(@PathVariable Integer reply_id) {
         return replyService.getReplyContent(reply_id);
     }
@@ -352,6 +360,9 @@ public class LearnController {
     }
 
     @GetMapping("/v1/test/info/{test_id}")
+    @SentinelResource(value = "getTestInfo",
+            blockHandlerClass = GlobeBlockException.class,
+            blockHandler = "blockedGetTestInfo")
     public DataRespond getTestInfo(@PathVariable("test_id") Integer testId) {
         return testService.getTestInfo(testId);
     }

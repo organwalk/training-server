@@ -48,6 +48,9 @@ public class DataUtil {
         }
         // 调用用户服务的内部接口，批量查询用户信息
         List<UpInfo> upInfoList = getUpInfoList(upIds);
+        if (upInfoList.isEmpty()){
+            return new ArrayList<>();
+        }
 
         for (int i = 0; i < rawDataList.size(); i++) {
             // 获取rawDataList中第i个元素
@@ -72,13 +75,18 @@ public class DataUtil {
     public ResourceNormalDetailRespond switchDeptIdAndUpIdToInfo(ResourceNormalDetailRespond obj){
         // 调用部门服务的内部接口，查询部门信息
         JSONObject jsonObject = deptClient.getDeptInfo(obj.getDept_id()).getJSONObject("data");
+        if (Objects.equals(jsonObject.getInteger("code"), 5005)){
+            return null;
+        }
         DeptInfo deptInfo = JSON.parseObject(jsonObject.toJSONString(), DeptInfo.class);
-        System.out.println(deptInfo);
         obj.setDeptInfo(deptInfo);
         // 调用用户服务的内部接口，查询用户信息
         List<Integer> upIds = new ArrayList<>();
         upIds.add(obj.getUp_id());
-        JSONArray jsonUpInfoList = userClient.getUserInfoByUidList(new UserInfoListReq(upIds));
+        JSONObject jsonUpInfoList = userClient.getUserInfoByUidList(new UserInfoListReq(upIds));
+        if (Objects.equals(jsonUpInfoList.getInteger("code"), 5005)){
+            return null;
+        }
         List<UpInfo> upInfoList = JSON.parseArray(jsonUpInfoList.toJSONString(), UpInfo.class);
         obj.setUpInfo(upInfoList.get(0));
         return obj;
@@ -101,7 +109,13 @@ public class DataUtil {
         }
 
         List<UpInfo> upInfoList = getUpInfoList(upIds);
+        if (upInfoList.isEmpty()){
+            return new ArrayList<>();
+        }
         List<DeptInfo> deptInfoList = getDeptInfoList(deptIds);
+        if (deptInfoList.isEmpty()){
+            return new ArrayList<>();
+        }
 
         for (int i = 0; i < rawDataList.size(); i++) {
             // 获取rawDataList中第i个元素
@@ -146,7 +160,7 @@ public class DataUtil {
         JSONObject userInfo = userClient.getUserAccountByUid(upId);
         Integer codeMark = userInfo.getInteger("code");
         if (Objects.equals(codeMark, 5005)){
-            return "当前指定上传者不存在";
+            return userInfo.getString("msg");
         }
         // 检查身份是否是管理员
         if (!Objects.equals(auth, "admin")){
@@ -161,13 +175,19 @@ public class DataUtil {
 
     private List<UpInfo> getUpInfoList(List<Integer> upIds){
         // 调用用户服务的内部接口，批量查询用户信息
-        JSONArray jsonUpInfoList = userClient.getUserInfoByUidList(new UserInfoListReq(upIds));
+        JSONObject jsonUpInfoList = userClient.getUserInfoByUidList(new UserInfoListReq(upIds));
+        if (Objects.equals(jsonUpInfoList.getInteger("code"), 5005)){
+            return new ArrayList<>();
+        }
         return JSON.parseArray(jsonUpInfoList.toJSONString(), UpInfo.class);
     }
 
     private List<DeptInfo> getDeptInfoList(List<Integer> deptIds){
         // 调用部门服务的内部接口，批量查询部门信息
-        JSONArray jsonDeptInfoList = deptClient.getDeptInfoByDeptIdList(new DeptListReq(deptIds));
+        JSONObject jsonDeptInfoList = deptClient.getDeptInfoByDeptIdList(new DeptListReq(deptIds));
+        if (Objects.equals(jsonDeptInfoList.getInteger("code"), 5005)){
+            return new ArrayList<>();
+        }
         return JSON.parseArray(jsonDeptInfoList.toJSONString(), DeptInfo.class);
     }
 }

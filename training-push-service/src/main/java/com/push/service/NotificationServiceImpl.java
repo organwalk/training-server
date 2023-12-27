@@ -101,14 +101,16 @@ public class NotificationServiceImpl implements NotificationService {
             Integer isRead = getReadState(notificationReceptions, item.getId());
             // 获取发起人信息
             String sender = getSender(item.getNotificationUid());
-            // 获取指定通知源的引用内容
-            Object context = getQuote(item.getId(), reversedMap.get(item.getNotificationSourceId()), item.getNotificationQuoteId());
-            if (Objects.isNull(context) && item.getNotificationSourceId() != 6) {
-                // 如果 context 为空，删除当前 item
-                iterator.remove();
-            }else {
-                // 添加处理后的通知细节
-                processNotificationList.add(getNotificationDetail(item, reversedMap.get(item.getNotificationSourceId()), context, sender, isRead));
+            if (!sender.isBlank()){
+                // 获取指定通知源的引用内容
+                Object context = getQuote(item.getId(), reversedMap.get(item.getNotificationSourceId()), item.getNotificationQuoteId());
+                if (Objects.isNull(context) && item.getNotificationSourceId() != 6) {
+                    // 如果 context 为空，删除当前 item
+                    iterator.remove();
+                }else {
+                    // 添加处理后的通知细节
+                    processNotificationList.add(getNotificationDetail(item, reversedMap.get(item.getNotificationSourceId()), context, sender, isRead));
+                }
             }
         }
 
@@ -137,16 +139,16 @@ public class NotificationServiceImpl implements NotificationService {
         Iterator<NotificationTypeResult> iterator = typeNotificationList.iterator();
         while (iterator.hasNext()) {
             NotificationTypeResult item = iterator.next();
-
             String sender = getSender(item.getNotificationUid());
-            Object context = getQuote(item.getId(), reversedMap.get(item.getNotificationSourceId()), item.getNotificationQuoteId());
-
-            if (Objects.isNull(context) && sourceId != 6) {
-                // 如果 context 为空，删除当前 item
-                iterator.remove();
-            } else {
-                // 如果 context 不为空，处理通知细节并添加到新列表中
-                processNotificationList.add(getTypeNotificationDetail(item, reversedMap.get(item.getNotificationSourceId()), context, sender));
+            if (!sender.isBlank()){
+                Object context = getQuote(item.getId(), reversedMap.get(item.getNotificationSourceId()), item.getNotificationQuoteId());
+                if (Objects.isNull(context) && sourceId != 6) {
+                    // 如果 context 为空，删除当前 item
+                    iterator.remove();
+                } else {
+                    // 如果 context 不为空，处理通知细节并添加到新列表中
+                    processNotificationList.add(getTypeNotificationDetail(item, reversedMap.get(item.getNotificationSourceId()), context, sender));
+                }
             }
         }
 
@@ -185,6 +187,9 @@ public class NotificationServiceImpl implements NotificationService {
 
     private String getSender(Integer notificationUid) {
         JSONObject userInfo = userClient.getUserAccountByUid(notificationUid).join();
+        if (Objects.equals(userInfo.getInteger("code"), 5005)){
+            return "";
+        }
         return userInfo.getJSONObject("data").getString("realName");
     }
 
@@ -210,6 +215,9 @@ public class NotificationServiceImpl implements NotificationService {
 
     private Object getPlanQuote(Integer quoteId) {
         JSONObject planInfo = planClient.getPlanInfoById(quoteId).join();
+        if (Objects.equals(planInfo.getInteger("code"), 5005)){
+            return null;
+        }
         @Data
         @AllArgsConstructor
         class planQuote {

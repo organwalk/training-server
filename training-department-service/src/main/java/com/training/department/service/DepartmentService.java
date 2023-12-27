@@ -23,9 +23,6 @@ public interface DepartmentService {
     // 编辑指定部门
     MsgRespond editDeptInfo(Integer deptId, DeptReq req);
 
-    // 删除指定部门
-    MsgRespond deleteDept(Integer deptId);
-
     // 获取指定部门下的成员列表
     DataRespond getDeptMemberList(Integer deptId, Integer pageSize, Integer offset);
 
@@ -36,16 +33,16 @@ public interface DepartmentService {
     MsgRespond deleteMember(MembersReq req);
 
     // 获取指定员工的部门ID
-    Integer getDeptIdByUid(Integer uid);
+    DataRespond getDeptIdByUid(Integer uid);
 
     // 获取部门存在状态
-    Integer getDeptExistStatus(Integer deptId);
+    DataRespond getDeptExistStatus(Integer deptId);
 
     // 获取指定部门信息
     DataRespond getDeptInfoByDeptId(Integer deptId);
 
     // 根据部门ID列表获取部门信息列表
-    List<DeptTable> getDeptListByDeptList(List<Integer> deptIdList);
+    DataRespond getDeptListByDeptList(List<Integer> deptIdList);
 
     // 根据部门名称模糊查询部门
     DataRespond getDeptListByKeyword(String keyword, Integer pageSize, Integer offset);

@@ -172,9 +172,9 @@ public class ResourceNoteServiceImpl implements ResourceNoteService {
     public DataRespond getNoteDetail(Integer noteId) {
         ResourceNoteTable noteDetail = resourceNoteMapper.selectNoteDetail(noteId);
         if (Objects.isNull(noteDetail)){
-            return new DataFailRespond("fail");
+            return new DataFailRespond("笔记详情为空");
         }
-        return new DataSuccessRespond("success", noteDetail);
+        return new DataSuccessRespond("已成功获取笔记", noteDetail);
     }
 
 

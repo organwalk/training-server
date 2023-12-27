@@ -60,6 +60,9 @@ public class AuthenticationFilter implements GatewayFilter {
         JSONObject authInfo =  userClient.getUserAuthInfo(headers.getUsername());
         String realAuthName = (String) authInfo.get("auth_name");
         String realAccessToken = (String) authInfo.get("access_token");
+        if (Objects.equals(realAuthName, "none") && Objects.equals(realAccessToken, "user-service error")){
+            return filterUtil.resAuthFail(exchange, 5005, "用户服务出现异常，无法正常鉴权");
+        }
 
         // 检查请求权限和接口权限标识是否一致
         if (Objects.equals("v4", reqAuthMark) && Objects.equals("none", headers.getAuthName())){

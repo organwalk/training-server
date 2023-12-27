@@ -35,8 +35,8 @@ public interface ProgressPlanMapper {
             "WHERE t.plan_id = #{plan_id}  GROUP BY t.lesson_id")
     List<Integer> getCommonLessonIdsByPlanId(int plan_id);
 
-    @Select("select id from t_progress_plan where plan_id=#{plan_id}")
-    Integer judgePlanExit(int plan_id);
+    @Select("select count(id) from t_progress_plan where plan_id=#{plan_id}")
+    Integer judgePlanExit(@Param("plan_id") int plan_id);
 
     @Select("select lesson_id from t_progress_plan where plan_id=#{plan_id} LIMIT #{page_size} offset #{offset}")
     List<Integer> getLesson(@Param("plan_id")int plan_id,@Param("page_size")int page_size,@Param("offset")int offset);

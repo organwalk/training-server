@@ -18,8 +18,5 @@ public interface ResourceClient {
     JSONObject getNoteDetail(@PathVariable Integer note_id);
 
     @DeleteExchange("/v1/file/note/{user_id}/{note_id}")
-    void deleteNoteResource(@PathVariable int user_id,@PathVariable int note_id);
-
-    @GetExchange("/v1/file/note/{note_id}")
-    JSONObject getNoteResource(@PathVariable int note_id);
+    JSONObject deleteNoteResource(@PathVariable int user_id,@PathVariable int note_id);
 }

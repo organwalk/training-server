@@ -14,5 +14,5 @@ public interface DeptClient {
     JSONObject getDeptInfo(@PathVariable int dept_id);
 
     @GetExchange("/v1/department/{uid}")
-    Integer getDeptIdByUserId(@PathVariable int uid);
+    JSONObject getDeptIdByUserId(@PathVariable int uid);
 }

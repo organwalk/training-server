@@ -29,8 +29,6 @@ public interface TrainingPlanService {
     //修改计划状态
     MsgRespond changeState(String state,int id);
 
-    MsgRespond deletePlan(int id);
-
     // 模糊查询计划信息获取列表
     DataRespond getAllPlanByKeyword(String keyword, int page_size, int offset);
 }

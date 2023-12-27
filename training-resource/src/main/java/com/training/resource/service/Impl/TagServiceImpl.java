@@ -1,5 +1,6 @@
 package com.training.resource.service.Impl;
 
+import com.alibaba.fastjson.JSONObject;
 import com.training.common.entity.DataFailRespond;
 import com.training.common.entity.DataRespond;
 import com.training.common.entity.DataSuccessRespond;
@@ -39,9 +40,9 @@ public class TagServiceImpl implements TagService {
         Integer deptId = req.getDept_id();
         String tagName = req.getTag_name();
         // 检查部门是否存在
-        Integer deptMark = deptClient.getDeptExistStatus(deptId);
-        if (Objects.isNull(deptMark)){
-            return MsgRespond.fail("当前指定的部门不存在，请修改后重试");
+        JSONObject deptInfo = deptClient.getDeptExistStatus(deptId);
+        if (Objects.equals(deptInfo.getInteger("code"), 5005)){
+            return MsgRespond.fail(deptInfo.getString("msg"));
         }
         // 检查指定部门下标签名是否已经存在
         String tagMark = tagMapper.selectTagExistByDeptIdAndTagName(deptId, tagName);
@@ -104,9 +105,9 @@ public class TagServiceImpl implements TagService {
     @Override
     public DataRespond getTagListByDeptId(Integer deptId) {
         // 检查部门是否存在
-        Integer deptMark = deptClient.getDeptExistStatus(deptId);
-        if (Objects.isNull(deptMark)){
-            return new DataFailRespond("当前指定的部门不存在，请修改后重试");
+        JSONObject deptInfo = deptClient.getDeptExistStatus(deptId);
+        if (Objects.equals(deptInfo.getInteger("code"), 5005)){
+            return new DataFailRespond(deptInfo.getString("msg"));
         }
         // 获取标签列表
         List<TagRespond> tagList = tagMapper.selectTagListByDeptId(deptId);

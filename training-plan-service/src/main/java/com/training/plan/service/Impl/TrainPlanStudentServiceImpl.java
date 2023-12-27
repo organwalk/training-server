@@ -56,12 +56,15 @@ public class TrainPlanStudentServiceImpl implements TrainPlanStudentService {
             return MsgRespond.fail("提供的学生列表中，部分学生已经在计划内");
         }
         List<Integer> nonNullStudentList = new ArrayList<>();
-        studentIdList.forEach(item -> {
-             Integer uid = deptClient.getDeptId(item);
-             if (Objects.nonNull(uid)){
-                 nonNullStudentList.add(item);
-             }
-        });
+        for (Integer item : studentIdList) {
+            JSONObject res = deptClient.getDeptId(item);
+            if (Objects.equals(res.getInteger("code"), 5005)){
+                return MsgRespond.fail(res.getString("msg"));
+            }
+            if (Objects.nonNull(res.getInteger("data"))){
+                nonNullStudentList.add(item);
+            }
+        }
         //添加学生
         if (!nonNullStudentList.isEmpty()){
             trainPlanStudentMapper.insertTrainPlanStudent(nonNullStudentList,plan_id);
@@ -70,7 +73,10 @@ public class TrainPlanStudentServiceImpl implements TrainPlanStudentService {
             for(Integer i:lessonIdList){
                 Integer sum = chapterMapper.getCountByLId(i);
                 for (Integer j:studentIdList){
-                    progressClient.insertProgress(i,j,0,sum);
+                    JSONObject res = progressClient.insertProgress(i,j,0,sum);
+                    if (Objects.equals(res.getInteger("code"), 5005)){
+                        return MsgRespond.fail(res.getString("res"));
+                    }
                 }
             }
         }
@@ -105,8 +111,11 @@ public class TrainPlanStudentServiceImpl implements TrainPlanStudentService {
         //获取计划中所有学生id
         List<Integer> AllStuId = trainPlanStudentMapper.getAllStuId(plan_id);
         //调用远程接口获取学生详细信息
-        JSONArray StuList = userClient.getUserInfoByUidList(new UserInfoListReq(AllStuId));
-        List<User> userList = JSONArray.parseArray(StuList.toJSONString(),User.class);
+        JSONObject res = userClient.getUserInfoByUidList(new UserInfoListReq(AllStuId));
+        if (Objects.equals(res.getInteger("code"), 5005)){
+            return new DataFailRespond(res.getString("msg"));
+        }
+        List<User> userList = res.getJSONArray("data").toJavaList(User.class);
         //获取所有id
         List<Integer> IdList = trainPlanStudentMapper.getAllIdByPlanID(plan_id);
         List<StudentInfo> AllStuList = new ArrayList<>();
@@ -160,7 +169,7 @@ public class TrainPlanStudentServiceImpl implements TrainPlanStudentService {
         }
         JSONObject resObject = userClient.getUserAccountByUid(training_student_id);
         if (Objects.equals(resObject.get("code"), 5005)){
-            return "该员工不存在，无法添加!";
+            return resObject.getString("msg");
         }
         if(!Objects.equals(resObject.getJSONObject("data").get("authId"),1)){
             return "该用户不是员工，无法添加";

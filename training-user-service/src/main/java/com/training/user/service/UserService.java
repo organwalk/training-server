@@ -49,7 +49,7 @@ public interface UserService {
     DataRespond getUserInfoByUid(Integer uid);
 
     // 根据用户ID列表获取用户信息列表
-    List<UserInfo> getUserInfoListByUidList(List<Integer> uidList);
+    DataRespond getUserInfoListByUidList(List<Integer> uidList);
 
     // 根据信息模糊搜索获取用户列表
     DataRespond getSearchByKeyword(String keyword, Integer type, Integer pageSize, Integer offset);

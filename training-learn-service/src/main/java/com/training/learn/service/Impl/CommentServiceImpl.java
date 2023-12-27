@@ -100,7 +100,10 @@ public class CommentServiceImpl implements CommentService {
             int user_id = comment.getUserId();
             JSONObject req = JSON.parseObject(comment.getContent());
             Integer note_id = req.getInteger("note_id");
-            resourceClient.deleteNoteResource(user_id, note_id);
+            JSONObject res = resourceClient.deleteNoteResource(user_id, note_id);
+            if (Objects.equals(res.getInteger("code"), 5005)){
+                return MsgRespond.fail(res.getString("msg"));
+            }
         }
         Integer sum = (Integer) likeCache.getCommentLike(key, field);
         if (sum != null) {
@@ -134,7 +137,7 @@ public class CommentServiceImpl implements CommentService {
         JSONObject res = resourceClient.getNoteDetail(noteReq.getResource_note_id());
 
         if (Objects.equals(res.getInteger("code"), 5005)) {
-            return MsgRespond.fail("学习笔记为空");
+            return MsgRespond.fail(res.getString("msg"));
         }
 
         if (!Objects.equals(res.getInteger("lessonId"), lesson_id)

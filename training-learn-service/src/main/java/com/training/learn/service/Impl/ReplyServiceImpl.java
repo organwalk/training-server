@@ -1,7 +1,6 @@
 package com.training.learn.service.Impl;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.training.common.entity.*;
 import com.training.common.entity.req.UserInfoListReq;
@@ -178,7 +177,10 @@ public class ReplyServiceImpl implements ReplyService {
                 likeCache.saveReplyLike(ReplyKey, Reply_field, reply_sum);
             }
             Integer reply_state = likeMapper.getStateByCommentIdAndReplyId(comment_id, reply.getId(), user_id);
-            replyProcess(replyLists, reply, reply_sum, reply_state);
+            String process = replyProcess(replyLists, reply, reply_sum, reply_state);
+            if (!process.isBlank()){
+                return new DataFailRespond(process);
+            }
         }
 
         return new DataPagingSuccessRespond("已成功获取该评论的跟帖回复列表", countMark, replyLists);
@@ -214,8 +216,18 @@ public class ReplyServiceImpl implements ReplyService {
         for (Comment comment : commentList) {
             //获取评论用户的真实姓名
             String comment_real_name = getUserName(comment.getUserId());
+            if (comment_real_name.isBlank()){
+                return new DataFailRespond("用户服务出现异常，无法正常获取用户信息");
+            }
             //获取用户所在的部门名称
             String comment_dept_name = getDeptName(comment.getUserId());
+            if (Objects.equals(comment_dept_name, "该用户不存在指定部门")){
+                return new DataFailRespond("该用户不存在指定部门");
+            } else if (Objects.equals(comment_dept_name, "部门管理服务异常，无法正常获取部门ID")) {
+                return new DataFailRespond("部门管理服务异常，无法正常获取部门ID");
+            }else if (Objects.equals(comment_dept_name, "info error")){
+                return new DataFailRespond("部门管理服务异常，无法正常获取部门信息");
+            }
             String Comment_field = String.valueOf(comment.getId());
 
             //获取缓存中的评论点赞数
@@ -246,7 +258,10 @@ public class ReplyServiceImpl implements ReplyService {
                 }
 
                 Integer reply_state = likeMapper.getStateByReplyId(reply.getId(), user_id);
-                replyProcess(replyLists, reply, reply_sum, reply_state);
+                String process = replyProcess(replyLists, reply, reply_sum, reply_state);
+                if (!process.isBlank()){
+                    return new DataFailRespond(process);
+                }
             }
             CommentList commentList1 = new CommentList(comment.getId(), comment.getUserId(), comment_real_name, comment_dept_name, comment.getContent(), comment.getCreateDatetime(), comment_like_sum, comment_state,
                     new CommentList.Reply_Obj(replyCount, replyLists));
@@ -255,16 +270,27 @@ public class ReplyServiceImpl implements ReplyService {
         return new DataPagingSuccessRespond("已成功获取该章节的评论列表", countMark, commentLists);
     }
 
-    private void replyProcess(List<ReplyList> replyLists, Reply reply, Integer reply_sum, Integer reply_state) {
+    private String replyProcess(List<ReplyList> replyLists, Reply reply, Integer reply_sum, Integer reply_state) {
         if (reply_state == null) {
             reply_state = 0;
         }
 
         String reply_real_name = getUserName(reply.getUser_id());
+        if (reply_real_name.isBlank()){
+            return "用户服务错误，无法正常获取用户信息";
+        }
         String reply_dept_name = getDeptName(reply.getUser_id());
+        if (Objects.equals(reply_dept_name, "该用户不存在指定部门")){
+            return "该用户不存在指定部门";
+        } else if (Objects.equals(reply_dept_name, "部门管理服务异常，无法正常获取部门ID")) {
+            return "部门管理服务异常，无法正常获取部门ID";
+        }else if (Objects.equals(reply_dept_name, "info error")){
+            return "部门管理服务异常，无法正常获取部门信息";
+        }
         ReplyList replyList = new ReplyList(reply.getId(), reply.getUser_id(), reply_real_name, reply_dept_name, reply.getContent(), reply.getCreate_datetime(), reply_sum, reply_state);
 
         replyLists.add(replyList);
+        return "";
     }
 
 
@@ -311,9 +337,9 @@ public class ReplyServiceImpl implements ReplyService {
      * @return 根据处理结果返回对应消息
      */
     private String judgeUser(List<Integer> uidList) {
-        JSONArray uidJsonArray = userClient.getUserInfoByUidList(new UserInfoListReq(uidList));
-        if (!Objects.equals(uidList.size(), uidJsonArray.size())) {
-            return "该用户不存在";
+        JSONObject res = userClient.getUserInfoByUidList(new UserInfoListReq(uidList));
+        if (Objects.equals(res.getInteger("code"), 5005)){
+            return res.getString("msg");
         }
         return "";
     }
@@ -356,9 +382,9 @@ public class ReplyServiceImpl implements ReplyService {
      * 2023/11/9
      */
     private String judgeUserExit(int user_id) {
-        JSONObject req = userClient.getUserAccountByUid(user_id);
-        if (Objects.equals(req.get("code"), 5005)) {
-            return "该用户不存在！";
+        JSONObject res = userClient.getUserAccountByUid(user_id);
+        if (Objects.equals(res.get("code"), 5005)) {
+            return res.getString("msg");
         }
         return "";
     }
@@ -372,8 +398,11 @@ public class ReplyServiceImpl implements ReplyService {
      * 2023/11/9
      */
     private String getUserName(int user_id) {
-        JSONObject req = userClient.getUserAccountByUid(user_id);
-        JSONObject date = req.getJSONObject("data");
+        JSONObject res = userClient.getUserAccountByUid(user_id);
+        if (Objects.equals(res.getInteger("code"), 5005)){
+            return "";
+        }
+        JSONObject date = res.getJSONObject("data");
         return date.getString("realName");
     }
 
@@ -386,13 +415,20 @@ public class ReplyServiceImpl implements ReplyService {
      * 2023/11/9
      */
     private String getDeptName(int user_id) {
-        Integer dept_id = deptClient.getDeptIdByUserId(user_id);
-        if (dept_id != null) {
-            JSONObject req = deptClient.getDeptInfo(dept_id);
-            JSONObject data = req.getJSONObject("data");
-            return data.getString("deptName");
+        JSONObject res = deptClient.getDeptIdByUserId(user_id);
+        if (Objects.equals(res.getInteger("code"), 5005)){
+            if (Objects.equals(res.getString("msg"), "该用户不存在指定部门")){
+                return "该用户不存在指定部门";
+            }else {
+                return "部门管理服务异常，无法正常获取部门ID";
+            }
         }
-        return "该用户不在任何部门";
+        JSONObject infoRes = deptClient.getDeptInfo(res.getInteger("data"));
+        if (Objects.equals(infoRes.getInteger("code"), 5005)){
+            return "info error";
+        }
+        JSONObject data = infoRes.getJSONObject("data");
+        return data.getString("deptName");
     }
 
 

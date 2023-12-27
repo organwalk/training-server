@@ -151,7 +151,10 @@ public class ResourceNormalImpl implements ResourceNormalService {
             return new DataFailRespond("该部门分类标签下资源列表为空");
         }
         List<ResourceNormalRespond> resourceList = resourceNormalMapper.selectResourceListByDeptIdAndTagId(deptId, tagId, pageSize, offset);
-        return new DataPagingSuccessRespond("已成功获取此资源列表", sumMark, dataUtil.switchUidListToUserInfoList(resourceList));
+        List<ResourceNormalRespond> list = dataUtil.switchUidListToUserInfoList(resourceList);
+        return list.isEmpty()
+                ? new DataFailRespond("获取资源列表失败")
+                : new DataPagingSuccessRespond("已成功获取此资源列表", sumMark, list);
     }
 
     /**
@@ -216,7 +219,10 @@ public class ResourceNormalImpl implements ResourceNormalService {
             return new DataFailRespond("此资源文件不存在，请重新指定");
         }
         // 获取部门和人员详细并进行转化
-        return new DataSuccessRespond("已成功获取此资源文件详情", dataUtil.switchDeptIdAndUpIdToInfo(detailObj));
+        ResourceNormalDetailRespond obj = dataUtil.switchDeptIdAndUpIdToInfo(detailObj);
+        return Objects.isNull(obj)
+                ? new DataFailRespond("无法获取部门信息")
+                : new DataSuccessRespond("已成功获取详情", obj);
     }
 
 
@@ -372,7 +378,7 @@ public class ResourceNormalImpl implements ResourceNormalService {
         JSONObject userInfo = userClient.getUserAccountByUid(upId);
         Integer codeMark = userInfo.getInteger("code");
         if (Objects.equals(codeMark, 5005)) {
-            return new DataFailRespond("当前指定上传者不存在");
+            return new DataFailRespond(userInfo.getString("msg"));
         }
         // 获取列表总数
         Integer sumMark = resourceNormalMapper.selectResourceListSumByUpId(upId);
@@ -380,9 +386,10 @@ public class ResourceNormalImpl implements ResourceNormalService {
             return new DataFailRespond("当前用户的上传资源文件列表为空");
         }
         List<ResourceNormalRespond> resourceList = resourceNormalMapper.selectResourceListByUpId(upId, pageSize, offset);
-
-        return new DataPagingSuccessRespond("已成功获取该用户的上传资源列表", sumMark,
-                dataUtil.switchUidListToUserInfoList(resourceList));
+        List<ResourceNormalRespond> list = dataUtil.switchUidListToUserInfoList(resourceList);
+        return list.isEmpty()
+                ? new DataFailRespond("获取上传资源列表失败")
+                : new DataPagingSuccessRespond("已成功获取该用户的上传资源列表", sumMark, list);
     }
 
     /**
@@ -401,8 +408,10 @@ public class ResourceNormalImpl implements ResourceNormalService {
             return new DataFailRespond("上传资源文件列表为空");
         }
         List<ResourceNormalAllListRespond> result = resourceNormalMapper.selectResourceList(pageSize, offset);
-        return new DataPagingSuccessRespond("已成功获取上传资源文件列表", sumMark,
-                dataUtil.switchUidAndDeptListToUserAndDeptInfoList(result));
+        List<ResourceNormalAllListRespond> list = dataUtil.switchUidAndDeptListToUserAndDeptInfoList(result);
+        return list.isEmpty()
+                ? new DataFailRespond("获取上传资源文件列表失败")
+                : new DataPagingSuccessRespond("已成功获取上传资源文件列表", sumMark, list);
     }
 
     /**
@@ -423,7 +432,10 @@ public class ResourceNormalImpl implements ResourceNormalService {
             return new DataFailRespond("该关键词查询结果为空");
         }
         List<ResourceNormalAllListRespond> result = resourceNormalMapper.selectResourceListByKeyword(deptId, tagId, keyword, pageSize, offset);
-        return new DataPagingSuccessRespond("已成功查询到相关结果", sumMark, dataUtil.switchUidAndDeptListToUserAndDeptInfoList(result));
+        List<ResourceNormalAllListRespond> list = dataUtil.switchUidAndDeptListToUserAndDeptInfoList(result);
+        return list.isEmpty()
+                ? new DataFailRespond("获取查询结果失败")
+                : new DataPagingSuccessRespond("已成功查询到相关结果", sumMark, list);
     }
 
     /**
@@ -435,9 +447,9 @@ public class ResourceNormalImpl implements ResourceNormalService {
      */
     private String checkResourceInfo(Integer deptId, Integer tagId){
         // 检查指定部门是否存在
-        Integer deptMark = deptClient.getDeptExistStatus(deptId);
-        if (Objects.isNull(deptMark)){
-            return "当前指定的部门不存在，请修改后重试";
+        JSONObject deptInfo = deptClient.getDeptExistStatus(deptId);
+        if (Objects.equals(deptInfo.getInteger("code"), 5005)){
+            return deptInfo.getString("msg");
         }
         // 检查指定标签是否存在
         Integer tagMark = tagMapper.selectTagExistById(tagId);
@@ -454,9 +466,9 @@ public class ResourceNormalImpl implements ResourceNormalService {
             return checkInfo;
         }
         // 检查指定用户是否存在
-        Integer codeMark = (Integer) userClient.getUserAccountByUid(userId).get("code");
-        if (Objects.equals(codeMark, 5005)){
-            return "当前指定上传者不存在";
+        JSONObject res = userClient.getUserAccountByUid(userId);
+        if (Objects.equals(res.getInteger("code"), 5005)){
+            return res.getString("msg");
         }
         return "";
     }

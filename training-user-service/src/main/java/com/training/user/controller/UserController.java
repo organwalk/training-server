@@ -1,5 +1,6 @@
 package com.training.user.controller;
 
+import com.alibaba.csp.sentinel.annotation.SentinelResource;
 import com.training.common.entity.DataRespond;
 import com.training.common.entity.MsgRespond;
 import com.training.common.entity.req.UserInfoListReq;
@@ -8,15 +9,12 @@ import com.training.user.entity.request.AllAccountInfoReq;
 import com.training.user.entity.request.LoginReq;
 import com.training.user.entity.request.UserAccountInfoReq;
 import com.training.user.entity.respond.AuthInfoRespond;
-import com.training.user.entity.result.UserInfo;
+import com.training.user.exceptions.GlobeBlockException;
 import com.training.user.service.UserService;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-
 
 /**
  * 用户服务接口
@@ -48,6 +46,9 @@ public class UserController {
 
     // (仅内部) 获取指定用户授权信息
     @GetMapping("/v1/auth/{username}")
+    @SentinelResource(value = "getAccessToken",
+            blockHandlerClass = GlobeBlockException.class,
+            blockHandler = "blockedGetAccessToken")
     public AuthInfoRespond getAccessToken(@PathVariable String username) {
         return userService.getUserAuthInfo(username);
     }
@@ -71,9 +72,10 @@ public class UserController {
 
     // 获取指定用户的账号信息
     @GetMapping("/v1/account/{uid}")
-    public DataRespond getAccountInfoByUid(@PathVariable
-                                           @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "uid必须为纯数字字段")
-                                           Integer uid) {
+    @SentinelResource(value = "getAccountInfoByUid",
+            blockHandlerClass = GlobeBlockException.class,
+            blockHandler = "blockedGetAccountInfoByUid")
+    public DataRespond getAccountInfoByUid(@PathVariable Integer uid) {
         return userService.getUserAccountByUid(uid);
     }
 
@@ -96,6 +98,9 @@ public class UserController {
 
     // 用户自行修改账号信息
     @PutMapping("/v1/account/{uid}")
+    @SentinelResource(value = "editUserAccountInfoByUser",
+            blockHandlerClass = GlobeBlockException.class,
+            blockHandler = "blockedEditUserAccountInfoByUser")
     public MsgRespond editUserAccountInfoByUser(@PathVariable
                                                 @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "uid必须为纯数字字段")
                                                 Integer uid,
@@ -122,15 +127,16 @@ public class UserController {
 
     // 获取指定用户信息
     @GetMapping("/v1/info/{uid}")
-    public DataRespond getUserInfoByUid(@PathVariable
-                                        @Digits(integer = Integer.MAX_VALUE, fraction = 0, message = "uid必须为纯数字字段")
-                                        Integer uid) {
+    public DataRespond getUserInfoByUid(@PathVariable @Min(value = 1, message = "uid必须为大于1的数字") Integer uid) {
         return userService.getUserInfoByUid(uid);
     }
 
     // 根据用户ID列表获取用户信息列表
     @GetMapping("/v1/info/list")
-    public List<UserInfo> getUserInfoByUidList(@RequestBody UserInfoListReq req) {
+    @SentinelResource(value = "getUserInfoByUidList",
+            blockHandlerClass = GlobeBlockException.class,
+            blockHandler = "blockedGetUserInfoByUidList")
+    public DataRespond getUserInfoByUidList(@RequestBody UserInfoListReq req) {
         return userService.getUserInfoListByUidList(req.getUid_list());
     }
 

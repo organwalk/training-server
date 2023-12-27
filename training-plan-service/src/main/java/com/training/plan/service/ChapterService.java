@@ -16,6 +16,5 @@ public interface ChapterService {
 
     MsgRespond deleteChapterById(int id);
 
-    MsgRespond deleteAllChapterByLessonId(int lesson_id);
     DataRespond getChapterDetail(Integer chapterId);
 }

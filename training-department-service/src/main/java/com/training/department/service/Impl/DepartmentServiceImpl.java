@@ -5,7 +5,6 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.training.common.entity.*;
 import com.training.common.entity.req.UserInfoListReq;
-import com.training.department.client.ResourceClient;
 import com.training.department.client.UserClient;
 import com.training.department.entity.request.DeptReq;
 import com.training.department.entity.request.MembersReq;
@@ -31,7 +30,6 @@ import java.util.Objects;
 public class DepartmentServiceImpl implements DepartmentService {
 
     private final UserClient userClient;
-    private final ResourceClient resourceClient;
     private final DeptMapper deptMapper;
     private final DeptWorkerMapper deptWorkerMapper;
 
@@ -107,30 +105,6 @@ public class DepartmentServiceImpl implements DepartmentService {
     }
 
     /**
-     * 删除指定部门具体实现
-     * @param deptId 部门ID
-     * @return 根据处理结果返回提示消息
-     */
-    @Override
-    public MsgRespond deleteDept(Integer deptId) {
-        // 检查被删除的部门是否存在
-        Integer deptMark = deptMapper.selectDeptExist(deptId);
-        if (Objects.isNull(deptMark)){
-            return MsgRespond.fail("该部门不存在，无法删除");
-        }
-        // 检查此部门是否设置了部门标签
-        Integer codeMark = resourceClient.getTagListByDeptId(deptId).getInteger("code");
-        if (Objects.equals(codeMark, 2002)){
-            return MsgRespond.fail("该部门已定义资源分类标签，无法删除。请在删除资源分类标签后重试");
-        }
-        // 先删除指定部门下的员工
-        deptWorkerMapper.deleteAllWorkerByDeptId(deptId);
-        // 再删除指定部门
-        deptMapper.deleteDeptByDeptId(deptId);
-        return MsgRespond.success("已成功删除此部门");
-    }
-
-    /**
      * 获取指定部门下的成员列表具体实现
      * @param deptId 部门ID
      * @return 返回成员列表
@@ -146,8 +120,11 @@ public class DepartmentServiceImpl implements DepartmentService {
         Integer sumMark = deptWorkerMapper.selectUidListSumByDeptId(deptId);
         // 获取UID列表
         List<Integer> uidList = deptWorkerMapper.selectUidListByDeptId(deptId, pageSize, offset);
-        JSONArray userInfoList = userClient.getUserInfoByUidList(new UserInfoListReq(uidList));
-        List<MembersInfo> membersInfoList = JSON.parseArray(userInfoList.toJSONString(), MembersInfo.class);
+        JSONObject res = userClient.getUserInfoByUidList(new UserInfoListReq(uidList));
+        if (Objects.equals(res.getInteger("code"), 5005)){
+            return new DataFailRespond(res.getString("msg"));
+        }
+        List<MembersInfo> membersInfoList = res.getJSONArray("data").toJavaList(MembersInfo.class);
         return new DataPagingSuccessRespond("已成功获取当前部门下成员列表", sumMark, membersInfoList);
     }
 
@@ -214,8 +191,11 @@ public class DepartmentServiceImpl implements DepartmentService {
      * @return null或者部门ID
      */
     @Override
-    public Integer getDeptIdByUid(Integer uid) {
-        return deptWorkerMapper.selectDeptIdByUid(uid);
+    public DataRespond getDeptIdByUid(Integer uid) {
+        Integer deptId = deptWorkerMapper.selectDeptIdByUid(uid);
+        return Objects.isNull(deptId)
+                ? new DataFailRespond("该用户不存在指定部门")
+                : new DataSuccessRespond("已获取该用户所属部门ID", deptId);
     }
 
     /**
@@ -224,8 +204,11 @@ public class DepartmentServiceImpl implements DepartmentService {
      * @return null或者整数ID
      */
     @Override
-    public Integer getDeptExistStatus(Integer deptId) {
-        return deptMapper.selectDeptExist(deptId);
+    public DataRespond getDeptExistStatus(Integer deptId) {
+        Integer id = deptMapper.selectDeptExist(deptId);
+        return Objects.isNull(id)
+                ? new DataFailRespond("部门不存在")
+                : new DataSuccessRespond("已获取到部门存在状态", id);
     }
 
     /**
@@ -248,8 +231,9 @@ public class DepartmentServiceImpl implements DepartmentService {
      * @return 部门列表 或 空列表
      */
     @Override
-    public List<DeptTable> getDeptListByDeptList(List<Integer> deptIdList) {
-        return deptMapper.batchSelectDeptByDeptList(deptIdList);
+    public DataRespond getDeptListByDeptList(List<Integer> deptIdList) {
+        List<DeptTable> result = deptMapper.batchSelectDeptByDeptList(deptIdList);
+        return result.isEmpty() ? new DataFailRespond("部门列表为空") : new DataSuccessRespond("已成功获取部门列表", result);
     }
 
     /**
@@ -286,7 +270,7 @@ public class DepartmentServiceImpl implements DepartmentService {
         // 检查部门负责人是否存在以及是否是员工
         JSONObject resObject = userClient.getUserAccountByUid(headId);
         if (Objects.equals(resObject.get("code"), 5005)){
-            return "该员工不存在，请重新指定部门负责人";
+            return resObject.getString("msg");
         }
         if (!Objects.equals(resObject.getJSONObject("data").get("authId"), 1)){
             return "此用户非员工身份，请重新指定部门负责人";
@@ -314,7 +298,7 @@ public class DepartmentServiceImpl implements DepartmentService {
         // 检查员工是否存在
         JSONObject resObject = userClient.getUserAccountByUid(uid);
         if (Objects.equals(resObject.get("code"), 5005)){
-            return "该员工不存在，请重新指定员工";
+            return resObject.getString("msg");
         }
         if (!Objects.equals(resObject.getJSONObject("data").get("authId"), 1)){
             return "此用户非员工身份，请重新指定员工";

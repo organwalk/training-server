@@ -47,11 +47,15 @@ public class GlobalExceptionHandler {
         }
         return MsgRespond.fail(errorMsg.toString());
     }
+    @ExceptionHandler(value = {RuntimeException.class})
+    public MsgRespond runTimeError(RuntimeException re){
+        logger.error(re.getClass());
+        return MsgRespond.fail("内部服务错误，请稍后重试");
+    }
 
-    @ExceptionHandler(value = {Exception.class, RuntimeException.class, IllegalArgumentException.class})
-    public MsgRespond handleInternalServerError(Exception e, RuntimeException re, IllegalArgumentException ae) {
+    @ExceptionHandler(value = {Exception.class, IllegalArgumentException.class})
+    public MsgRespond handleInternalServerError(Exception e, IllegalArgumentException ae) {
         logger.error(e);
-        logger.error(re);
         logger.error(ae);
         return MsgRespond.fail("内部服务错误，请稍后重试");
     }
