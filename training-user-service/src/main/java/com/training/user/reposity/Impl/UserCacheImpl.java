@@ -49,6 +49,6 @@ public class UserCacheImpl implements UserCache {
      */
     @Override
     public void deleteAccessToken(String username) {
-        redisTemplate.opsForHash().delete(ACCESS_TOKEN_KEY + username);
+        redisTemplate.delete(ACCESS_TOKEN_KEY + username);
     }
 }

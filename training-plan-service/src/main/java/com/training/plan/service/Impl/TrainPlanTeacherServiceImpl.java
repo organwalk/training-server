@@ -79,7 +79,7 @@ public class TrainPlanTeacherServiceImpl implements TrainPlanTeacherService {
         if (Objects.equals(res.getInteger("code"), 5005)){
             return new DataFailRespond(res.getString("msg"));
         }
-        List<User> userList = res.getJSONArray("data").toJavaList(User.class);
+        List<User> userList = JSON.parseArray(res.getJSONArray("data").toJSONString(), User.class);
         List<Integer> IdList = trainPlanTeacherMapper.getAllTeaId(plan_id);
         List<TeacherInfo> list = new ArrayList<>();
         for(int i =0;i<userList.size();i++){

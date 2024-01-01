@@ -179,7 +179,8 @@ public class DataUtil {
         if (Objects.equals(jsonUpInfoList.getInteger("code"), 5005)){
             return new ArrayList<>();
         }
-        return JSON.parseArray(jsonUpInfoList.toJSONString(), UpInfo.class);
+        System.out.println(jsonUpInfoList);
+        return JSON.parseArray(jsonUpInfoList.getJSONArray("data").toJSONString(), UpInfo.class);
     }
 
     private List<DeptInfo> getDeptInfoList(List<Integer> deptIds){
@@ -188,6 +189,6 @@ public class DataUtil {
         if (Objects.equals(jsonDeptInfoList.getInteger("code"), 5005)){
             return new ArrayList<>();
         }
-        return JSON.parseArray(jsonDeptInfoList.toJSONString(), DeptInfo.class);
+        return JSON.parseArray(jsonDeptInfoList.getJSONArray("data").toJSONString(), DeptInfo.class);
     }
 }

@@ -224,7 +224,7 @@ public class LearnController {
 
     //新建一份试卷
     @PostMapping("/v1/test")
-    private MsgRespond creatTest(@Validated @RequestBody TestReq testReq) throws ParseException {
+    public MsgRespond creatTest(@Validated @RequestBody TestReq testReq) throws ParseException {
         return testService.creatTest(testReq);
     }
 

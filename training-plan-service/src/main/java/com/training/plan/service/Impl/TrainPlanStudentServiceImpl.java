@@ -115,7 +115,7 @@ public class TrainPlanStudentServiceImpl implements TrainPlanStudentService {
         if (Objects.equals(res.getInteger("code"), 5005)){
             return new DataFailRespond(res.getString("msg"));
         }
-        List<User> userList = res.getJSONArray("data").toJavaList(User.class);
+        List<User> userList = JSON.parseArray(res.getJSONArray("data").toJSONString(), User.class);
         //获取所有id
         List<Integer> IdList = trainPlanStudentMapper.getAllIdByPlanID(plan_id);
         List<StudentInfo> AllStuList = new ArrayList<>();

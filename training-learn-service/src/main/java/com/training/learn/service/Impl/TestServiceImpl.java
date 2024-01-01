@@ -65,7 +65,7 @@ public class TestServiceImpl implements TestService {
      * 2023/11/14
      */
     @Override
-    public MsgRespond creatTest(TestReq req) {
+    public MsgRespond creatTest(TestReq req) throws ParseException {
 
         //判断教师是否是该课程的授课教师
         String TeaInLessonMark = judgeTeaInInLesson(req.getTeacher_id(), req.getLesson_id());
@@ -80,29 +80,20 @@ public class TestServiceImpl implements TestService {
         }
 
         //判断起始和截止时间的合法性
-        String validDateTimeMsg = validDateTime(req.getStart_datetime(), req.getEnd_datetime());
-        if (!validDateTimeMsg.isBlank()) {
-            return MsgRespond.fail(validDateTimeMsg);
+        SimpleDateFormat si = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        //判断结束时间是否早于起始时间
+        if (si.parse(req.getStart_datetime()).getTime() > si.parse(req.getEnd_datetime()).getTime()) {
+            return MsgRespond.fail("结束时间不得早于起始时间！");
+        }
+        //判断起始时间是否早于现在
+        if (si.parse(req.getStart_datetime()).getTime() < System.currentTimeMillis()) {
+            return MsgRespond.fail("起始时间不得早于现在！");
         }
 
         req.setIsRelease(0);
 
         Integer i = testMapper.creatTest(req);
         return i > 0 ? MsgRespond.success("已成功创建此试卷") : MsgRespond.fail("创建试卷失败！");
-    }
-
-    @SneakyThrows
-    private String validDateTime(String startDatetime, String endDatetime) {
-        SimpleDateFormat si = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        //判断结束时间是否早于起始时间
-        if (si.parse(startDatetime).getTime() > si.parse(endDatetime).getTime()) {
-            return "结束时间不得早于起始时间！";
-        }
-        //判断起始时间是否早于现在
-        if (si.parse(startDatetime).getTime() < System.currentTimeMillis()) {
-            return "起始时间不得早于现在！";
-        }
-        return "";
     }
 
 

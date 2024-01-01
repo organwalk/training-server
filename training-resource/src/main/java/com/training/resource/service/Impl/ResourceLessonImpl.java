@@ -127,7 +127,8 @@ public class ResourceLessonImpl implements ResourceLessonService {
 
             // 删除该教材资源的视频测试题
             JSONObject res = planClient.deleteAllVideoTestByResourceLessonId(idMark);
-            if (Objects.equals(res.getInteger("code"), 5005)){
+            if (Objects.equals(res.getInteger("code"), 5005)
+                    && !Objects.equals(res.getString("msg"), "该视频教程下不存在测试")){
                 return MsgRespond.fail(res.getString("msg"));
             }
 

@@ -37,24 +37,24 @@ public class GlobalExceptionHandler {
         return MsgRespond.fail(errorMsg.toString());
     }
 
-    @ExceptionHandler(value = ConstraintViolationException.class)
-    public MsgRespond handConstraintViolationException(ConstraintViolationException e) {
-        logger.warn(e);
-        Set<ConstraintViolation<?>> violations = e.getConstraintViolations();
-        StringBuilder errorMsg = new StringBuilder();
-        for (ConstraintViolation<?> violation : violations) {
-            errorMsg.append(violation.getMessage()).append(";");
-        }
-        return MsgRespond.fail(errorMsg.toString());
-    }
-
-    @ExceptionHandler(value = {Exception.class, RuntimeException.class, IllegalArgumentException.class})
-    public MsgRespond handleInternalServerError(Exception e, RuntimeException re, IllegalArgumentException ae) {
-        logger.error(e);
-        logger.error(re);
-        logger.error(ae);
-        return MsgRespond.fail("内部服务错误，请稍后重试");
-    }
+//    @ExceptionHandler(value = ConstraintViolationException.class)
+//    public MsgRespond handConstraintViolationException(ConstraintViolationException e) {
+//        logger.warn(e);
+//        Set<ConstraintViolation<?>> violations = e.getConstraintViolations();
+//        StringBuilder errorMsg = new StringBuilder();
+//        for (ConstraintViolation<?> violation : violations) {
+//            errorMsg.append(violation.getMessage()).append(";");
+//        }
+//        return MsgRespond.fail(errorMsg.toString());
+//    }
+//
+//    @ExceptionHandler(value = {Exception.class, RuntimeException.class, IllegalArgumentException.class})
+//    public MsgRespond handleInternalServerError(Exception e, RuntimeException re, IllegalArgumentException ae) {
+//        logger.error(e);
+//        logger.error(re);
+//        logger.error(ae);
+//        return MsgRespond.fail("内部服务错误，请稍后重试");
+//    }
 
     // 捕获400 Bad Request异常
     @ExceptionHandler({MissingServletRequestParameterException.class, MethodArgumentTypeMismatchException.class})
