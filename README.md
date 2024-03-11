@@ -113,8 +113,6 @@
 - Springboot 3 + MyBatisPlus + RedisTemplate + WebFlux + WebSocket+RabbitMQ
 - MySQL 8.0 + Redis 7.0
 
-仓库地址：待开发
-
 ### 1.2.8 GateWay网关
 
 在网关处通过调用用户服务完成权限认证。同时提供请求管理。
