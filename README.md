@@ -127,11 +127,11 @@
 
 ## 1.3 项目运行所需配置
 
-yml配置文件模板参照：[YML File Configuration Template](https://github.com/organwalk/training-server/blob/master/YML%20File%20Configuration%20Template.md)
+(非最新)yml配置文件模板参照：[YML File Configuration Template](https://github.com/organwalk/training-server/blob/master/YML%20File%20Configuration%20Template.md)
 
 ## 1.4 数据库表设计
 
-数据库表设计参照：[Database Table Design](https://github.com/organwalk/training-server/blob/master/Database%20Table%20Design.md)
+（非最新）数据库表设计参照：[Database Table Design](https://github.com/organwalk/training-server/blob/master/Database%20Table%20Design.md)
 
 ## 1.5 开发环境
 
